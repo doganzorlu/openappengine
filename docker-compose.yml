@@ -1,0 +1,86 @@
+services:
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: openappengine-backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - backend_vendor:/var/www/html/vendor
+      - backend_storage:/var/www/html/storage
+      - backend_bootstrap_cache:/var/www/html/bootstrap/cache
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=openappengine
+      - DB_USERNAME=openappengine
+      - DB_PASSWORD=openappenginesecure
+    depends_on:
+      - db
+    networks:
+      - openappengine-net
+
+  web:
+    image: nginx:alpine
+    container_name: openappengine-nginx
+    restart: unless-stopped
+    ports:
+      - "11001:80"
+    volumes:
+      - ./backend:/var/www/html
+      - backend_vendor:/var/www/html/vendor:ro
+      - backend_storage:/var/www/html/storage:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - openappengine-net
+
+  db:
+    image: mariadb:10.11
+    container_name: openappengine-db
+    restart: unless-stopped
+    ports:
+      - "11002:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_DATABASE: openappengine
+      MYSQL_USER: openappengine
+      MYSQL_PASSWORD: openappenginesecure
+    volumes:
+      - openappengine_db_data:/var/lib/mysql
+    networks:
+      - openappengine-net
+
+  frontend:
+    image: node:22-alpine
+    container_name: openappengine-frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "11000:3000"
+    command: npm run dev
+    networks:
+      - openappengine-net
+
+volumes:
+  openappengine_db_data:
+    driver: local
+  backend_vendor:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_bootstrap_cache:
+    driver: local
+  frontend_node_modules:
+    driver: local
+
+networks:
+  openappengine-net:
+    driver: bridge

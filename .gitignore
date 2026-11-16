@@ -1,0 +1,31 @@
+# OS Files
+.DS_Store
+._*
+Thumbs.db
+
+# Docker Data
+docker/mysql/data
+
+# Backend / Laravel
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/vendor/
+backend/storage/*.key
+backend/storage/app/public/sites/
+backend/storage/framework/cache/*
+!backend/storage/framework/cache/.gitignore
+backend/storage/framework/sessions/*
+!backend/storage/framework/sessions/.gitignore
+backend/storage/framework/views/*
+!backend/storage/framework/views/.gitignore
+backend/storage/logs/*
+!backend/storage/logs/.gitignore
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitignore
+
+# Frontend / React
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
