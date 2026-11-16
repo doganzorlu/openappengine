@@ -22,6 +22,7 @@ export interface Site {
   theme_config: {
     primary_color?: string
     font_family?: string
+    logo_url?: string
   }
 }
 

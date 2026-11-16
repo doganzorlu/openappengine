@@ -51,6 +51,7 @@ export function App() {
 
   // Editor State
   const [isEditorMode, setIsEditorMode] = useState(false)
+  const [isEngineBarVisible, setIsEngineBarVisible] = useState(false)
   const [selectedNode, setSelectedNode] = useState<ComponentNode | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -387,90 +388,115 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcfcfc]">
-      {/* Top Engine Control Bar */}
-      <header className="sticky top-0 z-50 bg-gray-900 text-white border-b border-gray-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs">
-          {/* Left: Brand & Site Switcher */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <strong className="tracking-wider uppercase font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300 text-xs sm:text-sm">
-                OpenAppEngine
-              </strong>
-            </div>
+    <div className="min-h-screen flex flex-col bg-[#fcfcfc] w-full max-w-full overflow-x-hidden">
+      {/* Top Engine Control Bar (Visible in Editor Mode or when toggled open) */}
+      {isEngineBarVisible || isEditorMode ? (
+        <header className="sticky top-0 z-50 bg-gray-900 text-white border-b border-gray-800 shadow-md">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs">
+            {/* Left: Brand & Site Switcher */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <strong className="tracking-wider uppercase font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300 text-xs sm:text-sm">
+                  OpenAppEngine
+                </strong>
+              </div>
 
-            {/* Site Switcher Dropdown */}
-            <div className="relative">
-              <select
-                value={currentSlug}
-                onChange={(e) => handleSiteChange(e.target.value)}
-                className="bg-gray-800 text-white font-medium border border-gray-700 rounded-lg px-2 sm:px-3 py-1 pr-6 sm:pr-8 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-[11px] sm:text-xs transition max-w-[140px] sm:max-w-none truncate"
-              >
-                {sitesList.length > 0 ? (
-                  sitesList.map((s) => (
-                    <option key={s.slug} value={s.slug}>
-                      {s.name} ({s.domain})
+              {/* Site Switcher Dropdown */}
+              <div className="relative">
+                <select
+                  value={currentSlug}
+                  onChange={(e) => handleSiteChange(e.target.value)}
+                  className="bg-gray-800 text-white font-medium border border-gray-700 rounded-lg px-2 sm:px-3 py-1 pr-6 sm:pr-8 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-[11px] sm:text-xs transition max-w-[140px] sm:max-w-none truncate"
+                >
+                  {sitesList.length > 0 ? (
+                    sitesList.map((s) => (
+                      <option key={s.slug} value={s.slug}>
+                        {s.name} ({s.domain})
+                      </option>
+                    ))
+                  ) : (
+                    <option value={site.slug}>
+                      {site.name} ({site.domain})
                     </option>
-                  ))
-                ) : (
-                  <option value={site.slug}>
-                    {site.name} ({site.domain})
-                  </option>
-                )}
-              </select>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            {/* Right: Admin Panel button, Visual Editor & Save */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {isEditorMode && (
+                <>
+                  <button
+                    onClick={() => {
+                      setBlockInsertIndex(null)
+                      setIsBlockLibraryOpen(true)
+                    }}
+                    className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1 shadow transition text-[11px] sm:text-xs"
+                    title="Hazır Blok Kütüphanesinden Yeni Bölüm Ekle"
+                  >
+                    <span>🧩</span> Bölüm Ekle
+                  </button>
+
+                  <button
+                    onClick={handleSaveLayout}
+                    disabled={isSaving}
+                    className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1 shadow transition disabled:opacity-50 text-[11px] sm:text-xs"
+                  >
+                    {isSaving ? '...' : '💾 Kaydet'}
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => {
+                  setIsEditorMode(!isEditorMode)
+                  setSelectedNode(null)
+                }}
+                className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition shadow text-[11px] sm:text-xs ${
+                  isEditorMode
+                    ? 'bg-purple-600 text-white hover:bg-purple-500 ring-2 ring-purple-400'
+                    : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
+                }`}
+              >
+                {isEditorMode ? '👁️ Önizle' : '🛠️ Editör'}
+              </button>
+
+              <button
+                onClick={() => setViewMode('admin')}
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white font-semibold flex items-center gap-1 text-[11px] sm:text-xs transition shadow"
+              >
+                <span>⚙️</span>
+                <span className="hidden sm:inline">Yönetim Paneli</span>
+              </button>
+
+              {!isEditorMode && (
+                <button
+                  onClick={() => setIsEngineBarVisible(false)}
+                  className="p-1.5 hover:bg-gray-800 text-gray-400 hover:text-white rounded-lg transition"
+                  title="Üst Çubuğu Gizle (Siteyi Tam Ekran Gör)"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
-
-          {/* Right: Admin Panel button, Visual Editor & Save */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {isEditorMode && (
-              <>
-                <button
-                  onClick={() => {
-                    setBlockInsertIndex(null)
-                    setIsBlockLibraryOpen(true)
-                  }}
-                  className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1 shadow transition text-[11px] sm:text-xs"
-                  title="Hazır Blok Kütüphanesinden Yeni Bölüm Ekle"
-                >
-                  <span>🧩</span> Bölüm Ekle
-                </button>
-
-                <button
-                  onClick={handleSaveLayout}
-                  disabled={isSaving}
-                  className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1 shadow transition disabled:opacity-50 text-[11px] sm:text-xs"
-                >
-                  {isSaving ? '...' : '💾 Kaydet'}
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={() => {
-                setIsEditorMode(!isEditorMode)
-                setSelectedNode(null)
-              }}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition shadow text-[11px] sm:text-xs ${
-                isEditorMode
-                  ? 'bg-purple-600 text-white hover:bg-purple-500 ring-2 ring-purple-400'
-                  : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
-              }`}
-            >
-              {isEditorMode ? '👁️ Önizle' : '🛠️ Editör'}
-            </button>
-
-            <button
-              onClick={() => setViewMode('admin')}
-              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white font-semibold flex items-center gap-1 text-[11px] sm:text-xs transition shadow"
-            >
-              <span>⚙️</span>
-              <span className="hidden sm:inline">Yönetim Paneli</span>
-            </button>
-          </div>
+        </header>
+      ) : (
+        /* Discreet Floating Engine Trigger */
+        <div className="fixed bottom-4 right-4 z-50">
+          <button
+            onClick={() => setIsEngineBarVisible(true)}
+            className="bg-gray-900/90 hover:bg-gray-900 text-white backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl border border-gray-700/70 text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 group"
+            title="OpenAppEngine Menüsünü Aç"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="group-hover:text-purple-300 transition">OpenAppEngine</span>
+            <span className="text-[10px] text-gray-400">▲</span>
+          </button>
         </div>
-      </header>
+      )}
 
       {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
       {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
@@ -478,6 +504,8 @@ export function App() {
           <ComponentRenderer
             nodes={site.settings.header_layout}
             siteSlug={site.slug}
+            site={site}
+            menus={menus}
             isEditing={false}
             selectedNodeId={null}
             onSelectNode={() => {}}
@@ -493,6 +521,8 @@ export function App() {
           <ComponentRenderer
             nodes={page.layout}
             siteSlug={site.slug}
+            site={site}
+            menus={menus}
             isEditing={isEditorMode}
             selectedNodeId={selectedNode?.id || null}
             onSelectNode={(node) => setSelectedNode(node)}
@@ -524,6 +554,8 @@ export function App() {
           <ComponentRenderer
             nodes={site.settings.footer_layout}
             siteSlug={site.slug}
+            site={site}
+            menus={menus}
             isEditing={false}
             selectedNodeId={null}
             onSelectNode={() => {}}

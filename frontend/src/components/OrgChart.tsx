@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import defaultMembers from '../data/otizmkonfederasyonu_org_chart.json'
+import { normalizeMediaUrl } from './ImageBox'
 
 export interface OrgMember {
   name: string
@@ -27,7 +28,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
   return (
     <div className="w-full my-8 text-center">
       {title && title !== 'Organizasyon Şeması' && (
-        <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-8 tracking-wide uppercase">
+        <h3 className="text-xl sm:text-2xl font-black text-white mb-8 tracking-wide uppercase drop-shadow-sm">
           {title}
         </h3>
       )}
@@ -41,7 +42,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
         >
           <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-amber-400 shadow-md bg-gray-100">
             <img
-              src={president.image}
+              src={normalizeMediaUrl(president.image)}
               alt={president.name}
               className="w-full h-full object-cover group-hover:scale-105 transition"
               loading="lazy"
@@ -76,7 +77,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
           >
             <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-indigo-200 shadow-sm bg-gray-100 mb-3">
               <img
-                src={member.image}
+                src={normalizeMediaUrl(member.image)}
                 alt={member.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition"
                 loading="lazy"

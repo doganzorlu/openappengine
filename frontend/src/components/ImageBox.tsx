@@ -1,5 +1,10 @@
 import React from 'react'
 
+export function normalizeMediaUrl(url?: string | null): string {
+  if (!url) return ''
+  return url.replace(/^https?:\/\/(otizmkonfederasyonu\.org\.tr|localhost:\d+)/, '')
+}
+
 interface ImageBoxProps {
   title: string
   description?: string
@@ -15,15 +20,28 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
   url,
   styles = {},
 }) => {
+  const normImageUrl = normalizeMediaUrl(imageUrl)
+  const isMinimal = !title && Boolean(description)
+
   const content = (
     <div
       style={styles}
-      className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group h-full justify-between"
+      className={`flex flex-col items-center text-center p-4 transition-all duration-300 group h-full justify-between ${
+        isMinimal
+          ? 'bg-transparent text-white hover:scale-105'
+          : 'bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1'
+      }`}
     >
-      {imageUrl && (
-        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4 bg-gray-50 flex items-center justify-center p-3">
+      {normImageUrl && (
+        <div
+          className={`overflow-hidden mb-3 flex items-center justify-center p-2 transition-transform duration-300 ${
+            isMinimal
+              ? 'w-28 h-28 sm:w-36 sm:h-36 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 group-hover:border-white/40 shadow-lg'
+              : 'w-full aspect-[4/3] bg-gray-50 rounded-xl'
+          }`}
+        >
           <img
-            src={imageUrl}
+            src={normImageUrl}
             alt={title || description}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
@@ -36,7 +54,11 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
             {title}
           </h3>
         ) : description ? (
-          <h4 className="text-sm sm:text-base font-bold text-gray-800 group-hover:text-purple-600 transition">
+          <h4
+            className={`text-sm sm:text-base font-bold transition leading-snug ${
+              isMinimal ? 'text-white' : 'text-gray-800 group-hover:text-purple-600'
+            }`}
+          >
             {description}
           </h4>
         ) : null}

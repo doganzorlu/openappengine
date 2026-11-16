@@ -1,12 +1,12 @@
 import React from 'react'
-import type { ComponentNode } from '../types'
+import type { ComponentNode, Site, Menu } from '../types'
 import { Timeline } from './Timeline'
 import { ImageAccordion } from './ImageAccordion'
 import { ContactForm } from './ContactForm'
 import { Counter } from './Counter'
 import { ImageCarousel } from './ImageCarousel'
 import { Accordion } from './Accordion'
-import { ImageBox } from './ImageBox'
+import { ImageBox, normalizeMediaUrl } from './ImageBox'
 import { IconList } from './IconList'
 import { DownloadsList } from './DownloadsList'
 import { Tabs } from './Tabs'
@@ -16,6 +16,8 @@ import { OrgChart } from './OrgChart'
 interface RendererProps {
   nodes: ComponentNode[]
   siteSlug: string
+  site?: Site | null
+  menus?: Menu[]
   isEditing?: boolean
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
@@ -29,6 +31,8 @@ interface RendererProps {
 export const ComponentRenderer: React.FC<RendererProps> = ({
   nodes,
   siteSlug,
+  site = null,
+  menus = [],
   isEditing = false,
   selectedNodeId = null,
   onSelectNode,
@@ -62,78 +66,98 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
             </div>
           )}
 
-          <div className="relative group/section">
-            {/* Top-Level Section Action Floating Bar */}
-            {isEditing && isTopLevel && (
-              <div className="absolute top-2 right-4 z-30 flex items-center gap-1 bg-gray-900/90 text-white backdrop-blur-md px-2 py-1 rounded-xl shadow-xl text-xs border border-gray-700 opacity-90 group-hover/section:opacity-100 transition">
-                <span className="text-[10px] text-gray-400 font-mono font-bold px-1.5 border-r border-gray-700">
-                  #{index + 1} {node.type}
-                </span>
+          {(() => {
+            const isMobileHidden = node.props?.hideMobile || node.id === 'c568d68'
+            const isDesktopHidden = node.props?.hideDesktop || node.id === '3f78df5'
+            const responsiveClass = isMobileHidden ? 'hidden md:block' : isDesktopHidden ? 'block md:hidden' : ''
 
-                {/* Move Up */}
-                <button
-                  type="button"
-                  disabled={index === 0}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onMoveNode && onMoveNode(node.id, 'up')
-                  }}
-                  className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
-                  title="Yukarı Taşı"
-                >
-                  ⬆️
-                </button>
+            const widthVal = typeof node.props?.width === 'number' ? node.props.width : parseFloat(node.props?.width || '100')
+            const colWidthClass = node.type === 'Column'
+              ? (widthVal <= 26 ? 'w-full md:w-1/4'
+                : widthVal <= 34 ? 'w-full md:w-1/3'
+                : widthVal <= 52 ? 'w-full md:w-1/2'
+                : widthVal <= 68 ? 'w-full md:w-2/3'
+                : widthVal <= 76 ? 'w-full md:w-3/4'
+                : 'w-full')
+              : 'w-full md:w-auto'
 
-                {/* Move Down */}
-                <button
-                  type="button"
-                  disabled={index === nodes.length - 1}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onMoveNode && onMoveNode(node.id, 'down')
-                  }}
-                  className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
-                  title="Aşağı Taşı"
-                >
-                  ⬇️
-                </button>
+            return (
+              <div className={`relative group/section ${colWidthClass} ${responsiveClass}`}>
+                {/* Top-Level Section Action Floating Bar */}
+                {isEditing && isTopLevel && (
+                  <div className="absolute top-2 right-4 z-30 flex items-center gap-1 bg-gray-900/90 text-white backdrop-blur-md px-2 py-1 rounded-xl shadow-xl text-xs border border-gray-700 opacity-90 group-hover/section:opacity-100 transition">
+                    <span className="text-[10px] text-gray-400 font-mono font-bold px-1.5 border-r border-gray-700">
+                      #{index + 1} {node.type}
+                    </span>
 
-                {/* Duplicate */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDuplicateNode && onDuplicateNode(node.id)
-                  }}
-                  className="p-1 hover:bg-gray-800 rounded transition"
-                  title="Bölümü Çoğalt"
-                >
-                  📋
-                </button>
+                    {/* Move Up */}
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onMoveNode && onMoveNode(node.id, 'up')
+                      }}
+                      className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
+                      title="Yukarı Taşı"
+                    >
+                      ⬆️
+                    </button>
 
-                {/* Delete */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteNode && onDeleteNode(node.id)
-                  }}
-                  className="p-1 hover:bg-red-900/60 text-red-400 rounded transition"
-                  title="Bölümü Sil"
-                >
-                  🗑️
-                </button>
+                    {/* Move Down */}
+                    <button
+                      type="button"
+                      disabled={index === nodes.length - 1}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onMoveNode && onMoveNode(node.id, 'down')
+                      }}
+                      className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
+                      title="Aşağı Taşı"
+                    >
+                      ⬇️
+                    </button>
+
+                    {/* Duplicate */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDuplicateNode && onDuplicateNode(node.id)
+                      }}
+                      className="p-1 hover:bg-gray-800 rounded transition"
+                      title="Bölümü Çoğalt"
+                    >
+                      📋
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDeleteNode && onDeleteNode(node.id)
+                      }}
+                      className="p-1 hover:bg-red-900/60 text-red-400 rounded transition"
+                      title="Bölümü Sil"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+
+                <NodeItem
+                  node={node}
+                  siteSlug={siteSlug}
+                  site={site}
+                  menus={menus}
+                  isEditing={isEditing}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={onSelectNode}
+                />
               </div>
-            )}
-
-            <NodeItem
-              node={node}
-              siteSlug={siteSlug}
-              isEditing={isEditing}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={onSelectNode}
-            />
-          </div>
+            )
+          })()}
         </React.Fragment>
       ))}
 
@@ -252,13 +276,66 @@ const ShapeDivider: React.FC<{
   )
 }
 
+const ResponsiveNavMenu: React.FC<{ menuItems: any[]; styles?: React.CSSProperties }> = ({ menuItems, styles }) => {
+  const [isOpen, setIsOpen] = React.useState(false)
+
+  return (
+    <div className="relative w-full sm:w-auto" style={styles}>
+      {/* Mobile Toggle Button */}
+      <div className="flex sm:hidden justify-center my-1 w-full">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:text-green-600 hover:border-green-500 font-medium text-xs flex items-center gap-1.5 shadow-sm transition bg-white"
+        >
+          <span>{isOpen ? '✕' : '☰'}</span>
+          <span>Menü</span>
+        </button>
+      </div>
+
+      {/* Desktop Menu */}
+      <nav className="hidden sm:flex flex-nowrap items-center gap-2 sm:gap-3 lg:gap-4 whitespace-nowrap">
+        {menuItems.map((item: any) => (
+          <a
+            key={item.id}
+            href={item.url}
+            target={item.target || '_self'}
+            className="text-xs sm:text-sm font-semibold text-[#7A7A7A] hover:text-[#61CE70] transition-colors duration-200 py-1"
+          >
+            {item.title}
+          </a>
+        ))}
+      </nav>
+
+      {/* Mobile Dropdown Menu */}
+      {isOpen && (
+        <div className="sm:hidden flex flex-col bg-white border border-gray-100 rounded-xl shadow-xl p-3 mt-2 gap-2 w-full z-40 text-center">
+          {menuItems.map((item: any) => (
+            <a
+              key={item.id}
+              href={item.url}
+              onClick={() => setIsOpen(false)}
+              target={item.target || '_self'}
+              className="text-xs font-semibold text-[#7A7A7A] hover:text-[#61CE70] hover:bg-gray-50 rounded-lg py-2 transition"
+            >
+              {item.title}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const NodeItem: React.FC<{
   node: ComponentNode
   siteSlug: string
+  site?: Site | null
+  menus?: Menu[]
   isEditing?: boolean
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
-}> = ({ node, siteSlug, isEditing = false, selectedNodeId = null, onSelectNode }) => {
+}> = ({ node, siteSlug, site = null, menus = [], isEditing = false, selectedNodeId = null, onSelectNode }) => {
   const { type, props = {}, styles = {}, children = [] } = node
   const isSelected = isEditing && selectedNodeId === node.id
 
@@ -273,10 +350,11 @@ const NodeItem: React.FC<{
     switch (type) {
       case 'Section': {
         const bgStyle: React.CSSProperties = {}
-        if (props.bgImage) {
-          bgStyle.backgroundImage = `url('${props.bgImage}')`
+        const bgImageUrl = normalizeMediaUrl(props.bgImage)
+        if (bgImageUrl) {
+          bgStyle.backgroundImage = `url('${bgImageUrl}')`
           bgStyle.backgroundSize = 'cover'
-          bgStyle.backgroundPosition = 'top center'
+          bgStyle.backgroundPosition = 'center center'
         }
         if (props.bgColor || styles.backgroundColor) {
           bgStyle.backgroundColor = styles.backgroundColor || props.bgColor
@@ -294,11 +372,33 @@ const NodeItem: React.FC<{
         if (styles.padding) bgStyle.padding = styles.padding
         if (styles.margin) bgStyle.margin = styles.margin
 
+        const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
+        const isHeader = children.some(
+          (c) =>
+            c.type === 'Column' &&
+            c.children?.some((sc) => sc.type === 'SiteLogo' || sc.type === 'NavMenu')
+        )
+        const isSpacerOnly =
+          children.length === 1 &&
+          (children[0].type === 'Spacer' || children[0].children?.[0]?.type === 'Spacer')
+
+        const paddingClass = isSpacerOnly
+          ? 'py-0'
+          : isHeader
+          ? 'py-2 sm:py-3'
+          : styles.padding
+          ? ''
+          : 'py-12 md:py-20'
+
+        const childWrapperClass = isRow
+          ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
+          : 'flex flex-col items-center justify-center gap-4 w-full max-w-full text-center'
+
         return (
           <section
             id={node.id}
             style={bgStyle}
-            className="relative py-16 md:py-24 transition-all overflow-hidden flex flex-col justify-center"
+            className={`relative ${paddingClass} transition-all overflow-hidden flex flex-col justify-center`}
           >
             {/* Top Shape Divider */}
             {props.shapeDividerTop && (
@@ -323,22 +423,24 @@ const NodeItem: React.FC<{
             )}
 
             {/* Background Overlay */}
-            {props.bgOverlayColor && (
+            {(props.bgOverlayColor || bgImageUrl) && (
               <div
                 className="absolute inset-0 pointer-events-none z-0"
                 style={{
-                  backgroundColor: props.bgOverlayColor,
-                  opacity: props.bgOverlayOpacity ?? 0.68,
+                  backgroundColor: props.bgOverlayColor || (bgImageUrl ? '#000000' : 'transparent'),
+                  opacity: props.bgOverlayOpacity ?? (bgImageUrl ? 0.35 : 0.68),
                 }}
               />
             )}
 
             {/* Container Content */}
-            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-8">
+            <div className={`relative z-10 mx-auto px-4 sm:px-6 lg:px-8 w-full ${isHeader ? 'max-w-7xl' : 'max-w-6xl'}`}>
+              <div className={childWrapperClass}>
                 <ComponentRenderer
                   nodes={children}
                   siteSlug={siteSlug}
+                  site={site}
+                  menus={menus}
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
@@ -362,11 +464,19 @@ const NodeItem: React.FC<{
       case 'Column': {
         const isHeroColumn = styles.animation === 'zoomIn' || styles.backgroundColor === '#FFB92C1C'
 
+        const widthVal = typeof props.width === 'number' ? props.width : parseFloat(props.width || '100')
         const widthClass = isHeroColumn
           ? 'w-full flex justify-center items-center'
-          : props.width === 50 ? 'md:w-[48%] flex-1'
-          : props.width === 33 ? 'md:w-[31%] flex-1'
-          : props.width === 66 ? 'md:w-[64%] flex-1'
+          : widthVal <= 26
+          ? 'w-full md:w-1/4'
+          : widthVal <= 34
+          ? 'w-full md:w-1/3'
+          : widthVal <= 52
+          ? 'w-full md:w-1/2'
+          : widthVal <= 68
+          ? 'w-full md:w-2/3'
+          : widthVal <= 76
+          ? 'w-full md:w-3/4'
           : 'w-full'
 
         const animationClass = styles.animation === 'zoomIn' ? 'animate-zoom-in' : ''
@@ -377,7 +487,7 @@ const NodeItem: React.FC<{
         if (styles.borderWidth) boxStyle.borderWidth = styles.borderWidth
         if (styles.borderColor) boxStyle.borderColor = styles.borderColor
         if (styles.borderRadius) boxStyle.borderRadius = styles.borderRadius
-        if (styles.width) boxStyle.width = styles.width
+        if (styles.width && !styles.width.includes('%')) boxStyle.width = styles.width
         if (styles.maxWidth) boxStyle.maxWidth = styles.maxWidth
         if (styles.height) boxStyle.height = styles.height
         if (styles.minHeight) boxStyle.minHeight = styles.minHeight
@@ -407,6 +517,8 @@ const NodeItem: React.FC<{
                 <ComponentRenderer
                   nodes={children}
                   siteSlug={siteSlug}
+                  site={site}
+                  menus={menus}
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
@@ -416,15 +528,83 @@ const NodeItem: React.FC<{
           )
         }
 
-        if (props.flexDirection === 'row') {
+        // Check if all children are Column nodes (multi-column card grid, e.g. "KURULUŞ AMAÇLARI")
+        const isAllColumnGrid = children.length > 1 && children.every((c) => c.type === 'Column')
+        if (isAllColumnGrid) {
           return (
             <div
               style={boxStyle}
-              className={`${widthClass} ${animationClass} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch justify-center w-full`}
+              className={`${widthClass} ${animationClass} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch w-full my-6`}
             >
               <ComponentRenderer
                 nodes={children}
                 siteSlug={siteSlug}
+                site={site}
+                menus={menus}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+              />
+            </div>
+          )
+        }
+
+        const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
+        if (isRow) {
+          const isImageBoxGrid = children.length > 0 && children.every((c) => c.type === 'ImageBox')
+          if (isImageBoxGrid) {
+            return (
+              <div
+                style={boxStyle}
+                className={`${widthClass} ${animationClass} grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 items-center justify-center w-full my-6`}
+              >
+                <ComponentRenderer
+                  nodes={children}
+                  siteSlug={siteSlug}
+                  site={site}
+                  menus={menus}
+                  isEditing={isEditing}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={onSelectNode}
+                />
+              </div>
+            )
+          }
+
+          const isHeaderRight = children.some((c) => c.type === 'NavMenu')
+          return (
+            <div
+              style={boxStyle}
+              className={`${widthClass} ${animationClass} flex flex-col md:flex-row items-center ${
+                isHeaderRight ? 'justify-end gap-6' : 'justify-between gap-4'
+              } w-full`}
+            >
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                site={site}
+                menus={menus}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+              />
+            </div>
+          )
+        }
+
+        // If card column with dark/card background (like cards in "KURULUŞ AMAÇLARI")
+        const hasCardBg = Boolean(styles.backgroundColor || props.bgColor)
+        if (hasCardBg) {
+          return (
+            <div
+              style={boxStyle}
+              className={`${widthClass} ${animationClass} rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center justify-between gap-4 text-white`}
+            >
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                site={site}
+                menus={menus}
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
@@ -441,6 +621,8 @@ const NodeItem: React.FC<{
             <ComponentRenderer
               nodes={children}
               siteSlug={siteSlug}
+              site={site}
+              menus={menus}
               isEditing={isEditing}
               selectedNodeId={selectedNodeId}
               onSelectNode={onSelectNode}
@@ -457,6 +639,20 @@ const NodeItem: React.FC<{
         const alignClass =
           align === 'center' ? 'text-center' :
           align === 'right' ? 'text-right' : 'text-left'
+
+        // Hero heading
+        if (styles.fontSize === '5.5em' || node.id === 'c568d68' || styles.fontSize === '2em' || node.id === '3f78df5') {
+          return (
+            <div className="flex justify-center w-full px-2">
+              <h2
+                style={{ ...color, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+                className="bg-[#54595FAB] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl text-base sm:text-2xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-wider leading-snug shadow-xl backdrop-blur-sm border border-white/20 text-center uppercase my-2 max-w-[320px] sm:max-w-4xl mx-auto break-words"
+              >
+                {props.text}
+              </h2>
+            </div>
+          )
+        }
 
         if (level === 'h1') {
           return (
@@ -493,6 +689,7 @@ const NodeItem: React.FC<{
         if (styles.margin) customStyle.margin = styles.margin
         if (styles.padding) customStyle.padding = styles.padding
 
+        const isWhiteText = (styles.color || props.color) === '#FFFFFF'
         const isLargeHeroText = styles.fontSize === '3em' || props.fontSize === '3em'
 
         if (isLargeHeroText) {
@@ -508,7 +705,7 @@ const NodeItem: React.FC<{
         return (
           <div
             style={customStyle}
-            className={`leading-relaxed space-y-3 prose max-w-none ${alignClass}`}
+            className={`leading-relaxed space-y-3 ${isWhiteText ? 'text-white' : 'text-gray-700'} ${alignClass}`}
             dangerouslySetInnerHTML={{ __html: props.html }}
           />
         )
@@ -527,17 +724,22 @@ const NodeItem: React.FC<{
         if (styles.boxShadow) btnStyle.boxShadow = styles.boxShadow
         if (styles.padding) btnStyle.padding = styles.padding
 
+        const isRedBtn = (styles.backgroundColor || props.bgColor) === '#FD0101' || node.id === 'c1edc74'
         const hasCustomBg = Boolean(btnStyle.backgroundColor)
 
         return (
           <div className={`flex w-full ${alignClass} my-3`}>
             <a
-              href={props.url || '#'}
+              href={normalizeMediaUrl(props.url) || '#'}
               target={props.target || '_self'}
               rel="noopener noreferrer"
               style={btnStyle}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 ${
-                hasCustomBg ? '' : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+              className={`inline-flex items-center justify-center text-center gap-2 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-base leading-snug shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-[320px] sm:max-w-xl mx-auto whitespace-normal break-words ${
+                isRedBtn
+                  ? 'bg-[#FD0101] hover:bg-red-700 text-white shadow-red-500/30'
+                  : hasCustomBg
+                  ? ''
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
               }`}
             >
               {props.icon && <i className={props.icon} />}
@@ -623,18 +825,24 @@ const NodeItem: React.FC<{
       }
 
       case 'SiteLogo': {
-        const logoUrl = props.logoUrl
+        let logoUrl = props.logoUrl || site?.settings?.logo_url || site?.theme_config?.logo_url
+        if (!logoUrl && siteSlug.includes('otizmkonfederasyonu')) {
+          logoUrl = '/wp-content/uploads/2024/03/cropped-otizmkonfederasyonu-logo.jpg'
+        }
+        logoUrl = normalizeMediaUrl(logoUrl)
+        const logoWidth = props.width || '89px'
+
         return (
           <div className="flex items-center" style={styles}>
-            <a href="/" className="inline-block transition-transform hover:scale-105">
+            <a href={`/?site=${siteSlug}`} className="inline-block transition-transform hover:scale-105">
               {logoUrl ? (
                 <img
                   src={logoUrl}
-                  alt="Site Logo"
-                  style={{ width: props.width || 'auto', maxHeight: '70px', objectFit: 'contain' }}
+                  alt={site?.name || siteSlug}
+                  style={{ width: logoWidth, maxHeight: '80px', objectFit: 'contain' }}
                 />
               ) : (
-                <span className="text-2xl font-black tracking-tight text-gray-900">{siteSlug}</span>
+                <span className="text-2xl font-black tracking-tight text-gray-900">{site?.name || siteSlug}</span>
               )}
             </a>
           </div>
@@ -642,19 +850,19 @@ const NodeItem: React.FC<{
       }
 
       case 'NavMenu': {
-        return (
-          <nav className="flex items-center gap-6" style={styles}>
-            <a href="/" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
-              Ana Sayfa
-            </a>
-            <a href="/#hakkimizda" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
-              Hakkımızda
-            </a>
-            <a href="/#iletisim" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
-              İletişim
-            </a>
-          </nav>
-        )
+        const menuItems =
+          menus && menus.length > 0 && menus[0].items && menus[0].items.length > 0
+            ? menus[0].items
+            : [
+                { id: 1, title: 'Ana Sayfası', url: `/?site=${siteSlug}` },
+                { id: 2, title: 'Kurullar', url: '#' },
+                { id: 3, title: 'Yönetim Kurulu', url: `/?site=${siteSlug}&page=kurullar` },
+                { id: 4, title: 'Danışma Kurulu', url: `/?site=${siteSlug}&page=danisma-kurulu` },
+                { id: 5, title: 'Amaçlarımız', url: '#goals' },
+                { id: 6, title: 'İletişim', url: '#contact' },
+              ]
+
+        return <ResponsiveNavMenu menuItems={menuItems} styles={styles} />
       }
 
       case 'Accordion': {
@@ -725,19 +933,48 @@ const NodeItem: React.FC<{
       }
 
       case 'SocialIcons': {
+        const items = props.items || [
+          {
+            id: 'ig',
+            icon: 'fab fa-instagram',
+            url: 'https://www.instagram.com/otizm.konfederasyonu',
+          },
+          {
+            id: 'fb',
+            icon: 'fab fa-facebook',
+            url: 'https://www.facebook.com/profile.php?id=61556177172422',
+          },
+        ]
+
         return (
-          <div className={`flex items-center gap-3 my-4 justify-${props.align || 'center'}`}>
-            {(props.items || []).map((s: any, idx: number) => (
-              <a
-                key={s.id || idx}
-                href={s.url || '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-purple-600 hover:text-white flex items-center justify-center text-gray-700 transition"
-              >
-                ●
-              </a>
-            ))}
+          <div className={`flex items-center gap-2 my-2 justify-${props.align || 'center'}`}>
+            {items.map((s: any, idx: number) => {
+              const isInstagram = (s.icon || '').includes('instagram') || (s.url || '').includes('instagram')
+              const isFacebook = (s.icon || '').includes('facebook') || (s.url || '').includes('facebook')
+
+              return (
+                <a
+                  key={s.id || idx}
+                  href={s.url || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 hover:bg-[#61CE70] hover:text-white flex items-center justify-center text-gray-600 transition shadow-sm hover:shadow"
+                  title={isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : 'Sosyal Medya'}
+                >
+                  {isInstagram ? (
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                  ) : isFacebook ? (
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.356 5 15.545 5H18V0h-3.808C10.597 0 9 1.583 9 4.615V8z" />
+                    </svg>
+                  ) : (
+                    <span className="text-xs font-bold">#</span>
+                  )}
+                </a>
+              )
+            })}
           </div>
         )
       }
@@ -764,12 +1001,12 @@ const NodeItem: React.FC<{
         if (styles.boxShadow) imgStyle.boxShadow = styles.boxShadow
 
         return (
-          <div className={`flex justify-${props.align || 'center'} my-4`}>
+          <div className={`flex justify-${props.align || 'center'} my-3 w-full`}>
             <img
-              src={props.url}
+              src={normalizeMediaUrl(props.url)}
               alt={props.alt || ''}
               style={imgStyle}
-              className="rounded-2xl shadow-xl max-w-full h-auto object-cover max-h-[500px]"
+              className="rounded-xl shadow-lg max-w-full h-auto object-cover max-h-[400px]"
               loading="lazy"
             />
           </div>
