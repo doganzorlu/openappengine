@@ -223,7 +223,21 @@ class AdminController extends Controller
     public function listMedia(Request $request, string $siteSlug): JsonResponse
     {
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
-        $media = Media::where('site_id', $site->id)->latest()->get();
+        $media = Media::where('site_id', $site->id)->latest()->get()->map(function ($m) {
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'filename' => $m->name,
+                'path' => $m->file_url ?: ('/storage/' . $m->file_path),
+                'file_url' => $m->file_url ?: ('/storage/' . $m->file_path),
+                'mime_type' => $m->mime_type,
+                'size' => $m->file_size,
+                'alt_text' => $m->alt_text,
+                'meta' => $m->meta,
+                'created_at' => $m->created_at,
+            ];
+        });
+
         return response()->json(['success' => true, 'media' => $media]);
     }
 
@@ -236,19 +250,84 @@ class AdminController extends Controller
         ]);
 
         $file = $request->file('file');
-        $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $originalExt = strtolower($file->getClientOriginalExtension());
+        $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid();
+        $filename = $baseName . '.' . $originalExt;
+
         $path = $file->storeAs("sites/{$site->slug}/media", $filename, 'public');
+        $fullPath = storage_path('app/public/' . $path);
+
+        $meta = [
+            'has_webp' => false,
+            'original_size' => $file->getSize(),
+        ];
+
+        // WebP Optimization via PHP GD
+        if (function_exists('imagewebp') && in_array($originalExt, ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'])) {
+            try {
+                $image = null;
+                if (in_array($originalExt, ['jpg', 'jpeg'])) {
+                    $image = @imagecreatefromjpeg($fullPath);
+                } elseif ($originalExt === 'png') {
+                    $image = @imagecreatefrompng($fullPath);
+                    if ($image) {
+                        imagepalettetotruecolor($image);
+                        imagealphablending($image, true);
+                        imagesavealpha($image, true);
+                    }
+                } elseif ($originalExt === 'webp') {
+                    $image = @imagecreatefromwebp($fullPath);
+                }
+
+                if ($image) {
+                    $webpFilename = $baseName . '.webp';
+                    $webpRelPath = "sites/{$site->slug}/media/" . $webpFilename;
+                    $fullWebpPath = storage_path('app/public/' . $webpRelPath);
+
+                    if (imagewebp($image, $fullWebpPath, 82)) {
+                        imagedestroy($image);
+                        $webpSize = file_exists($fullWebpPath) ? filesize($fullWebpPath) : 0;
+                        $origSize = $file->getSize();
+                        $savings = ($origSize > 0 && $webpSize > 0)
+                            ? max(0, round((($origSize - $webpSize) / $origSize) * 100))
+                            : 0;
+
+                        $meta['has_webp'] = true;
+                        $meta['webp_url'] = '/storage/' . $webpRelPath;
+                        $meta['webp_size'] = $webpSize;
+                        $meta['savings_percentage'] = $savings;
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning("WebP conversion skipped: " . $e->getMessage());
+            }
+        }
 
         $media = Media::create([
             'site_id' => $site->id,
-            'filename' => $filename,
-            'path' => '/storage/' . $path,
+            'name' => $filename,
+            'file_path' => $path,
+            'file_url' => '/storage/' . $path,
             'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
+            'file_size' => $file->getSize(),
             'alt_text' => $file->getClientOriginalName(),
+            'meta' => $meta,
         ]);
 
-        return response()->json(['success' => true, 'media' => $media]);
+        return response()->json([
+            'success' => true,
+            'media' => [
+                'id' => $media->id,
+                'name' => $media->name,
+                'filename' => $media->name,
+                'path' => $media->file_url,
+                'file_url' => $media->file_url,
+                'mime_type' => $media->mime_type,
+                'size' => $media->file_size,
+                'alt_text' => $media->alt_text,
+                'meta' => $media->meta,
+            ],
+        ]);
     }
 
     // ==========================================

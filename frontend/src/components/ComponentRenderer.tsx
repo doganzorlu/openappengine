@@ -18,6 +18,11 @@ interface RendererProps {
   isEditing?: boolean
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
+  isTopLevel?: boolean
+  onMoveNode?: (nodeId: string, direction: 'up' | 'down') => void
+  onDuplicateNode?: (nodeId: string) => void
+  onDeleteNode?: (nodeId: string) => void
+  onAddBlockAtIndex?: (index: number) => void
 }
 
 export const ComponentRenderer: React.FC<RendererProps> = ({
@@ -26,21 +31,123 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   isEditing = false,
   selectedNodeId = null,
   onSelectNode,
+  isTopLevel = false,
+  onMoveNode,
+  onDuplicateNode,
+  onDeleteNode,
+  onAddBlockAtIndex,
 }) => {
   if (!nodes || !Array.isArray(nodes)) return null
 
   return (
     <>
-      {nodes.map((node) => (
-        <NodeItem
-          key={node.id}
-          node={node}
-          siteSlug={siteSlug}
-          isEditing={isEditing}
-          selectedNodeId={selectedNodeId}
-          onSelectNode={onSelectNode}
-        />
+      {nodes.map((node, index) => (
+        <React.Fragment key={node.id}>
+          {/* Section Divider with Quick Add trigger (Visible in Editor Mode for top level) */}
+          {isEditing && isTopLevel && (
+            <div className="relative group/divider py-1.5 flex items-center justify-center my-1 z-30">
+              <div className="absolute inset-x-0 h-[2px] bg-purple-300 opacity-0 group-hover/divider:opacity-100 transition-opacity" />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAddBlockAtIndex && onAddBlockAtIndex(index)
+                }}
+                className="relative px-3 py-1 bg-white hover:bg-purple-600 hover:text-white text-purple-600 border border-purple-300 rounded-full text-xs font-semibold shadow-sm opacity-0 group-hover/divider:opacity-100 transition-all flex items-center gap-1.5 transform hover:scale-105"
+                title="Araya Yeni Bölüm Ekle"
+              >
+                <span>➕</span> Araya Bölüm Ekle
+              </button>
+            </div>
+          )}
+
+          <div className="relative group/section">
+            {/* Top-Level Section Action Floating Bar */}
+            {isEditing && isTopLevel && (
+              <div className="absolute top-2 right-4 z-30 flex items-center gap-1 bg-gray-900/90 text-white backdrop-blur-md px-2 py-1 rounded-xl shadow-xl text-xs border border-gray-700 opacity-90 group-hover/section:opacity-100 transition">
+                <span className="text-[10px] text-gray-400 font-mono font-bold px-1.5 border-r border-gray-700">
+                  #{index + 1} {node.type}
+                </span>
+
+                {/* Move Up */}
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onMoveNode && onMoveNode(node.id, 'up')
+                  }}
+                  className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
+                  title="Yukarı Taşı"
+                >
+                  ⬆️
+                </button>
+
+                {/* Move Down */}
+                <button
+                  type="button"
+                  disabled={index === nodes.length - 1}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onMoveNode && onMoveNode(node.id, 'down')
+                  }}
+                  className="p-1 hover:bg-gray-800 rounded disabled:opacity-30 disabled:hover:bg-transparent transition"
+                  title="Aşağı Taşı"
+                >
+                  ⬇️
+                </button>
+
+                {/* Duplicate */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDuplicateNode && onDuplicateNode(node.id)
+                  }}
+                  className="p-1 hover:bg-gray-800 rounded transition"
+                  title="Bölümü Çoğalt"
+                >
+                  📋
+                </button>
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteNode && onDeleteNode(node.id)
+                  }}
+                  className="p-1 hover:bg-red-900/60 text-red-400 rounded transition"
+                  title="Bölümü Sil"
+                >
+                  🗑️
+                </button>
+              </div>
+            )}
+
+            <NodeItem
+              node={node}
+              siteSlug={siteSlug}
+              isEditing={isEditing}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={onSelectNode}
+            />
+          </div>
+        </React.Fragment>
       ))}
+
+      {/* Bottom Add Section Card in Visual Editor */}
+      {isEditing && isTopLevel && (
+        <div className="py-8 px-4 flex justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl mx-4 sm:mx-8 my-8 hover:border-purple-500 hover:bg-purple-50/40 transition group">
+          <button
+            type="button"
+            onClick={() => onAddBlockAtIndex && onAddBlockAtIndex(nodes.length)}
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 group-hover:scale-105"
+          >
+            <span>🧩</span> Hazır Blok Kütüphanesinden Bölüm Ekle
+          </button>
+        </div>
+      )}
     </>
   )
 }

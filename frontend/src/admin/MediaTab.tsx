@@ -9,6 +9,13 @@ export const MediaTab: React.FC<MediaTabProps> = ({ siteSlug, token }) => {
   const [mediaList, setMediaList] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+
+  const copyToClipboard = (url: string) => {
+    navigator.clipboard.writeText(url)
+    setCopiedUrl(url)
+    setTimeout(() => setCopiedUrl(null), 2500)
+  }
 
   const fetchMedia = async () => {
     try {
@@ -91,24 +98,51 @@ export const MediaTab: React.FC<MediaTabProps> = ({ siteSlug, token }) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {mediaList.map((m) => (
-              <div
-                key={m.id}
-                className="group relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex flex-col justify-between"
-              >
-                <div className="aspect-square w-full flex items-center justify-center overflow-hidden bg-black/5">
-                  <img
-                    src={m.path}
-                    alt={m.alt_text || ''}
-                    className="w-full h-full object-cover group-hover:scale-105 transition"
-                    loading="lazy"
-                  />
+            {mediaList.map((m) => {
+              const displayUrl = m.meta?.webp_url || m.file_url || m.path
+              const isCopied = copiedUrl === displayUrl
+              return (
+                <div
+                  key={m.id}
+                  className="group relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex flex-col justify-between hover:shadow-md transition"
+                >
+                  {/* WebP badge */}
+                  {m.meta?.has_webp && (
+                    <div className="absolute top-2 left-2 z-10 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow flex items-center gap-1">
+                      <span>⚡</span>
+                      <span>WebP (-{m.meta.savings_percentage}%)</span>
+                    </div>
+                  )}
+
+                  <div
+                    onClick={() => copyToClipboard(displayUrl)}
+                    className="aspect-square w-full flex items-center justify-center overflow-hidden bg-black/5 cursor-pointer relative"
+                    title="URL'yi Kopyalamak İçin Tıklayın"
+                  >
+                    <img
+                      src={m.file_url || m.path}
+                      alt={m.alt_text || ''}
+                      className="w-full h-full object-cover group-hover:scale-105 transition"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold">
+                      {isCopied ? '✅ Kopyalandı!' : '📋 URL Kopyala'}
+                    </div>
+                  </div>
+
+                  <div className="p-2 text-[10px] text-gray-600 truncate bg-white flex items-center justify-between">
+                    <span className="truncate">{m.alt_text || m.name || m.filename}</span>
+                    <span className="text-[9px] text-gray-400 shrink-0 ml-1">
+                      {m.meta?.webp_size
+                        ? `${Math.round(m.meta.webp_size / 1024)} KB`
+                        : m.size
+                        ? `${Math.round(m.size / 1024)} KB`
+                        : ''}
+                    </span>
+                  </div>
                 </div>
-                <div className="p-2 text-[10px] text-gray-600 truncate bg-white">
-                  {m.alt_text || m.filename}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

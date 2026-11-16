@@ -15,6 +15,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/sites/{slug}/page/{pageSlug?}', [SiteController::class, 'page']);
     Route::put('/sites/{slug}/pages/{pageId}/layout', [SiteController::class, 'updateLayout']);
     Route::post('/sites/{slug}/forms/{formSlug}/submit', [SiteController::class, 'submitForm']);
+    Route::get('/sitemap.xml', [SiteController::class, 'sitemap']);
+    Route::get('/robots.txt', [SiteController::class, 'robots']);
 
     // Authentication
     Route::post('/auth/login', [AuthController::class, 'login']);
