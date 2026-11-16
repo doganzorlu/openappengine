@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Site, Menu, PageData } from './types'
+import type { Site, Menu, PageData } from './types'
 import { Navbar } from './components/Navbar'
 import { ComponentRenderer } from './components/ComponentRenderer'
 import { Footer } from './components/Footer'

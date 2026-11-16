@@ -1,5 +1,5 @@
 import React from 'react'
-import { ComponentNode } from '../types'
+import type { ComponentNode } from '../types'
 import { Timeline } from './Timeline'
 import { ImageAccordion } from './ImageAccordion'
 import { ContactForm } from './ContactForm'

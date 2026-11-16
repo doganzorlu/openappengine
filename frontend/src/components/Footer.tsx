@@ -1,5 +1,5 @@
 import React from 'react'
-import { Site } from '../types'
+import type { Site } from '../types'
 
 interface FooterProps {
   site: Site

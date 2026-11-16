@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Menu, Site } from '../types'
+import type { Menu, Site } from '../types'
 
 interface NavbarProps {
   site: Site
