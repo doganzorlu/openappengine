@@ -139,24 +139,25 @@ class SiteController extends Controller
         $emailSent = false;
         $emailError = null;
 
-        // Dispatch SMTP Notification if site has SMTP settings
+        // Dispatch SMTP Notification using this tenant's dedicated SMTP config
         $smtp = $site->settings['smtp'] ?? [];
         if (!empty($smtp['host']) && !empty($smtp['username'])) {
             try {
-                Config::set('mail.default', 'smtp');
-                Config::set('mail.mailers.smtp.host', $smtp['host']);
-                Config::set('mail.mailers.smtp.port', (int)($smtp['port'] ?? 587));
-                Config::set('mail.mailers.smtp.encryption', $smtp['encryption'] ?: null);
-                Config::set('mail.mailers.smtp.username', $smtp['username']);
-                Config::set('mail.mailers.smtp.password', $smtp['password'] ?? '');
+                Config::set('mail.mailers.tenant_smtp', [
+                    'transport' => 'smtp',
+                    'host' => $smtp['host'],
+                    'port' => (int)($smtp['port'] ?? 587),
+                    'encryption' => ($smtp['encryption'] === 'none') ? null : ($smtp['encryption'] ?: 'tls'),
+                    'username' => $smtp['username'],
+                    'password' => $smtp['password'] ?? '',
+                    'timeout' => 15,
+                ]);
+                Mail::purge('tenant_smtp');
 
                 $fromAddress = !empty($smtp['from_address'])
                     ? $smtp['from_address']
                     : ($smtp['username'] ?? 'noreply@' . ($site->domain ?: 'openappengine.local'));
                 $fromName = !empty($smtp['from_name']) ? $smtp['from_name'] : $site->name;
-
-                Config::set('mail.from.address', $fromAddress);
-                Config::set('mail.from.name', $fromName);
 
                 $recipient = $form->settings['recipient_email'] 
                     ?? $site->settings['contact_email'] 
@@ -176,7 +177,7 @@ class SiteController extends Controller
                 }
                 $htmlBody .= "</table>";
 
-                Mail::html($htmlBody, function ($msg) use ($recipient, $form, $site, $fromAddress, $fromName) {
+                Mail::mailer('tenant_smtp')->html($htmlBody, function ($msg) use ($recipient, $form, $site, $fromAddress, $fromName) {
                     $msg->to($recipient)
                         ->from($fromAddress, $fromName)
                         ->subject("🔔 Yeni İletişim Formu: {$form->name} - {$site->name}");
@@ -184,7 +185,7 @@ class SiteController extends Controller
 
                 $emailSent = true;
             } catch (\Throwable $e) {
-                Log::warning("Form submission email dispatch failed: " . $e->getMessage());
+                Log::warning("Tenant ({$site->slug}) SMTP email dispatch failed: " . $e->getMessage());
                 $emailError = $e->getMessage();
             }
         }

@@ -46,6 +46,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
   })
   const [smtpLoading, setSmtpLoading] = useState(true)
   const [smtpSaving, setSmtpSaving] = useState(false)
+  const [testingSmtp, setTestingSmtp] = useState(false)
 
   // Team / Users State
   const [teamUsers, setTeamUsers] = useState<SiteUserItem[]>([])
@@ -183,6 +184,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
       alert('Kaydedilemedi.')
     } finally {
       setSmtpSaving(false)
+    }
+  }
+
+  // Test SMTP Connection
+  const handleTestSmtp = async () => {
+    try {
+      setTestingSmtp(true)
+      const res = await fetch(`/api/v1/admin/sites/${siteSlug}/email-settings/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ recipient: smtp.from_address || smtp.username }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showSuccess('✅ ' + data.message)
+      } else {
+        alert(data.message || 'SMTP Testi başarısız oldu.')
+      }
+    } catch (e: any) {
+      alert('SMTP Testi sırasında hata oluştu: ' + (e.message || ''))
+    } finally {
+      setTestingSmtp(false)
     }
   }
 
@@ -522,7 +548,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
               </div>
 
               {userRole === 'admin' ? (
-                <div className="pt-4 border-t border-gray-100 flex justify-end">
+                <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={handleTestSmtp}
+                    disabled={testingSmtp || !smtp.host}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold shadow transition disabled:opacity-50 flex items-center gap-1.5 text-xs sm:text-sm"
+                  >
+                    <span>{testingSmtp ? '⏳' : '🧪'}</span>
+                    <span>{testingSmtp ? 'Test Ediliyor...' : 'Bağlantıyı Test Et'}</span>
+                  </button>
+
                   <button
                     type="submit"
                     disabled={smtpSaving}

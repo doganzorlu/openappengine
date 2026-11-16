@@ -68,6 +68,7 @@ Route::prefix('v1')->group(function () {
             // Email / SMTP
             Route::get('/email-settings', [AdminController::class, 'getEmailSettings']);
             Route::put('/email-settings', [AdminController::class, 'updateEmailSettings']);
+            Route::post('/email-settings/test', [AdminController::class, 'testSmtpConnection']);
 
             // WordPress Importer
             Route::post('/import-wordpress', [AdminController::class, 'importWordPress']);

@@ -365,6 +365,62 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Send test email using tenant-specific SMTP settings
+     */
+    public function testSmtpConnection(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'admin');
+        $smtp = $site->settings['smtp'] ?? [];
+
+        if (empty($smtp['host']) || empty($smtp['username'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lütfen önce bu site için SMTP Sunucu Adresi ve Kullanıcı Adını kaydedin.',
+            ], 422);
+        }
+
+        $testRecipient = $request->input('recipient') ?: ($smtp['from_address'] ?: $smtp['username']);
+
+        try {
+            Config::set('mail.mailers.tenant_smtp', [
+                'transport' => 'smtp',
+                'host' => $smtp['host'],
+                'port' => (int)($smtp['port'] ?? 587),
+                'encryption' => ($smtp['encryption'] === 'none') ? null : ($smtp['encryption'] ?: 'tls'),
+                'username' => $smtp['username'],
+                'password' => $smtp['password'] ?? '',
+                'timeout' => 15,
+            ]);
+            Mail::purge('tenant_smtp');
+
+            $fromAddress = $smtp['from_address'] ?: $smtp['username'];
+            $fromName = $smtp['from_name'] ?: $site->name;
+
+            Mail::mailer('tenant_smtp')->html(
+                "<h3>🎉 OpenAppEngine SMTP Test Başarılı!</h3>" .
+                "<p>Bu e-posta, <strong>{$site->name} ({$site->domain})</strong> tenant'ı için tanımladığınız özel SMTP sunucusu (<code>{$smtp['host']}</code>) üzerinden gönderilmiştir.</p>" .
+                "<p><strong>Gönderen:</strong> {$fromName} &lt;{$fromAddress}&gt;</p>" .
+                "<p><strong>Zaman:</strong> " . now()->format('d.m.Y H:i:s') . "</p>",
+                function ($msg) use ($testRecipient, $fromAddress, $fromName, $site) {
+                    $msg->to($testRecipient)
+                        ->from($fromAddress, $fromName)
+                        ->subject("✅ SMTP Bağlantı Testi: {$site->name}");
+                }
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Test e-postası başarıyla {$testRecipient} adresine gönderildi!",
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "SMTP Bağlantı Hatası: " . $e->getMessage(),
+            ], 400);
+        }
+    }
+
     // ==========================================
     // 6. WORDPRESS IMPORTER
     // ==========================================
