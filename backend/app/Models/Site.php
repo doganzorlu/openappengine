@@ -46,4 +46,11 @@ class Site extends Model
     {
         return $this->hasMany(Media::class);
     }
+
+    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'site_users')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
 }

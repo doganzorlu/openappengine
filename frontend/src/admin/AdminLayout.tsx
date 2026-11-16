@@ -6,6 +6,7 @@ import { FormsTab } from './FormsTab'
 import { MediaTab } from './MediaTab'
 import { ImporterTab } from './ImporterTab'
 import { SettingsTab } from './SettingsTab'
+import { TenantsTab } from './TenantsTab'
 
 interface AdminLayoutProps {
   user: any
@@ -75,13 +76,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   }, [currentSlug])
 
   const menuItems = [
+    ...(user?.is_super_admin ? [{ id: 'tenants', label: 'Tenantlar & Siteler', icon: '🏢' }] : []),
     { id: 'dashboard', label: 'Başlangıç', icon: '📊' },
     { id: 'pages', label: 'Sayfalar', icon: '📄' },
     { id: 'posts', label: 'Yazılar & Blog', icon: '✍️' },
     { id: 'forms', label: 'Gelen İletiler', icon: '📬' },
     { id: 'media', label: 'Medya & Galeri', icon: '🖼️' },
+    { id: 'settings', label: 'Site Yönetimi & Ekip', icon: '⚙️', adminOnly: true },
     { id: 'importer', label: 'WordPress Importer', icon: '📥', adminOnly: true },
-    { id: 'settings', label: 'E-Posta / SMTP', icon: '⚙️', adminOnly: true },
   ]
 
   const handleTabClick = (tabId: string) => {
@@ -117,18 +119,37 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {/* Right: Site switcher & user controls */}
           <div className="flex items-center gap-2 sm:gap-4 text-xs">
-            {/* Site Switcher */}
-            <select
-              value={currentSlug}
-              onChange={(e) => onSwitchSite(e.target.value)}
-              className="bg-gray-800 text-white font-medium border border-gray-700 rounded-xl px-2.5 sm:px-3 py-1.5 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-xs"
-            >
-              {sitesList.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.name} ({s.domain})
-                </option>
-              ))}
-            </select>
+            {/* Site Switcher / Tenant Indicator */}
+            {sitesList.length > 1 ? (
+              <select
+                value={activeTab === 'tenants' ? '__tenants__' : currentSlug}
+                onChange={(e) => {
+                  if (e.target.value === '__tenants__') {
+                    setActiveTab('tenants')
+                  } else {
+                    onSwitchSite(e.target.value)
+                    if (activeTab === 'tenants') setActiveTab('dashboard')
+                  }
+                }}
+                className="bg-gray-800 text-white font-medium border border-gray-700 rounded-xl px-2.5 sm:px-3 py-1.5 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-xs"
+              >
+                {sitesList.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name} ({s.domain})
+                  </option>
+                ))}
+                {user?.is_super_admin && (
+                  <option value="__tenants__" className="bg-purple-900 font-bold">
+                    🏢 Tüm Tenantları Yönet...
+                  </option>
+                )}
+              </select>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-purple-950/70 border border-purple-800/50 px-3 py-1.5 rounded-xl text-xs text-purple-200">
+                <span>🏢</span>
+                <span className="font-bold text-white">{sitesList[0]?.name || currentSlug}</span>
+              </div>
+            )}
 
             {/* Role Badge */}
             <span
@@ -261,6 +282,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
         {/* Tab Content Body */}
         <main className="flex-1 min-w-0">
+          {activeTab === 'tenants' && (
+            <TenantsTab
+              token={token}
+              isSuperAdmin={Boolean(user?.is_super_admin)}
+              onSelectTenant={(slug) => {
+                onSwitchSite(slug)
+                setActiveTab('dashboard')
+              }}
+            />
+          )}
+
           {activeTab === 'dashboard' && (
             <DashboardTab stats={stats} onNavigateTab={handleTabClick} />
           )}

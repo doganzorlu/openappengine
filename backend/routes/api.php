@@ -23,9 +23,26 @@ Route::prefix('v1')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-        // Admin Management APIs
+        // Tenants (Sites) Management (Super Admin & Scoped)
+        Route::get('/admin/tenants', [AdminController::class, 'listTenants']);
+        Route::post('/admin/tenants', [AdminController::class, 'createTenant']);
+        Route::put('/admin/tenants/{id}', [AdminController::class, 'updateTenant']);
+        Route::delete('/admin/tenants/{id}', [AdminController::class, 'deleteTenant']);
+        Route::post('/admin/tenants/{id}/users', [AdminController::class, 'assignTenantUser']);
+        Route::delete('/admin/tenants/{id}/users/{userId}', [AdminController::class, 'removeTenantUser']);
+
+        // Admin Management APIs (Scoped to Site)
         Route::prefix('admin/sites/{slug}')->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard']);
+
+            // Site General Settings & Identity (Tenant Admin)
+            Route::get('/general-settings', [AdminController::class, 'getSiteGeneralSettings']);
+            Route::put('/general-settings', [AdminController::class, 'updateSiteGeneralSettings']);
+
+            // Site Team / Users Management (Tenant Admin)
+            Route::get('/users', [AdminController::class, 'listSiteUsers']);
+            Route::post('/users', [AdminController::class, 'addSiteUser']);
+            Route::delete('/users/{userId}', [AdminController::class, 'removeSiteUser']);
 
             // Pages
             Route::get('/pages', [AdminController::class, 'listPages']);
