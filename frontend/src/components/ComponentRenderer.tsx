@@ -59,7 +59,7 @@ const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; hei
 }
 
 const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, siteSlug }) => {
-  const { type, props = {}, children = [] } = node
+  const { type, props = {}, styles = {}, children = [] } = node
 
   switch (type) {
     case 'Section': {
@@ -69,8 +69,8 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
         bgStyle.backgroundSize = 'cover'
         bgStyle.backgroundPosition = 'top center'
       }
-      if (props.bgColor) {
-        bgStyle.backgroundColor = props.bgColor
+      if (props.bgColor || styles.backgroundColor) {
+        bgStyle.backgroundColor = styles.backgroundColor || props.bgColor
       }
       if (props.minHeight) {
         bgStyle.minHeight = `${props.minHeight}px`
@@ -78,6 +78,11 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
       if (props.bgAttachment === 'fixed') {
         bgStyle.backgroundAttachment = 'fixed'
       }
+
+      // Border from styles
+      if (styles.borderWidth) bgStyle.borderWidth = styles.borderWidth
+      if (styles.borderColor) bgStyle.borderColor = styles.borderColor
+      if (styles.borderStyle) bgStyle.borderStyle = styles.borderStyle
 
       return (
         <section
@@ -125,28 +130,41 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
     }
 
     case 'Column': {
-      const widthClass =
-        props.width === 50 ? 'md:w-[48%] flex-1' :
-        props.width === 33 ? 'md:w-[31%] flex-1' :
-        props.width === 66 ? 'md:w-[64%] flex-1' :
-        'w-full'
+      const isHeroColumn = styles.animation === 'zoomIn' || styles.backgroundColor === '#FFB92C1C'
 
-      const hasCustomBox = props.bgColor || props.boxShadow
-      const animationClass = props.animation === 'zoomIn' ? 'animate-zoom-in' : ''
+      const widthClass = isHeroColumn
+        ? 'w-full flex justify-center items-center'
+        : props.width === 50 ? 'md:w-[48%] flex-1'
+        : props.width === 33 ? 'md:w-[31%] flex-1'
+        : props.width === 66 ? 'md:w-[64%] flex-1'
+        : 'w-full'
+
+      const animationClass = styles.animation === 'zoomIn' ? 'animate-zoom-in' : ''
 
       const boxStyle: React.CSSProperties = {}
-      if (props.bgColor) {
-        boxStyle.backgroundColor = props.bgColor
+      if (styles.backgroundColor) boxStyle.backgroundColor = styles.backgroundColor
+      if (styles.boxShadow) boxStyle.boxShadow = styles.boxShadow
+      if (styles.borderWidth) boxStyle.borderWidth = styles.borderWidth
+      if (styles.borderColor) boxStyle.borderColor = styles.borderColor
+      if (styles.borderRadius) boxStyle.borderRadius = styles.borderRadius
+
+      if (isHeroColumn) {
+        return (
+          <div className={`${widthClass} ${animationClass}`}>
+            <div
+              style={boxStyle}
+              className="rounded-3xl p-8 sm:p-14 md:p-16 shadow-2xl backdrop-blur-md border border-amber-300/30 max-w-3xl text-center transform hover:scale-[1.01] transition-transform"
+            >
+              <ComponentRenderer nodes={children} siteSlug={siteSlug} />
+            </div>
+          </div>
+        )
       }
 
       return (
         <div
           style={boxStyle}
-          className={`${widthClass} ${animationClass} ${
-            hasCustomBox
-              ? 'rounded-3xl p-8 md:p-14 shadow-2xl backdrop-blur-md border border-white/20 my-6 transition-transform'
-              : 'space-y-6'
-          } ${props.align === 'center' ? 'text-center' : ''}`}
+          className={`${widthClass} ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
         >
           <ComponentRenderer nodes={children} siteSlug={siteSlug} />
         </div>
@@ -155,8 +173,8 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
 
     case 'Heading': {
       const level = props.level || 'h2'
-      const align = props.align || 'left'
-      const color = props.color ? { color: props.color } : {}
+      const align = styles.textAlign || props.align || 'left'
+      const color = styles.color || props.color ? { color: styles.color || props.color } : {}
 
       const alignClass =
         align === 'center' ? 'text-center' :
@@ -184,14 +202,30 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
     }
 
     case 'RichText': {
+      const align = styles.textAlign || props.align || 'left'
       const alignClass =
-        props.align === 'center' ? 'text-center' :
-        props.align === 'right' ? 'text-right' : 'text-left'
+        align === 'center' ? 'text-center' :
+        align === 'right' ? 'text-right' : 'text-left'
 
       const customStyle: React.CSSProperties = {}
-      if (props.color) customStyle.color = props.color
-      if (props.fontSize) customStyle.fontSize = props.fontSize
-      if (props.fontWeight) customStyle.fontWeight = props.fontWeight
+      if (styles.color || props.color) customStyle.color = styles.color || props.color
+      if (styles.fontSize || props.fontSize) customStyle.fontSize = styles.fontSize || props.fontSize
+      if (styles.fontWeight || props.fontWeight) customStyle.fontWeight = styles.fontWeight || props.fontWeight
+      if (styles.fontFamily) customStyle.fontFamily = styles.fontFamily
+      if (styles.margin) customStyle.margin = styles.margin
+      if (styles.padding) customStyle.padding = styles.padding
+
+      const isLargeHeroText = styles.fontSize === '3em' || props.fontSize === '3em'
+
+      if (isLargeHeroText) {
+        return (
+          <div
+            style={customStyle}
+            className={`text-2xl sm:text-4xl md:text-5xl font-light tracking-widest text-white leading-relaxed uppercase ${alignClass} drop-shadow-md`}
+            dangerouslySetInnerHTML={{ __html: props.html }}
+          />
+        )
+      }
 
       return (
         <div
@@ -203,11 +237,15 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
     }
 
     case 'Image': {
+      const imgStyle: React.CSSProperties = {}
+      if (styles.boxShadow) imgStyle.boxShadow = styles.boxShadow
+
       return (
         <div className={`flex justify-${props.align || 'center'} my-4`}>
           <img
             src={props.url}
             alt={props.alt || ''}
+            style={imgStyle}
             className="rounded-2xl shadow-xl max-w-full h-auto object-cover max-h-[500px]"
             loading="lazy"
           />

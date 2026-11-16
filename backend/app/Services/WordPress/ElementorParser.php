@@ -38,6 +38,8 @@ class ElementorParser
             }
         }
 
+        $styles = $this->extractStyles($settings);
+
         if ($elType === 'section') {
             $overlayColor = $settings['background_overlay_color'] ?? null;
             $overlayOpacity = $settings['background_overlay_opacity']['size'] ?? 0.5;
@@ -65,6 +67,7 @@ class ElementorParser
                     'layout' => $settings['layout'] ?? 'boxed',
                     'contentPosition' => $settings['content_position'] ?? 'top',
                 ],
+                'styles' => $styles,
                 'children' => $children,
             ];
         }
@@ -81,18 +84,19 @@ class ElementorParser
                     'animation' => $settings['animation'] ?? null,
                     'align' => $settings['align'] ?? 'left',
                 ],
+                'styles' => $styles,
                 'children' => $children,
             ];
         }
 
         if ($elType === 'widget') {
-            return $this->parseWidget($id, $element['widgetType'] ?? 'unknown', $settings);
+            return $this->parseWidget($id, $element['widgetType'] ?? 'unknown', $settings, $styles);
         }
 
         return null;
     }
 
-    protected function parseWidget(string $id, string $widgetType, array $settings): array
+    protected function parseWidget(string $id, string $widgetType, array $settings, array $styles): array
     {
         switch ($widgetType) {
             case 'heading':
@@ -105,6 +109,7 @@ class ElementorParser
                         'align' => $settings['align'] ?? 'left',
                         'color' => $settings['title_color'] ?? null,
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'text-editor':
@@ -124,6 +129,7 @@ class ElementorParser
                                 'type' => 'youtube',
                                 'isPlaylist' => str_contains($embedUrl, 'list='),
                             ],
+                            'styles' => $styles,
                         ];
                     }
 
@@ -146,6 +152,7 @@ class ElementorParser
                         'fontSize' => $fontSize,
                         'fontWeight' => $settings['typography_font_weight'] ?? null,
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'image':
@@ -157,6 +164,7 @@ class ElementorParser
                         'alt' => $settings['caption'] ?? '',
                         'align' => $settings['align'] ?? 'center',
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'video':
@@ -167,6 +175,7 @@ class ElementorParser
                         'url' => $settings['youtube_url'] ?? $settings['vimeo_url'] ?? '',
                         'type' => !empty($settings['youtube_url']) ? 'youtube' : 'vimeo',
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'menu-anchor':
@@ -176,6 +185,7 @@ class ElementorParser
                     'props' => [
                         'anchor' => $settings['anchor'] ?? '',
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'timeline-widget-addon':
@@ -198,6 +208,7 @@ class ElementorParser
                         'accentColor' => $settings['twae_date_label_color'] ?? '#BB0096',
                         'items' => $items,
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'eael-image-accordion':
@@ -217,6 +228,7 @@ class ElementorParser
                         'height' => $settings['eael_accordion_height'] ?? 400,
                         'items' => $items,
                     ],
+                    'styles' => $styles,
                 ];
 
             case 'eael-wpforms':
@@ -228,6 +240,7 @@ class ElementorParser
                         'formId' => $settings['form_id'] ?? null,
                         'title' => $settings['form_name'] ?? 'İletişim Formu',
                     ],
+                    'styles' => $styles,
                 ];
 
             default:
@@ -238,7 +251,88 @@ class ElementorParser
                         'widgetType' => $widgetType,
                         'settings' => $settings,
                     ],
+                    'styles' => $styles,
                 ];
         }
+    }
+
+    /**
+     * Extract structured CSS style properties for the visual editor and renderer
+     */
+    protected function extractStyles(array $settings): array
+    {
+        $styles = [];
+
+        // 1. Background
+        if (!empty($settings['background_color'])) {
+            $styles['backgroundColor'] = $settings['background_color'];
+        }
+
+        // 2. Borders
+        if (!empty($settings['border_border'])) {
+            $styles['borderStyle'] = $settings['border_border'];
+            $styles['borderColor'] = $settings['border_color'] ?? '#e2e8f0';
+            if (!empty($settings['border_width'])) {
+                $bw = $settings['border_width'];
+                $u = $bw['unit'] ?? 'px';
+                $styles['borderWidth'] = "{$bw['top']}{$u} {$bw['right']}{$u} {$bw['bottom']}{$u} {$bw['left']}{$u}";
+            }
+        }
+        if (!empty($settings['border_radius'])) {
+            $br = $settings['border_radius'];
+            $u = $br['unit'] ?? 'px';
+            $styles['borderRadius'] = "{$br['top']}{$u} {$br['right']}{$u} {$br['bottom']}{$u} {$br['left']}{$u}";
+        }
+
+        // 3. Box Shadow
+        if (!empty($settings['box_shadow_box_shadow_type']) || !empty($settings['_box_shadow_box_shadow_type']) || !empty($settings['image_box_shadow_box_shadow_type']) || !empty($settings['eael_accordion_shadow_box_shadow_type'])) {
+            $bs = $settings['box_shadow_box_shadow'] ?? $settings['_box_shadow_box_shadow'] ?? $settings['image_box_shadow_box_shadow'] ?? $settings['eael_accordion_shadow_box_shadow'] ?? null;
+            if ($bs) {
+                $h = $bs['horizontal'] ?? 0;
+                $v = $bs['vertical'] ?? 0;
+                $blur = $bs['blur'] ?? 10;
+                $spread = $bs['spread'] ?? 0;
+                $color = $bs['color'] ?? 'rgba(0,0,0,0.5)';
+                $styles['boxShadow'] = "{$h}px {$v}px {$blur}px {$spread}px {$color}";
+            } else {
+                $styles['boxShadow'] = "0px 0px 15px rgba(0, 0, 0, 0.45)";
+            }
+        }
+
+        // 4. Margins & Padding
+        if (!empty($settings['_margin'])) {
+            $m = $settings['_margin'];
+            $u = $m['unit'] ?? 'px';
+            $styles['margin'] = "{$m['top']}{$u} {$m['right']}{$u} {$m['bottom']}{$u} {$m['left']}{$u}";
+        }
+        if (!empty($settings['_padding'])) {
+            $p = $settings['_padding'];
+            $u = $p['unit'] ?? 'px';
+            $styles['padding'] = "{$p['top']}{$u} {$p['right']}{$u} {$p['bottom']}{$u} {$p['left']}{$u}";
+        }
+
+        // 5. Typography
+        if (!empty($settings['typography_font_size']['size'])) {
+            $styles['fontSize'] = $settings['typography_font_size']['size'] . ($settings['typography_font_size']['unit'] ?? 'px');
+        }
+        if (!empty($settings['typography_font_weight'])) {
+            $styles['fontWeight'] = (int) $settings['typography_font_weight'];
+        }
+        if (!empty($settings['typography_font_family'])) {
+            $styles['fontFamily'] = $settings['typography_font_family'];
+        }
+        if (!empty($settings['text_color']) || !empty($settings['title_color'])) {
+            $styles['color'] = $settings['text_color'] ?? $settings['title_color'];
+        }
+        if (!empty($settings['align'])) {
+            $styles['textAlign'] = $settings['align'];
+        }
+
+        // 6. Animation
+        if (!empty($settings['animation'])) {
+            $styles['animation'] = $settings['animation'];
+        }
+
+        return $styles;
     }
 }

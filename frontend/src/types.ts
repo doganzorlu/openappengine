@@ -29,6 +29,7 @@ export interface ComponentNode {
   id: string
   type: string
   props: Record<string, any>
+  styles?: Record<string, any>
   children?: ComponentNode[]
 }
 
