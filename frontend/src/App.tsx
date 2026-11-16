@@ -4,6 +4,8 @@ import { Navbar } from './components/Navbar'
 import { ComponentRenderer } from './components/ComponentRenderer'
 import { Footer } from './components/Footer'
 import { InspectorPanel } from './components/InspectorPanel'
+import { AdminLayout } from './admin/AdminLayout'
+import { AdminLogin } from './admin/AdminLogin'
 
 interface SiteListItem {
   id: number
@@ -18,6 +20,22 @@ export function App() {
   const [currentSlug, setCurrentSlug] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('site') || ''
+  })
+
+  // Mode: 'public' | 'admin'
+  const [viewMode, setViewMode] = useState<'public' | 'admin'>(() => {
+    return window.location.pathname.startsWith('/admin') || window.location.hash === '#admin'
+      ? 'admin'
+      : 'public'
+  })
+
+  // Auth state
+  const [authToken, setAuthToken] = useState<string | null>(() => {
+    return localStorage.getItem('openappengine_token')
+  })
+  const [authUser, setAuthUser] = useState<any | null>(() => {
+    const saved = localStorage.getItem('openappengine_user')
+    return saved ? JSON.parse(saved) : null
   })
 
   const [site, setSite] = useState<Site | null>(null)
@@ -64,6 +82,9 @@ export function App() {
         setSite(siteData.site)
         setMenus(siteData.menus || [])
         const activeSlug = siteData.site.slug
+        if (!currentSlug) {
+          setCurrentSlug(activeSlug)
+        }
 
         // 2. Fetch Homepage Layout
         const pageRes = await fetch(`/api/v1/sites/${activeSlug}/page`)
@@ -168,6 +189,49 @@ export function App() {
     setTimeout(() => setToastMessage(null), 3500)
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('openappengine_token')
+    localStorage.removeItem('openappengine_user')
+    setAuthToken(null)
+    setAuthUser(null)
+    setViewMode('public')
+  }
+
+  // ==========================================
+  // VIEW MODE: ADMIN PANEL
+  // ==========================================
+  if (viewMode === 'admin') {
+    if (!authToken || !authUser) {
+      return (
+        <AdminLogin
+          onLoginSuccess={(token, user) => {
+            setAuthToken(token)
+            setAuthUser(user)
+          }}
+          onCancel={() => setViewMode('public')}
+        />
+      )
+    }
+
+    return (
+      <AdminLayout
+        user={authUser}
+        token={authToken}
+        currentSlug={currentSlug || site?.slug || 'berilzorlu'}
+        onSwitchSite={handleSiteChange}
+        onExitAdmin={() => setViewMode('public')}
+        onOpenVisualEditor={(_pageSlug) => {
+          setViewMode('public')
+          setIsEditorMode(true)
+        }}
+        onLogout={handleLogout}
+      />
+    )
+  }
+
+  // ==========================================
+  // VIEW MODE: PUBLIC SITE & VISUAL EDITOR
+  // ==========================================
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-600 space-y-4">
@@ -211,10 +275,10 @@ export function App() {
       <header className="sticky top-0 z-50 bg-gray-900 text-white border-b border-gray-800 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs">
           {/* Left: Brand & Site Switcher */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <strong className="tracking-wider uppercase font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300 text-sm">
+              <strong className="tracking-wider uppercase font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300 text-xs sm:text-sm">
                 OpenAppEngine
               </strong>
             </div>
@@ -224,7 +288,7 @@ export function App() {
               <select
                 value={currentSlug}
                 onChange={(e) => handleSiteChange(e.target.value)}
-                className="bg-gray-800 text-white font-medium border border-gray-700 rounded-lg px-3 py-1.5 pr-8 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-xs transition"
+                className="bg-gray-800 text-white font-medium border border-gray-700 rounded-lg px-2 sm:px-3 py-1 pr-6 sm:pr-8 focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer text-[11px] sm:text-xs transition max-w-[140px] sm:max-w-none truncate"
               >
                 {sitesList.length > 0 ? (
                   sitesList.map((s) => (
@@ -241,15 +305,15 @@ export function App() {
             </div>
           </div>
 
-          {/* Right: Mode Toggle & Action Buttons */}
-          <div className="flex items-center gap-2">
+          {/* Right: Admin Panel button, Visual Editor & Save */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isEditorMode && (
               <button
                 onClick={handleSaveLayout}
                 disabled={isSaving}
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1.5 shadow transition disabled:opacity-50"
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1 shadow transition disabled:opacity-50 text-[11px] sm:text-xs"
               >
-                {isSaving ? 'Kaydediliyor...' : '💾 Düzeni Kaydet'}
+                {isSaving ? '...' : '💾 Kaydet'}
               </button>
             )}
 
@@ -258,13 +322,21 @@ export function App() {
                 setIsEditorMode(!isEditorMode)
                 setSelectedNode(null)
               }}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition shadow ${
+              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition shadow text-[11px] sm:text-xs ${
                 isEditorMode
-                  ? 'bg-purple-600 text-white hover:bg-purple-500 ring-2 ring-purple-400 ring-offset-1 ring-offset-gray-900'
+                  ? 'bg-purple-600 text-white hover:bg-purple-500 ring-2 ring-purple-400'
                   : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
               }`}
             >
-              {isEditorMode ? '👁️ Önizleme Modu' : '🛠️ Görsel Editör'}
+              {isEditorMode ? '👁️ Önizle' : '🛠️ Editör'}
+            </button>
+
+            <button
+              onClick={() => setViewMode('admin')}
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white font-semibold flex items-center gap-1 text-[11px] sm:text-xs transition shadow"
+            >
+              <span>⚙️</span>
+              <span className="hidden sm:inline">Yönetim Paneli</span>
             </button>
           </div>
         </div>
