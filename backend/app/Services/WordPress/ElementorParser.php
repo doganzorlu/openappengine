@@ -88,11 +88,37 @@ class ElementorParser
                 ];
 
             case 'text-editor':
+                $html = $settings['editor'] ?? '';
+
+                // Handle WordPress [embedyt] shortcodes from youtube-embed-plus
+                if (preg_match('/\[embedyt\]\s*(https?:\/\/[^\s<\]]+)\s*\[\/embedyt\]/i', $html, $matches)) {
+                    $embedUrl = html_entity_decode($matches[1]);
+                    // Clean layout=gallery param if present or keep clean embed URL
+                    $cleanHtml = trim(strip_tags(preg_replace('/\[embedyt\].*?\[\/embedyt\]/is', '', $html)));
+
+                    // If text-editor is purely the embedyt video/playlist
+                    if (empty($cleanHtml)) {
+                        return [
+                            'id' => $id,
+                            'type' => 'Video',
+                            'props' => [
+                                'url' => $embedUrl,
+                                'type' => 'youtube',
+                                'isPlaylist' => str_contains($embedUrl, 'list='),
+                            ],
+                        ];
+                    }
+
+                    // Otherwise replace shortcode inline with responsive iframe
+                    $iframe = '<div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl my-6 bg-black"><iframe src="' . htmlspecialchars($embedUrl) . '" class="absolute inset-0 w-full h-full border-0" allowfullscreen></iframe></div>';
+                    $html = preg_replace('/\[embedyt\].*?\[\/embedyt\]/is', $iframe, $html);
+                }
+
                 return [
                     'id' => $id,
                     'type' => 'RichText',
                     'props' => [
-                        'html' => $settings['editor'] ?? '',
+                        'html' => $html,
                         'align' => $settings['align'] ?? 'left',
                         'color' => $settings['text_color'] ?? null,
                     ],
