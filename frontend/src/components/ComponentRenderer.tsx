@@ -267,7 +267,7 @@ const ShapeDivider: React.FC<{
   return (
     <div
       className={`absolute left-0 right-0 w-full overflow-hidden leading-none z-10 pointer-events-none ${
-        isBottom ? '-bottom-[1px]' : '-top-[1px] rotate-180'
+        isBottom ? '-bottom-[1px] rotate-180' : '-top-[1px]'
       }`}
       style={{ height: `${height}px` }}
     >
