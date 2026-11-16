@@ -22,6 +22,10 @@ export function App() {
     const params = new URLSearchParams(window.location.search)
     return params.get('site') || ''
   })
+  const [currentPageSlug, setCurrentPageSlug] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('page') || ''
+  })
 
   // Mode: 'public' | 'admin'
   const [viewMode, setViewMode] = useState<'public' | 'admin'>(() => {
@@ -53,7 +57,7 @@ export function App() {
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false)
   const [blockInsertIndex, setBlockInsertIndex] = useState<number | null>(null)
 
-  // 1. Fetch available sites list once
+  // 1. Fetch available sites list once & listen to popstate
   useEffect(() => {
     async function fetchSites() {
       try {
@@ -67,9 +71,17 @@ export function App() {
       }
     }
     fetchSites()
+
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      setCurrentSlug(params.get('site') || '')
+      setCurrentPageSlug(params.get('page') || '')
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  // 2. Fetch active site data whenever currentSlug changes
+  // 2. Fetch active site data whenever currentSlug or currentPageSlug changes
   useEffect(() => {
     async function loadData() {
       try {
@@ -89,14 +101,17 @@ export function App() {
           setCurrentSlug(activeSlug)
         }
 
-        // 2. Fetch Homepage Layout
-        const pageRes = await fetch(`/api/v1/sites/${activeSlug}/page`)
+        // 2. Fetch Active Page (Homepage or Requested Page)
+        const pageEndpoint = currentPageSlug
+          ? `/api/v1/sites/${activeSlug}/page/${currentPageSlug}`
+          : `/api/v1/sites/${activeSlug}/page`
+        const pageRes = await fetch(pageEndpoint)
         if (!pageRes.ok) throw new Error('Sayfa verisi yüklenemedi.')
         const pageData = await pageRes.json()
         setPage(pageData.page)
 
         // Set document title and dynamic SEO meta tags
-        const seoTitle = pageData.page?.seo?.title || siteData.site?.name || 'OpenAppEngine'
+        const seoTitle = pageData.page?.seo?.title || pageData.page?.title || siteData.site?.name || 'OpenAppEngine'
         const seoDesc = pageData.page?.seo?.description || siteData.site?.description || ''
         const seoImage = siteData.site?.settings?.logo_url || ''
 
@@ -136,13 +151,15 @@ export function App() {
     }
 
     loadData()
-  }, [currentSlug])
+  }, [currentSlug, currentPageSlug])
 
   // Site switch handler
   const handleSiteChange = (newSlug: string) => {
     setCurrentSlug(newSlug)
+    setCurrentPageSlug('')
     const url = new URL(window.location.href)
     url.searchParams.set('site', newSlug)
+    url.searchParams.delete('page')
     window.history.pushState({}, '', url.toString())
   }
 

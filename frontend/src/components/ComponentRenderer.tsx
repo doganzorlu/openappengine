@@ -11,6 +11,7 @@ import { IconList } from './IconList'
 import { DownloadsList } from './DownloadsList'
 import { Tabs } from './Tabs'
 import { SlideCarousel } from './SlideCarousel'
+import { OrgChart } from './OrgChart'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -415,6 +416,23 @@ const NodeItem: React.FC<{
           )
         }
 
+        if (props.flexDirection === 'row') {
+          return (
+            <div
+              style={boxStyle}
+              className={`${widthClass} ${animationClass} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch justify-center w-full`}
+            >
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+              />
+            </div>
+          )
+        }
+
         return (
           <div
             style={boxStyle}
@@ -690,26 +708,10 @@ const NodeItem: React.FC<{
 
       case 'OrgChart': {
         return (
-          <div className="w-full my-8 p-8 rounded-2xl bg-gradient-to-b from-gray-50 to-white border border-gray-200 text-center shadow-sm">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">{props.title || 'Organizasyon Şeması'}</h3>
-            <div className="flex flex-col items-center space-y-4">
-              <div className="px-6 py-3 rounded-xl bg-purple-700 text-white font-bold shadow-md">
-                Yönetim Kurulu Başkanlığı
-              </div>
-              <div className="w-0.5 h-6 bg-purple-300" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
-                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
-                  Genel Sekreterlik
-                </div>
-                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
-                  Mali İşler & Muhasebe
-                </div>
-                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
-                  Eğitim & Proje Komisyonu
-                </div>
-              </div>
-            </div>
-          </div>
+          <OrgChart
+            title={props.title}
+            members={props.members}
+          />
         )
       }
 
