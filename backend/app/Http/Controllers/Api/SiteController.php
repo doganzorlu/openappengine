@@ -13,6 +13,18 @@ use Illuminate\Http\Request;
 class SiteController extends Controller
 {
     /**
+     * List all active sites
+     */
+    public function index(): JsonResponse
+    {
+        $sites = Site::where('status', 'active')
+            ->select(['id', 'name', 'slug', 'domain', 'description'])
+            ->get();
+
+        return response()->json(['sites' => $sites]);
+    }
+
+    /**
      * Get site config, theme, and menus
      */
     public function show(string $siteSlug): JsonResponse
@@ -98,6 +110,46 @@ class SiteController extends Controller
             'success' => true,
             'message' => 'Mesajınız başarıyla iletildi. En kısa sürede sizinle iletişime geçeceğiz.',
             'submission_id' => $submission->id,
+        ]);
+    }
+
+    /**
+     * List pages of a site
+     */
+    public function pages(string $siteSlug): JsonResponse
+    {
+        $site = Site::where('slug', $siteSlug)->firstOrFail();
+        $pages = Page::where('site_id', $site->id)
+            ->select(['id', 'title', 'slug', 'is_home'])
+            ->get();
+
+        return response()->json(['pages' => $pages]);
+    }
+
+    /**
+     * Update page layout from the visual editor
+     */
+    public function updateLayout(Request $request, string $siteSlug, int $pageId): JsonResponse
+    {
+        $site = Site::where('slug', $siteSlug)->firstOrFail();
+        $page = Page::where('site_id', $site->id)->where('id', $pageId)->firstOrFail();
+
+        $request->validate([
+            'layout' => 'present|array',
+        ]);
+
+        $page->layout = $request->input('layout');
+        $page->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sayfa düzeni başarıyla güncellendi.',
+            'page' => [
+                'id' => $page->id,
+                'title' => $page->title,
+                'slug' => $page->slug,
+                'layout' => $page->layout,
+            ],
         ]);
     }
 }

@@ -12,7 +12,7 @@ class ElementorParser
         $components = [];
 
         foreach ($elementorElements as $element) {
-            $parsed = $this->parseElement($element);
+            $parsed = $this->parseElement($element, true);
             if ($parsed) {
                 $components[] = $parsed;
             }
@@ -21,7 +21,7 @@ class ElementorParser
         return $components;
     }
 
-    protected function parseElement(array $element): ?array
+    protected function parseElement(array $element, bool $isRoot = false): ?array
     {
         $elType = $element['elType'] ?? 'widget';
         $id = $element['id'] ?? uniqid('el_');
@@ -31,7 +31,7 @@ class ElementorParser
         $children = [];
         if (!empty($rawChildren)) {
             foreach ($rawChildren as $child) {
-                $parsedChild = $this->parseElement($child);
+                $parsedChild = $this->parseElement($child, false);
                 if ($parsedChild) {
                     $children[] = $parsedChild;
                 }
@@ -66,6 +66,64 @@ class ElementorParser
                     ] : null,
                     'layout' => $settings['layout'] ?? 'boxed',
                     'contentPosition' => $settings['content_position'] ?? 'top',
+                ],
+                'styles' => $styles,
+                'children' => $children,
+            ];
+        }
+
+        // Elementor Flexbox Container (Elementor 3.16+)
+        if ($elType === 'container') {
+            $bgImage = $settings['background_image']['url'] ?? $settings['background_overlay_image']['url'] ?? null;
+            $overlayColor = $settings['background_overlay_color'] ?? null;
+            $overlayOpacity = $settings['background_overlay_opacity']['size'] ?? 0.5;
+
+            $minHeight = null;
+            if (!empty($settings['min_height']['size'])) {
+                $minHeight = $settings['min_height']['size'] . ($settings['min_height']['unit'] ?? 'px');
+            }
+
+            if ($isRoot) {
+                return [
+                    'id' => $id,
+                    'type' => 'Section',
+                    'props' => [
+                        'minHeight' => $minHeight,
+                        'bgImage' => $bgImage,
+                        'bgColor' => $settings['background_color'] ?? null,
+                        'bgAttachment' => $settings['background_attachment'] ?? $settings['background_overlay_attachment'] ?? 'scroll',
+                        'bgOverlayColor' => $overlayColor,
+                        'bgOverlayOpacity' => $overlayColor ? $overlayOpacity : null,
+                        'shapeDividerTop' => !empty($settings['shape_divider_top']) ? [
+                            'shape' => $settings['shape_divider_top'],
+                            'color' => $settings['shape_divider_top_color'] ?? '#ffffff',
+                            'height' => $settings['shape_divider_top_height']['size'] ?? 57,
+                        ] : null,
+                        'shapeDividerBottom' => !empty($settings['shape_divider_bottom']) ? [
+                            'shape' => $settings['shape_divider_bottom'],
+                            'color' => $settings['shape_divider_bottom_color'] ?? '#ffffff',
+                            'height' => $settings['shape_divider_bottom_height']['size'] ?? 61,
+                        ] : null,
+                        'layout' => $settings['content_width'] ?? 'boxed',
+                        'flexDirection' => $settings['flex_direction'] ?? 'column',
+                        'justifyContent' => $settings['flex_justify_content'] ?? 'center',
+                        'alignItems' => $settings['flex_align_items'] ?? 'stretch',
+                    ],
+                    'styles' => $styles,
+                    'children' => $children,
+                ];
+            }
+
+            $width = $settings['width']['size'] ?? $settings['boxed_width']['size'] ?? 100;
+            return [
+                'id' => $id,
+                'type' => 'Column',
+                'props' => [
+                    'width' => $width,
+                    'flexDirection' => $settings['flex_direction'] ?? 'column',
+                    'justifyContent' => $settings['flex_justify_content'] ?? 'start',
+                    'alignItems' => $settings['flex_align_items'] ?? 'stretch',
+                    'bgColor' => $settings['background_color'] ?? null,
                 ],
                 'styles' => $styles,
                 'children' => $children,
@@ -231,13 +289,177 @@ class ElementorParser
                     'styles' => $styles,
                 ];
 
+            case 'shortcode':
+                $shortcode = $settings['shortcode'] ?? '';
+                if (preg_match('/\[embedyt\]\s*(https?:\/\/[^\s<\]]+)\s*\[\/embedyt\]/i', $shortcode, $matches)) {
+                    $embedUrl = html_entity_decode($matches[1]);
+                    return [
+                        'id' => $id,
+                        'type' => 'Video',
+                        'props' => [
+                            'url' => $embedUrl,
+                            'type' => 'youtube',
+                            'isPlaylist' => str_contains($embedUrl, 'list='),
+                        ],
+                        'styles' => $styles,
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'RichText',
+                    'props' => [
+                        'html' => '<div class="shortcode-container">' . htmlspecialchars($shortcode) . '</div>',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'button':
+                return [
+                    'id' => $id,
+                    'type' => 'Button',
+                    'props' => [
+                        'text' => $settings['text'] ?? 'Tıklayınız',
+                        'url' => $settings['link']['url'] ?? '#',
+                        'target' => !empty($settings['link']['is_external']) ? '_blank' : '_self',
+                        'align' => $settings['align'] ?? 'left',
+                        'icon' => $settings['selected_icon']['value'] ?? null,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'counter':
+                return [
+                    'id' => $id,
+                    'type' => 'Counter',
+                    'props' => [
+                        'endingNumber' => (int) ($settings['ending_number'] ?? 100),
+                        'startingNumber' => (int) ($settings['starting_number'] ?? 0),
+                        'prefix' => $settings['prefix'] ?? '',
+                        'suffix' => $settings['suffix'] ?? '',
+                        'title' => $settings['title'] ?? '',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'image-carousel':
+                $carouselImages = [];
+                foreach ($settings['carousel'] ?? [] as $img) {
+                    if (!empty($img['url'])) {
+                        $carouselImages[] = [
+                            'id' => $img['id'] ?? uniqid(),
+                            'url' => $img['url'],
+                        ];
+                    }
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'ImageCarousel',
+                    'props' => [
+                        'images' => $carouselImages,
+                        'slidesToShow' => (int) ($settings['slides_to_show'] ?? 4),
+                        'autoplay' => ($settings['autoplay'] ?? 'yes') === 'yes',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'icon-box':
+                return [
+                    'id' => $id,
+                    'type' => 'IconBox',
+                    'props' => [
+                        'title' => $settings['title_text'] ?? '',
+                        'description' => $settings['description_text'] ?? '',
+                        'icon' => $settings['selected_icon']['value'] ?? 'fas fa-star',
+                        'url' => $settings['link']['url'] ?? null,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'image-box':
+                return [
+                    'id' => $id,
+                    'type' => 'ImageBox',
+                    'props' => [
+                        'title' => $settings['title_text'] ?? '',
+                        'description' => $settings['description_text'] ?? '',
+                        'imageUrl' => $settings['image']['url'] ?? '',
+                        'url' => $settings['link']['url'] ?? null,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'accordion':
+            case 'nested-accordion':
+            case 'eael-adv-accordion':
+                $items = [];
+                foreach ($settings['tabs'] ?? [] as $tab) {
+                    $items[] = [
+                        'id' => $tab['_id'] ?? uniqid(),
+                        'title' => $tab['tab_title'] ?? '',
+                        'content' => $tab['tab_content'] ?? '',
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'Accordion',
+                    'props' => [
+                        'items' => $items,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'spacer':
+                $height = $settings['space']['size'] ?? 30;
+                return [
+                    'id' => $id,
+                    'type' => 'Spacer',
+                    'props' => [
+                        'height' => $height . ($settings['space']['unit'] ?? 'px'),
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'social-icons':
+                $socials = [];
+                foreach ($settings['social_icon_list'] ?? [] as $s) {
+                    $socials[] = [
+                        'id' => $s['_id'] ?? uniqid(),
+                        'icon' => $s['social_icon']['value'] ?? '',
+                        'url' => $s['link']['url'] ?? '#',
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'SocialIcons',
+                    'props' => [
+                        'items' => $socials,
+                        'align' => $settings['align'] ?? 'center',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'call-to-action':
+                return [
+                    'id' => $id,
+                    'type' => 'CallToAction',
+                    'props' => [
+                        'title' => $settings['title'] ?? '',
+                        'description' => $settings['description'] ?? '',
+                        'buttonText' => $settings['button_text'] ?? 'Detaylı Bilgi',
+                        'buttonUrl' => $settings['link']['url'] ?? '#',
+                        'bgImage' => $settings['bg_image']['url'] ?? null,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'form':
             case 'eael-wpforms':
             case 'wpforms':
                 return [
                     'id' => $id,
                     'type' => 'ContactForm',
                     'props' => [
-                        'formId' => $settings['form_id'] ?? null,
+                        'formId' => $settings['form_id'] ?? $settings['form_name'] ?? 'contact-form',
                         'title' => $settings['form_name'] ?? 'İletişim Formu',
                     ],
                     'styles' => $styles,

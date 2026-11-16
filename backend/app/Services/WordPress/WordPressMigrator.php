@@ -64,7 +64,7 @@ class WordPressMigrator
         );
         $stats['site'] = $site->name;
 
-        // 2. FORMS (WPForms)
+        // 2. FORMS (WPForms + Elementor Pro Forms)
         $formsStmt = $pdo->query("SELECT ID, post_title, post_name, post_content FROM {$prefix}posts WHERE post_type = 'wpforms' AND post_status = 'publish'");
         while ($row = $formsStmt->fetch(PDO::FETCH_ASSOC)) {
             $formData = json_decode($row['post_content'], true);
@@ -81,6 +81,29 @@ class WordPressMigrator
                     ]
                 );
                 $stats['forms']++;
+            }
+        }
+
+        // Check for Elementor forms snapshots
+        $elFormsStmt = $pdo->query("SELECT meta_value FROM {$prefix}postmeta WHERE meta_key = '__elementor_forms_snapshot'");
+        while ($elRow = $elFormsStmt->fetch(PDO::FETCH_ASSOC)) {
+            $elForms = json_decode($elRow['meta_value'], true);
+            if (is_array($elForms)) {
+                foreach ($elForms as $ef) {
+                    $formSlug = \Illuminate\Support\Str::slug($ef['name'] ?? 'form-' . ($ef['id'] ?? uniqid()));
+                    Form::updateOrCreate(
+                        [
+                            'site_id' => $site->id,
+                            'slug' => $formSlug,
+                        ],
+                        [
+                            'name' => $ef['name'] ?? 'Form ' . ($ef['id'] ?? ''),
+                            'fields' => $ef['fields'] ?? [],
+                            'settings' => [],
+                        ]
+                    );
+                    $stats['forms']++;
+                }
             }
         }
 

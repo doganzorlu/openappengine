@@ -3,19 +3,39 @@ import type { ComponentNode } from '../types'
 import { Timeline } from './Timeline'
 import { ImageAccordion } from './ImageAccordion'
 import { ContactForm } from './ContactForm'
+import { Counter } from './Counter'
+import { ImageCarousel } from './ImageCarousel'
+import { Accordion } from './Accordion'
+import { ImageBox } from './ImageBox'
 
 interface RendererProps {
   nodes: ComponentNode[]
   siteSlug: string
+  isEditing?: boolean
+  selectedNodeId?: string | null
+  onSelectNode?: (node: ComponentNode) => void
 }
 
-export const ComponentRenderer: React.FC<RendererProps> = ({ nodes, siteSlug }) => {
+export const ComponentRenderer: React.FC<RendererProps> = ({
+  nodes,
+  siteSlug,
+  isEditing = false,
+  selectedNodeId = null,
+  onSelectNode,
+}) => {
   if (!nodes || !Array.isArray(nodes)) return null
 
   return (
     <>
       {nodes.map((node) => (
-        <NodeItem key={node.id} node={node} siteSlug={siteSlug} />
+        <NodeItem
+          key={node.id}
+          node={node}
+          siteSlug={siteSlug}
+          isEditing={isEditing}
+          selectedNodeId={selectedNodeId}
+          onSelectNode={onSelectNode}
+        />
       ))}
     </>
   )
@@ -63,260 +83,450 @@ const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; hei
   )
 }
 
-const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, siteSlug }) => {
+const NodeItem: React.FC<{
+  node: ComponentNode
+  siteSlug: string
+  isEditing?: boolean
+  selectedNodeId?: string | null
+  onSelectNode?: (node: ComponentNode) => void
+}> = ({ node, siteSlug, isEditing = false, selectedNodeId = null, onSelectNode }) => {
   const { type, props = {}, styles = {}, children = [] } = node
+  const isSelected = isEditing && selectedNodeId === node.id
 
-  switch (type) {
-    case 'Section': {
-      const bgStyle: React.CSSProperties = {}
-      if (props.bgImage) {
-        bgStyle.backgroundImage = `url('${props.bgImage}')`
-        bgStyle.backgroundSize = 'cover'
-        bgStyle.backgroundPosition = 'top center'
-      }
-      if (props.bgColor || styles.backgroundColor) {
-        bgStyle.backgroundColor = styles.backgroundColor || props.bgColor
-      }
-      if (props.minHeight) {
-        bgStyle.minHeight = `${props.minHeight}px`
-      }
-      if (props.bgAttachment === 'fixed') {
-        bgStyle.backgroundAttachment = 'fixed'
-      }
-
-      // Border from styles
-      if (styles.borderWidth) bgStyle.borderWidth = styles.borderWidth
-      if (styles.borderColor) bgStyle.borderColor = styles.borderColor
-      if (styles.borderStyle) bgStyle.borderStyle = styles.borderStyle
-
-      return (
-        <section
-          id={node.id}
-          style={bgStyle}
-          className="relative py-16 md:py-24 transition-all overflow-hidden flex flex-col justify-center"
-        >
-          {/* Top Shape Divider */}
-          {props.shapeDividerTop && (
-            <MountainDivider
-              position="top"
-              color={props.shapeDividerTop.color}
-              height={props.shapeDividerTop.height}
-            />
-          )}
-
-          {/* Background Overlay */}
-          {props.bgOverlayColor && (
-            <div
-              className="absolute inset-0 pointer-events-none z-0"
-              style={{
-                backgroundColor: props.bgOverlayColor,
-                opacity: props.bgOverlayOpacity ?? 0.68,
-              }}
-            />
-          )}
-
-          {/* Container Content */}
-          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-8">
-              <ComponentRenderer nodes={children} siteSlug={siteSlug} />
-            </div>
-          </div>
-
-          {/* Bottom Shape Divider */}
-          {props.shapeDividerBottom && (
-            <MountainDivider
-              position="bottom"
-              color={props.shapeDividerBottom.color}
-              height={props.shapeDividerBottom.height}
-            />
-          )}
-        </section>
-      )
+  const handleSelect = (e: React.MouseEvent) => {
+    if (isEditing && onSelectNode) {
+      e.stopPropagation()
+      onSelectNode(node)
     }
+  }
 
-    case 'Column': {
-      const isHeroColumn = styles.animation === 'zoomIn' || styles.backgroundColor === '#FFB92C1C'
+  const renderContent = () => {
+    switch (type) {
+      case 'Section': {
+        const bgStyle: React.CSSProperties = {}
+        if (props.bgImage) {
+          bgStyle.backgroundImage = `url('${props.bgImage}')`
+          bgStyle.backgroundSize = 'cover'
+          bgStyle.backgroundPosition = 'top center'
+        }
+        if (props.bgColor || styles.backgroundColor) {
+          bgStyle.backgroundColor = styles.backgroundColor || props.bgColor
+        }
+        if (props.minHeight) {
+          bgStyle.minHeight = typeof props.minHeight === 'number' ? `${props.minHeight}px` : props.minHeight
+        }
+        if (props.bgAttachment === 'fixed') {
+          bgStyle.backgroundAttachment = 'fixed'
+        }
 
-      const widthClass = isHeroColumn
-        ? 'w-full flex justify-center items-center'
-        : props.width === 50 ? 'md:w-[48%] flex-1'
-        : props.width === 33 ? 'md:w-[31%] flex-1'
-        : props.width === 66 ? 'md:w-[64%] flex-1'
-        : 'w-full'
+        if (styles.borderWidth) bgStyle.borderWidth = styles.borderWidth
+        if (styles.borderColor) bgStyle.borderColor = styles.borderColor
+        if (styles.borderStyle) bgStyle.borderStyle = styles.borderStyle
+        if (styles.padding) bgStyle.padding = styles.padding
+        if (styles.margin) bgStyle.margin = styles.margin
 
-      const animationClass = styles.animation === 'zoomIn' ? 'animate-zoom-in' : ''
+        return (
+          <section
+            id={node.id}
+            style={bgStyle}
+            className="relative py-16 md:py-24 transition-all overflow-hidden flex flex-col justify-center"
+          >
+            {/* Top Shape Divider */}
+            {props.shapeDividerTop && (
+              <MountainDivider
+                position="top"
+                color={props.shapeDividerTop.color}
+                height={props.shapeDividerTop.height}
+              />
+            )}
 
-      const boxStyle: React.CSSProperties = {}
-      if (styles.backgroundColor) boxStyle.backgroundColor = styles.backgroundColor
-      if (styles.boxShadow) boxStyle.boxShadow = styles.boxShadow
-      if (styles.borderWidth) boxStyle.borderWidth = styles.borderWidth
-      if (styles.borderColor) boxStyle.borderColor = styles.borderColor
-      if (styles.borderRadius) boxStyle.borderRadius = styles.borderRadius
-      if (styles.width) boxStyle.width = styles.width
-      if (styles.maxWidth) boxStyle.maxWidth = styles.maxWidth
-      if (styles.height) boxStyle.height = styles.height
-      if (styles.minHeight) boxStyle.minHeight = styles.minHeight
-      if (styles.padding) boxStyle.padding = styles.padding
-      if (styles.margin) boxStyle.margin = styles.margin
+            {/* Background Overlay */}
+            {props.bgOverlayColor && (
+              <div
+                className="absolute inset-0 pointer-events-none z-0"
+                style={{
+                  backgroundColor: props.bgOverlayColor,
+                  opacity: props.bgOverlayOpacity ?? 0.68,
+                }}
+              />
+            )}
 
-      if (isHeroColumn) {
-        const heroBoxStyle: React.CSSProperties = {
-          width: styles.width || '100%',
-          maxWidth: styles.maxWidth || '780px',
-          minHeight: styles.minHeight || '240px',
-          height: styles.height || 'auto',
-          padding: styles.padding || '2.5rem 3rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...boxStyle,
+            {/* Container Content */}
+            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-8">
+                <ComponentRenderer
+                  nodes={children}
+                  siteSlug={siteSlug}
+                  isEditing={isEditing}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={onSelectNode}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Shape Divider */}
+            {props.shapeDividerBottom && (
+              <MountainDivider
+                position="bottom"
+                color={props.shapeDividerBottom.color}
+                height={props.shapeDividerBottom.height}
+              />
+            )}
+          </section>
+        )
+      }
+
+      case 'Column': {
+        const isHeroColumn = styles.animation === 'zoomIn' || styles.backgroundColor === '#FFB92C1C'
+
+        const widthClass = isHeroColumn
+          ? 'w-full flex justify-center items-center'
+          : props.width === 50 ? 'md:w-[48%] flex-1'
+          : props.width === 33 ? 'md:w-[31%] flex-1'
+          : props.width === 66 ? 'md:w-[64%] flex-1'
+          : 'w-full'
+
+        const animationClass = styles.animation === 'zoomIn' ? 'animate-zoom-in' : ''
+
+        const boxStyle: React.CSSProperties = {}
+        if (styles.backgroundColor) boxStyle.backgroundColor = styles.backgroundColor
+        if (styles.boxShadow) boxStyle.boxShadow = styles.boxShadow
+        if (styles.borderWidth) boxStyle.borderWidth = styles.borderWidth
+        if (styles.borderColor) boxStyle.borderColor = styles.borderColor
+        if (styles.borderRadius) boxStyle.borderRadius = styles.borderRadius
+        if (styles.width) boxStyle.width = styles.width
+        if (styles.maxWidth) boxStyle.maxWidth = styles.maxWidth
+        if (styles.height) boxStyle.height = styles.height
+        if (styles.minHeight) boxStyle.minHeight = styles.minHeight
+        if (styles.padding) boxStyle.padding = styles.padding
+        if (styles.margin) boxStyle.margin = styles.margin
+
+        if (isHeroColumn) {
+          const heroBoxStyle: React.CSSProperties = {
+            width: styles.width || '100%',
+            maxWidth: styles.maxWidth || '780px',
+            minHeight: styles.minHeight || '240px',
+            height: styles.height || 'auto',
+            padding: styles.padding || '2.5rem 3rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...boxStyle,
+          }
+
+          return (
+            <div className={`${widthClass} ${animationClass}`}>
+              <div
+                style={heroBoxStyle}
+                className="rounded-3xl shadow-2xl backdrop-blur-md border border-amber-300/30 text-center transform hover:scale-[1.01] transition-all"
+              >
+                <ComponentRenderer
+                  nodes={children}
+                  siteSlug={siteSlug}
+                  isEditing={isEditing}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={onSelectNode}
+                />
+              </div>
+            </div>
+          )
         }
 
         return (
-          <div className={`${widthClass} ${animationClass}`}>
-            <div
-              style={heroBoxStyle}
-              className="rounded-3xl shadow-2xl backdrop-blur-md border border-amber-300/30 text-center transform hover:scale-[1.01] transition-all"
-            >
-              <ComponentRenderer nodes={children} siteSlug={siteSlug} />
-            </div>
+          <div
+            style={boxStyle}
+            className={`${widthClass} ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
+          >
+            <ComponentRenderer
+              nodes={children}
+              siteSlug={siteSlug}
+              isEditing={isEditing}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={onSelectNode}
+            />
           </div>
         )
       }
 
-      return (
-        <div
-          style={boxStyle}
-          className={`${widthClass} ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
-        >
-          <ComponentRenderer nodes={children} siteSlug={siteSlug} />
-        </div>
-      )
-    }
+      case 'Heading': {
+        const level = props.level || 'h2'
+        const align = styles.textAlign || props.align || 'left'
+        const color = styles.color || props.color ? { color: styles.color || props.color } : {}
 
-    case 'Heading': {
-      const level = props.level || 'h2'
-      const align = styles.textAlign || props.align || 'left'
-      const color = styles.color || props.color ? { color: styles.color || props.color } : {}
+        const alignClass =
+          align === 'center' ? 'text-center' :
+          align === 'right' ? 'text-right' : 'text-left'
 
-      const alignClass =
-        align === 'center' ? 'text-center' :
-        align === 'right' ? 'text-right' : 'text-left'
+        if (level === 'h1') {
+          return (
+            <h1
+              style={color}
+              className={`text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight ${alignClass}`}
+            >
+              {props.text}
+            </h1>
+          )
+        }
 
-      if (level === 'h1') {
         return (
-          <h1
+          <h2
             style={color}
-            className={`text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight ${alignClass}`}
+            className={`text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight ${alignClass}`}
           >
             {props.text}
-          </h1>
+          </h2>
         )
       }
 
-      return (
-        <h2
-          style={color}
-          className={`text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight ${alignClass}`}
-        >
-          {props.text}
-        </h2>
-      )
-    }
+      case 'RichText': {
+        const align = styles.textAlign || props.align || 'left'
+        const alignClass =
+          align === 'center' ? 'text-center' :
+          align === 'right' ? 'text-right' : 'text-left'
 
-    case 'RichText': {
-      const align = styles.textAlign || props.align || 'left'
-      const alignClass =
-        align === 'center' ? 'text-center' :
-        align === 'right' ? 'text-right' : 'text-left'
+        const customStyle: React.CSSProperties = {}
+        if (styles.color || props.color) customStyle.color = styles.color || props.color
+        if (styles.fontSize || props.fontSize) customStyle.fontSize = styles.fontSize || props.fontSize
+        if (styles.fontWeight || props.fontWeight) customStyle.fontWeight = styles.fontWeight || props.fontWeight
+        if (styles.fontFamily) customStyle.fontFamily = styles.fontFamily
+        if (styles.margin) customStyle.margin = styles.margin
+        if (styles.padding) customStyle.padding = styles.padding
 
-      const customStyle: React.CSSProperties = {}
-      if (styles.color || props.color) customStyle.color = styles.color || props.color
-      if (styles.fontSize || props.fontSize) customStyle.fontSize = styles.fontSize || props.fontSize
-      if (styles.fontWeight || props.fontWeight) customStyle.fontWeight = styles.fontWeight || props.fontWeight
-      if (styles.fontFamily) customStyle.fontFamily = styles.fontFamily
-      if (styles.margin) customStyle.margin = styles.margin
-      if (styles.padding) customStyle.padding = styles.padding
+        const isLargeHeroText = styles.fontSize === '3em' || props.fontSize === '3em'
 
-      const isLargeHeroText = styles.fontSize === '3em' || props.fontSize === '3em'
+        if (isLargeHeroText) {
+          return (
+            <div
+              style={customStyle}
+              className={`text-2xl sm:text-4xl md:text-5xl font-light tracking-widest text-white leading-relaxed uppercase ${alignClass} drop-shadow-md`}
+              dangerouslySetInnerHTML={{ __html: props.html }}
+            />
+          )
+        }
 
-      if (isLargeHeroText) {
         return (
           <div
             style={customStyle}
-            className={`text-2xl sm:text-4xl md:text-5xl font-light tracking-widest text-white leading-relaxed uppercase ${alignClass} drop-shadow-md`}
+            className={`leading-relaxed space-y-3 prose max-w-none ${alignClass}`}
             dangerouslySetInnerHTML={{ __html: props.html }}
           />
         )
       }
 
-      return (
-        <div
-          style={customStyle}
-          className={`leading-relaxed space-y-3 prose max-w-none ${alignClass}`}
-          dangerouslySetInnerHTML={{ __html: props.html }}
-        />
-      )
-    }
+      case 'Button': {
+        const align = styles.textAlign || props.align || 'left'
+        const alignClass =
+          align === 'center' ? 'justify-center' :
+          align === 'right' ? 'justify-end' : 'justify-start'
 
-    case 'Image': {
-      const imgStyle: React.CSSProperties = {}
-      if (styles.boxShadow) imgStyle.boxShadow = styles.boxShadow
+        const btnStyle: React.CSSProperties = {}
+        if (styles.backgroundColor) btnStyle.backgroundColor = styles.backgroundColor
+        if (styles.color) btnStyle.color = styles.color
+        if (styles.borderRadius) btnStyle.borderRadius = styles.borderRadius
+        if (styles.boxShadow) btnStyle.boxShadow = styles.boxShadow
+        if (styles.padding) btnStyle.padding = styles.padding
 
-      return (
-        <div className={`flex justify-${props.align || 'center'} my-4`}>
-          <img
-            src={props.url}
-            alt={props.alt || ''}
-            style={imgStyle}
-            className="rounded-2xl shadow-xl max-w-full h-auto object-cover max-h-[500px]"
-            loading="lazy"
-          />
-        </div>
-      )
-    }
-
-    case 'Video': {
-      let embedUrl = props.url || ''
-      if (embedUrl.includes('youtube.com/watch?v=')) {
-        const videoId = embedUrl.split('v=')[1]?.split('&')[0]
-        embedUrl = `https://www.youtube.com/embed/${videoId}`
-      } else if (embedUrl.includes('youtu.be/')) {
-        const videoId = embedUrl.split('youtu.be/')[1]?.split('?')[0]
-        embedUrl = `https://www.youtube.com/embed/${videoId}`
+        return (
+          <div className={`flex w-full ${alignClass} my-3`}>
+            <a
+              href={props.url || '#'}
+              target={props.target || '_self'}
+              rel="noopener noreferrer"
+              style={btnStyle}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              {props.icon && <i className={props.icon} />}
+              <span>{props.text || 'Tıklayınız'}</span>
+            </a>
+          </div>
+        )
       }
 
-      return (
-        <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl my-6 bg-black">
-          <iframe
-            src={embedUrl}
-            title="Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 w-full h-full border-0"
+      case 'Counter': {
+        return (
+          <div className="w-full my-4">
+            <Counter
+              endingNumber={props.endingNumber}
+              startingNumber={props.startingNumber}
+              prefix={props.prefix}
+              suffix={props.suffix}
+              title={props.title}
+            />
+          </div>
+        )
+      }
+
+      case 'ImageCarousel': {
+        return (
+          <ImageCarousel
+            images={props.images}
+            slidesToShow={props.slidesToShow}
+            autoplay={props.autoplay}
           />
-        </div>
-      )
-    }
+        )
+      }
 
-    case 'MenuAnchor': {
-      return <div id={props.anchor} className="relative -top-24 block invisible" />
-    }
+      case 'ImageBox': {
+        return (
+          <ImageBox
+            title={props.title}
+            description={props.description}
+            imageUrl={props.imageUrl}
+            url={props.url}
+          />
+        )
+      }
 
-    case 'Timeline': {
-      return <Timeline items={props.items} accentColor={props.accentColor} />
-    }
+      case 'IconBox': {
+        return (
+          <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-bold">
+              ★
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{props.title}</h3>
+            {props.description && (
+              <p className="text-sm text-gray-600 leading-relaxed">{props.description}</p>
+            )}
+          </div>
+        )
+      }
 
-    case 'ImageAccordion': {
-      return <ImageAccordion items={props.items} height={props.height} />
-    }
+      case 'Accordion': {
+        return <Accordion items={props.items} />
+      }
 
-    case 'ContactForm': {
-      return <ContactForm siteSlug={siteSlug} title={props.title} />
-    }
+      case 'Spacer': {
+        return <div style={{ height: props.height || '30px' }} className="w-full" />
+      }
 
-    default:
-      return null
+      case 'SocialIcons': {
+        return (
+          <div className={`flex items-center gap-3 my-4 justify-${props.align || 'center'}`}>
+            {(props.items || []).map((s: any, idx: number) => (
+              <a
+                key={s.id || idx}
+                href={s.url || '#'}
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-purple-600 hover:text-white flex items-center justify-center text-gray-700 transition"
+              >
+                ●
+              </a>
+            ))}
+          </div>
+        )
+      }
+
+      case 'CallToAction': {
+        return (
+          <div className="w-full my-6 p-8 rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white shadow-2xl flex flex-col items-center text-center">
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-3">{props.title}</h2>
+            {props.description && (
+              <p className="text-gray-300 max-w-2xl mb-6">{props.description}</p>
+            )}
+            <a
+              href={props.buttonUrl || '#'}
+              className="px-8 py-3.5 rounded-xl bg-white text-gray-900 font-bold shadow-lg hover:bg-gray-100 hover:scale-105 transition"
+            >
+              {props.buttonText || 'Detaylı Bilgi'}
+            </a>
+          </div>
+        )
+      }
+
+      case 'Image': {
+        const imgStyle: React.CSSProperties = {}
+        if (styles.boxShadow) imgStyle.boxShadow = styles.boxShadow
+
+        return (
+          <div className={`flex justify-${props.align || 'center'} my-4`}>
+            <img
+              src={props.url}
+              alt={props.alt || ''}
+              style={imgStyle}
+              className="rounded-2xl shadow-xl max-w-full h-auto object-cover max-h-[500px]"
+              loading="lazy"
+            />
+          </div>
+        )
+      }
+
+      case 'Video': {
+        let embedUrl = props.url || ''
+        if (embedUrl.includes('youtube.com/watch?v=')) {
+          const videoId = embedUrl.split('v=')[1]?.split('&')[0]
+          embedUrl = `https://www.youtube.com/embed/${videoId}`
+        } else if (embedUrl.includes('youtu.be/')) {
+          const videoId = embedUrl.split('youtu.be/')[1]?.split('?')[0]
+          embedUrl = `https://www.youtube.com/embed/${videoId}`
+        }
+
+        return (
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl my-6 bg-black">
+            <iframe
+              src={embedUrl}
+              title="Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full border-0"
+            />
+          </div>
+        )
+      }
+
+      case 'MenuAnchor': {
+        return <div id={props.anchor} className="relative -top-24 block invisible" />
+      }
+
+      case 'Timeline': {
+        return <Timeline items={props.items} accentColor={props.accentColor} />
+      }
+
+      case 'ImageAccordion': {
+        return <ImageAccordion items={props.items} height={props.height} />
+      }
+
+      case 'ContactForm': {
+        return <ContactForm siteSlug={siteSlug} title={props.title} />
+      }
+
+      case 'GenericWidget': {
+        return (
+          <div className="p-4 my-2 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-500">
+            [Widget: {props.widgetType || 'Bileşen'}]
+          </div>
+        )
+      }
+
+      default:
+        return null
+    }
   }
+
+  if (isEditing) {
+    return (
+      <div
+        onClick={handleSelect}
+        className={`relative group cursor-pointer transition-all ${
+          isSelected
+            ? 'ring-2 ring-purple-600 ring-offset-2 rounded-lg'
+            : 'hover:outline-dashed hover:outline-1 hover:outline-blue-400'
+        }`}
+      >
+        <span
+          className={`absolute -top-3 left-2 z-20 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider shadow-sm transition-opacity ${
+            isSelected
+              ? 'bg-purple-600 text-white opacity-100 font-bold'
+              : 'bg-blue-600 text-white opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          {type}
+        </span>
+        {renderContent()}
+      </div>
+    )
+  }
+
+  return renderContent()
 }
