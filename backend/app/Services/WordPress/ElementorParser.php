@@ -268,7 +268,34 @@ class ElementorParser
             $styles['backgroundColor'] = $settings['background_color'];
         }
 
-        // 2. Borders
+        // 2. Sizing & Dimensions (Independent width & height for boxes)
+        if (!empty($settings['_custom_width']['size'])) {
+            $styles['width'] = $settings['_custom_width']['size'] . ($settings['_custom_width']['unit'] ?? 'px');
+        } elseif (!empty($settings['width']['size'])) {
+            $styles['width'] = $settings['width']['size'] . ($settings['width']['unit'] ?? 'px');
+        } elseif (!empty($settings['box_width'])) {
+            $styles['width'] = $settings['box_width'];
+        }
+
+        if (!empty($settings['max_width']['size'])) {
+            $styles['maxWidth'] = $settings['max_width']['size'] . ($settings['max_width']['unit'] ?? 'px');
+        } elseif (!empty($settings['box_max_width'])) {
+            $styles['maxWidth'] = $settings['box_max_width'];
+        }
+
+        if (!empty($settings['min_height']['size'])) {
+            $styles['minHeight'] = $settings['min_height']['size'] . ($settings['min_height']['unit'] ?? 'px');
+        } elseif (!empty($settings['box_min_height'])) {
+            $styles['minHeight'] = $settings['box_min_height'];
+        }
+
+        if (!empty($settings['height']['size'])) {
+            $styles['height'] = $settings['height']['size'] . ($settings['height']['unit'] ?? 'px');
+        } elseif (!empty($settings['box_height'])) {
+            $styles['height'] = $settings['box_height'];
+        }
+
+        // 3. Borders
         if (!empty($settings['border_border'])) {
             $styles['borderStyle'] = $settings['border_border'];
             $styles['borderColor'] = $settings['border_color'] ?? '#e2e8f0';

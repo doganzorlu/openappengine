@@ -147,13 +147,32 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
       if (styles.borderWidth) boxStyle.borderWidth = styles.borderWidth
       if (styles.borderColor) boxStyle.borderColor = styles.borderColor
       if (styles.borderRadius) boxStyle.borderRadius = styles.borderRadius
+      if (styles.width) boxStyle.width = styles.width
+      if (styles.maxWidth) boxStyle.maxWidth = styles.maxWidth
+      if (styles.height) boxStyle.height = styles.height
+      if (styles.minHeight) boxStyle.minHeight = styles.minHeight
+      if (styles.padding) boxStyle.padding = styles.padding
+      if (styles.margin) boxStyle.margin = styles.margin
 
       if (isHeroColumn) {
+        const heroBoxStyle: React.CSSProperties = {
+          width: styles.width || '100%',
+          maxWidth: styles.maxWidth || '780px',
+          minHeight: styles.minHeight || '240px',
+          height: styles.height || 'auto',
+          padding: styles.padding || '2.5rem 3rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...boxStyle,
+        }
+
         return (
           <div className={`${widthClass} ${animationClass}`}>
             <div
-              style={boxStyle}
-              className="rounded-3xl p-8 sm:p-14 md:p-16 shadow-2xl backdrop-blur-md border border-amber-300/30 max-w-3xl text-center transform hover:scale-[1.01] transition-transform"
+              style={heroBoxStyle}
+              className="rounded-3xl shadow-2xl backdrop-blur-md border border-amber-300/30 text-center transform hover:scale-[1.01] transition-all"
             >
               <ComponentRenderer nodes={children} siteSlug={siteSlug} />
             </div>
