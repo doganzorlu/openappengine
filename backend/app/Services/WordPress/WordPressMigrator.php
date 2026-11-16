@@ -3,24 +3,29 @@
 namespace App\Services\WordPress;
 
 use App\Models\Form;
+use App\Models\Media;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Site;
+use App\Services\Storage\TenantStorageService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use PDO;
 
 class WordPressMigrator
 {
     protected ElementorParser $parser;
+    protected TenantStorageService $storageService;
 
-    public function __construct(ElementorParser $parser)
+    public function __construct(ElementorParser $parser, TenantStorageService $storageService)
     {
         $this->parser = $parser;
+        $this->storageService = $storageService;
     }
 
-    public function migrate(string $siteSlug, string $wpDbName, string $prefix = 'wp_'): array
+    public function migrate(string $siteSlug, string $wpDbName, string $prefix = 'wp_', ?string $uploadsDir = null): array
     {
         $pdo = new PDO(
             "mysql:host=" . env('DB_HOST', 'db') . ";dbname={$wpDbName};charset=utf8mb4",
@@ -43,6 +48,7 @@ class WordPressMigrator
             'posts' => 0,
             'menus' => 0,
             'forms' => 0,
+            'media' => 0,
         ];
 
         // 1. EXTRACT ELEMENTOR GLOBAL COLORS (Active Kit)
@@ -68,20 +74,35 @@ class WordPressMigrator
         }
         $this->parser->setGlobalColors($globalColors);
 
-        // 2. EXTRACT SITE LOGO
+        // 2. EXTRACT SITE LOGO (Prefer high-quality transparent PNG logo over lossy JPG)
         $logoUrl = null;
-        $logoId = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name = 'site_logo'")->fetchColumn();
-        if (!$logoId) {
-            $mods = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name LIKE 'theme_mods_%'")->fetchColumn();
-            if ($mods) {
-                $u = @unserialize($mods);
-                if (isset($u['custom_logo'])) {
-                    $logoId = $u['custom_logo'];
+        try {
+            $pngLogo = $pdo->query("
+                SELECT guid FROM {$prefix}posts 
+                WHERE post_type = 'attachment' 
+                  AND (post_title LIKE '%logo%' OR guid LIKE '%logo%') 
+                  AND (guid LIKE '%.png' OR post_mime_type = 'image/png') 
+                ORDER BY ID DESC LIMIT 1
+            ")->fetchColumn();
+            if ($pngLogo) {
+                $logoUrl = $pngLogo;
+            }
+        } catch (\Throwable $e) {}
+
+        if (!$logoUrl) {
+            $logoId = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name = 'site_logo'")->fetchColumn();
+            if (!$logoId) {
+                $mods = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name LIKE 'theme_mods_%'")->fetchColumn();
+                if ($mods) {
+                    $u = @unserialize($mods);
+                    if (isset($u['custom_logo'])) {
+                        $logoId = $u['custom_logo'];
+                    }
                 }
             }
-        }
-        if ($logoId) {
-            $logoUrl = $pdo->query("SELECT guid FROM {$prefix}posts WHERE ID = {$logoId}")->fetchColumn() ?: null;
+            if ($logoId) {
+                $logoUrl = $pdo->query("SELECT guid FROM {$prefix}posts WHERE ID = {$logoId}")->fetchColumn() ?: null;
+            }
         }
 
         // 3. EXTRACT ELEMENTOR HEADER & FOOTER TEMPLATES
@@ -118,6 +139,11 @@ class WordPressMigrator
         $domain = parse_url($options['home'] ?? "https://{$siteSlug}.com", PHP_URL_HOST) ?? "{$siteSlug}.com";
         $pageOnFront = (int) ($options['page_on_front'] ?? 0);
 
+        // Normalize logo URL to OpenAppEngine tenant storage
+        if ($logoUrl) {
+            $logoUrl = $this->storageService->rewriteLegacyUrls($logoUrl, $siteSlug, [$options['home'] ?? '', $domain]);
+        }
+
         $primaryColor = $globalColors['primary'] ?? '#BB0096';
         $siteSettings = [
             'original_home' => $options['home'] ?? '',
@@ -149,7 +175,54 @@ class WordPressMigrator
         );
         $stats['site'] = $site->name;
 
-        // 2. FORMS (WPForms + Elementor Pro Forms)
+        // 5. IMPORT ATTACHMENTS & MEDIA TO TENANT STORAGE
+        // Auto-discover uploads directory if not explicitly provided
+        if (empty($uploadsDir)) {
+            $possibleDirs = [
+                "/Volumes/SSDBIGDATA/Projects/WebSites/doganzorlu/{$domain}/wp-content/uploads",
+                "/Volumes/SSDBIGDATA/Projects/WebSites/doganzorlu/{$siteSlug}/wp-content/uploads",
+                base_path("../doganzorlu/{$domain}/wp-content/uploads"),
+                base_path("../doganzorlu/{$siteSlug}/wp-content/uploads"),
+            ];
+            foreach ($possibleDirs as $candidate) {
+                if (File::isDirectory($candidate)) {
+                    $uploadsDir = $candidate;
+                    break;
+                }
+            }
+        }
+
+        if (!empty($uploadsDir) && File::isDirectory($uploadsDir)) {
+            $importResult = $this->storageService->importWpUploads($site, $uploadsDir);
+            $stats['media'] = $importResult['count'] ?? 0;
+        } else {
+            // Register attachments from WP database into Media table
+            try {
+                $attachStmt = $pdo->query("SELECT ID, post_title, guid, post_mime_type FROM {$prefix}posts WHERE post_type = 'attachment'");
+                while ($att = $attachStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $normUrl = $this->storageService->rewriteLegacyUrls($att['guid'] ?? '', $siteSlug, [$options['home'] ?? '', $domain]);
+                    $relPath = preg_replace('#^/storage/#', '', $normUrl);
+
+                    Media::updateOrCreate(
+                        [
+                            'site_id' => $site->id,
+                            'file_path' => $relPath,
+                        ],
+                        [
+                            'name' => basename($normUrl),
+                            'file_url' => $normUrl,
+                            'mime_type' => $att['post_mime_type'] ?: 'image/jpeg',
+                            'file_size' => 0,
+                            'alt_text' => $att['post_title'] ?: basename($normUrl),
+                            'meta' => [],
+                        ]
+                    );
+                    $stats['media']++;
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 6. FORMS (WPForms + Elementor Pro Forms)
         $formsStmt = $pdo->query("SELECT ID, post_title, post_name, post_content FROM {$prefix}posts WHERE post_type = 'wpforms' AND post_status = 'publish'");
         while ($row = $formsStmt->fetch(PDO::FETCH_ASSOC)) {
             $formData = json_decode($row['post_content'], true);
@@ -192,7 +265,7 @@ class WordPressMigrator
             }
         }
 
-        // 3. PAGES
+        // 7. PAGES
         $pagesStmt = $pdo->query("SELECT ID, post_title, post_name, post_content, post_status FROM {$prefix}posts WHERE post_type = 'page' AND post_status = 'publish'");
         while ($row = $pagesStmt->fetch(PDO::FETCH_ASSOC)) {
             $postId = $row['ID'];
@@ -241,7 +314,7 @@ class WordPressMigrator
             $stats['pages']++;
         }
 
-        // 4. POSTS / ARTICLES
+        // 8. POSTS / ARTICLES
         $postsStmt = $pdo->query("SELECT ID, post_title, post_name, post_excerpt, post_content, post_date FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish'");
         while ($row = $postsStmt->fetch(PDO::FETCH_ASSOC)) {
             Post::updateOrCreate(
@@ -260,7 +333,7 @@ class WordPressMigrator
             $stats['posts']++;
         }
 
-        // 5. MENUS
+        // 9. MENUS
         $menuStmt = $pdo->query("
             SELECT t.term_id, t.name, t.slug 
             FROM {$prefix}terms t 
@@ -318,6 +391,9 @@ class WordPressMigrator
             }
             $stats['menus']++;
         }
+
+        // 10. REWRITE ALL TENANT URLS (Clean OpenAppEngine tenant storage paths)
+        $this->storageService->rewriteAllTenantUrls($site, [$options['home'] ?? '', $domain]);
 
         return $stats;
     }

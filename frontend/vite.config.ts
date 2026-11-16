@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://web',
         changeOrigin: true,
       },
+      '/storage': {
+        target: 'http://web',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -10,7 +10,8 @@ class MigrateWordPress extends Command
     protected $signature = 'engine:migrate-wp 
                             {slug : Site slug identifier (e.g. berilzorlu)}
                             {--db= : Source WordPress database name}
-                            {--prefix=wp_ : WordPress table prefix}';
+                            {--prefix=wp_ : WordPress table prefix}
+                            {--uploads= : Path to wp-content/uploads directory}';
 
     protected $description = 'Migrate a WordPress + Elementor site into OpenAppEngine';
 
@@ -19,11 +20,12 @@ class MigrateWordPress extends Command
         $slug = $this->argument('slug');
         $db = $this->option('db') ?: 'wp_' . $slug;
         $prefix = $this->option('prefix') ?: 'wp_';
+        $uploads = $this->option('uploads');
 
         $this->info("🚀 Starting migration for [{$slug}] from database [{$db}] (prefix: {$prefix})...");
 
         try {
-            $stats = $migrator->migrate($slug, $db, $prefix);
+            $stats = $migrator->migrate($slug, $db, $prefix, $uploads);
 
             $this->newLine();
             $this->info("✅ Migration completed successfully!");
@@ -35,6 +37,7 @@ class MigrateWordPress extends Command
                     ['Posts', $stats['posts']],
                     ['Menus', $stats['menus']],
                     ['Forms', $stats['forms']],
+                    ['Media/Storage Files', $stats['media'] ?? 0],
                 ]
             );
 

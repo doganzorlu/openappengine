@@ -1,8 +1,13 @@
 import React from 'react'
 
-export function normalizeMediaUrl(url?: string | null): string {
+export function normalizeMediaUrl(url?: string | null, siteSlug: string = 'otizmkonfederasyonu'): string {
   if (!url) return ''
-  return url.replace(/^https?:\/\/(otizmkonfederasyonu\.org\.tr|localhost:\d+)/, '')
+  if (url.startsWith('/storage/')) return url
+  let clean = url.replace(/^https?:\/\/[^\/]+/, '')
+  if (clean.includes('/wp-content/uploads/')) {
+    clean = clean.replace(/.*?\/wp-content\/uploads\//, `/storage/sites/${siteSlug}/media/`)
+  }
+  return clean
 }
 
 interface ImageBoxProps {

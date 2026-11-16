@@ -10,6 +10,7 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Site;
 use App\Models\User;
+use App\Services\Storage\TenantStorageService;
 use App\Services\WordPress\WordPressMigrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,10 +23,12 @@ use ZipArchive;
 class AdminController extends Controller
 {
     protected WordPressMigrator $migrator;
+    protected TenantStorageService $storageService;
 
-    public function __construct(WordPressMigrator $migrator)
+    public function __construct(WordPressMigrator $migrator, TenantStorageService $storageService)
     {
         $this->migrator = $migrator;
+        $this->storageService = $storageService;
     }
 
     /**
@@ -246,73 +249,11 @@ class AdminController extends Controller
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
 
         $request->validate([
-            'file' => 'required|image|max:10240', // max 10MB
+            'file' => 'required|file|max:20480', // max 20MB
+            'alt_text' => 'nullable|string|max:255',
         ]);
 
-        $file = $request->file('file');
-        $originalExt = strtolower($file->getClientOriginalExtension());
-        $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid();
-        $filename = $baseName . '.' . $originalExt;
-
-        $path = $file->storeAs("sites/{$site->slug}/media", $filename, 'public');
-        $fullPath = storage_path('app/public/' . $path);
-
-        $meta = [
-            'has_webp' => false,
-            'original_size' => $file->getSize(),
-        ];
-
-        // WebP Optimization via PHP GD
-        if (function_exists('imagewebp') && in_array($originalExt, ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'])) {
-            try {
-                $image = null;
-                if (in_array($originalExt, ['jpg', 'jpeg'])) {
-                    $image = @imagecreatefromjpeg($fullPath);
-                } elseif ($originalExt === 'png') {
-                    $image = @imagecreatefrompng($fullPath);
-                    if ($image) {
-                        imagepalettetotruecolor($image);
-                        imagealphablending($image, true);
-                        imagesavealpha($image, true);
-                    }
-                } elseif ($originalExt === 'webp') {
-                    $image = @imagecreatefromwebp($fullPath);
-                }
-
-                if ($image) {
-                    $webpFilename = $baseName . '.webp';
-                    $webpRelPath = "sites/{$site->slug}/media/" . $webpFilename;
-                    $fullWebpPath = storage_path('app/public/' . $webpRelPath);
-
-                    if (imagewebp($image, $fullWebpPath, 82)) {
-                        imagedestroy($image);
-                        $webpSize = file_exists($fullWebpPath) ? filesize($fullWebpPath) : 0;
-                        $origSize = $file->getSize();
-                        $savings = ($origSize > 0 && $webpSize > 0)
-                            ? max(0, round((($origSize - $webpSize) / $origSize) * 100))
-                            : 0;
-
-                        $meta['has_webp'] = true;
-                        $meta['webp_url'] = '/storage/' . $webpRelPath;
-                        $meta['webp_size'] = $webpSize;
-                        $meta['savings_percentage'] = $savings;
-                    }
-                }
-            } catch (\Throwable $e) {
-                \Log::warning("WebP conversion skipped: " . $e->getMessage());
-            }
-        }
-
-        $media = Media::create([
-            'site_id' => $site->id,
-            'name' => $filename,
-            'file_path' => $path,
-            'file_url' => '/storage/' . $path,
-            'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
-            'alt_text' => $file->getClientOriginalName(),
-            'meta' => $meta,
-        ]);
+        $media = $this->storageService->storeUploadedFile($site, $request->file('file'), $request->input('alt_text'));
 
         return response()->json([
             'success' => true,

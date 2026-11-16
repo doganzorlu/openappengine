@@ -827,19 +827,20 @@ const NodeItem: React.FC<{
       case 'SiteLogo': {
         let logoUrl = props.logoUrl || site?.settings?.logo_url || site?.theme_config?.logo_url
         if (!logoUrl && siteSlug.includes('otizmkonfederasyonu')) {
-          logoUrl = '/wp-content/uploads/2024/03/cropped-otizmkonfederasyonu-logo.jpg'
+          logoUrl = '/storage/sites/otizmkonfederasyonu/media/2024/02/cropped-konfederasyon_logo.png'
         }
-        logoUrl = normalizeMediaUrl(logoUrl)
+        logoUrl = normalizeMediaUrl(logoUrl, siteSlug)
         const logoWidth = props.width || '89px'
 
         return (
-          <div className="flex items-center" style={styles}>
-            <a href={`/?site=${siteSlug}`} className="inline-block transition-transform hover:scale-105">
+          <div className="flex items-center" style={{ ...styles, width: 'auto' }}>
+            <a href={`/?site=${siteSlug}`} className="inline-flex items-center transition-transform hover:scale-105">
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt={site?.name || siteSlug}
-                  style={{ width: logoWidth, maxHeight: '80px', objectFit: 'contain' }}
+                  className="h-14 sm:h-16 w-auto object-contain"
+                  style={{ maxWidth: logoWidth || '96px', maxHeight: '72px' }}
                 />
               ) : (
                 <span className="text-2xl font-black tracking-tight text-gray-900">{site?.name || siteSlug}</span>
