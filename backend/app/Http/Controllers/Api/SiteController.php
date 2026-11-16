@@ -25,6 +25,31 @@ class SiteController extends Controller
     }
 
     /**
+     * Resolve site dynamically by hostname or query slug
+     */
+    public function resolve(Request $request): JsonResponse
+    {
+        $host = $request->query('domain') ?: $request->getHost();
+        // Remove port if present
+        $host = explode(':', $host)[0];
+
+        $site = null;
+        if (!in_array($host, ['localhost', '127.0.0.1'])) {
+            $site = Site::where('domain', $host)
+                ->orWhere('domain', 'like', "%{$host}%")
+                ->orWhere('slug', $host)
+                ->first();
+        }
+
+        if (!$site) {
+            $fallbackSlug = $request->query('site', 'berilzorlu');
+            $site = Site::where('slug', $fallbackSlug)->first() ?? Site::firstOrFail();
+        }
+
+        return $this->show($site->slug);
+    }
+
+    /**
      * Get site config, theme, and menus
      */
     public function show(string $siteSlug): JsonResponse

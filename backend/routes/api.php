@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    Route::get('/resolve-site', [SiteController::class, 'resolve']);
     Route::get('/sites', [SiteController::class, 'index']);
     Route::get('/sites/{slug}', [SiteController::class, 'show']);
     Route::get('/sites/{slug}/pages', [SiteController::class, 'pages']);

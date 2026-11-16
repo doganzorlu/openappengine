@@ -17,7 +17,7 @@ export function App() {
   const [sitesList, setSitesList] = useState<SiteListItem[]>([])
   const [currentSlug, setCurrentSlug] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search)
-    return params.get('site') || 'berilzorlu'
+    return params.get('site') || ''
   })
 
   const [site, setSite] = useState<Site | null>(null)
@@ -56,15 +56,17 @@ export function App() {
         setError(null)
         setSelectedNode(null)
 
-        // 1. Fetch Site Config & Menus
-        const siteRes = await fetch(`/api/v1/sites/${currentSlug}`)
+        // 1. Fetch Site Config & Menus (or resolve automatically by domain hostname)
+        const endpoint = currentSlug ? `/api/v1/sites/${currentSlug}` : `/api/v1/resolve-site`
+        const siteRes = await fetch(endpoint)
         if (!siteRes.ok) throw new Error('Site verisi yüklenemedi.')
         const siteData = await siteRes.json()
         setSite(siteData.site)
         setMenus(siteData.menus || [])
+        const activeSlug = siteData.site.slug
 
         // 2. Fetch Homepage Layout
-        const pageRes = await fetch(`/api/v1/sites/${currentSlug}/page`)
+        const pageRes = await fetch(`/api/v1/sites/${activeSlug}/page`)
         if (!pageRes.ok) throw new Error('Sayfa verisi yüklenemedi.')
         const pageData = await pageRes.json()
         setPage(pageData.page)
