@@ -39,6 +39,9 @@ class ElementorParser
         }
 
         if ($elType === 'section') {
+            $overlayColor = $settings['background_overlay_color'] ?? null;
+            $overlayOpacity = $settings['background_overlay_opacity']['size'] ?? 0.5;
+
             return [
                 'id' => $id,
                 'type' => 'Section',
@@ -46,6 +49,19 @@ class ElementorParser
                     'minHeight' => $settings['custom_height']['size'] ?? null,
                     'bgImage' => $settings['background_image']['url'] ?? null,
                     'bgColor' => $settings['background_color'] ?? null,
+                    'bgAttachment' => $settings['background_attachment'] ?? 'scroll',
+                    'bgOverlayColor' => $overlayColor,
+                    'bgOverlayOpacity' => $overlayColor ? $overlayOpacity : null,
+                    'shapeDividerTop' => !empty($settings['shape_divider_top']) ? [
+                        'shape' => $settings['shape_divider_top'],
+                        'color' => $settings['shape_divider_top_color'] ?? '#ffffff',
+                        'height' => $settings['shape_divider_top_height']['size'] ?? 57,
+                    ] : null,
+                    'shapeDividerBottom' => !empty($settings['shape_divider_bottom']) ? [
+                        'shape' => $settings['shape_divider_bottom'],
+                        'color' => $settings['shape_divider_bottom_color'] ?? '#ffffff',
+                        'height' => $settings['shape_divider_bottom_height']['size'] ?? 61,
+                    ] : null,
                     'layout' => $settings['layout'] ?? 'boxed',
                     'contentPosition' => $settings['content_position'] ?? 'top',
                 ],
@@ -60,6 +76,10 @@ class ElementorParser
                 'props' => [
                     'width' => $settings['_column_size'] ?? 100,
                     'inlineSize' => $settings['_inline_size'] ?? null,
+                    'bgColor' => $settings['background_color'] ?? null,
+                    'boxShadow' => !empty($settings['box_shadow_box_shadow_type']),
+                    'animation' => $settings['animation'] ?? null,
+                    'align' => $settings['align'] ?? 'left',
                 ],
                 'children' => $children,
             ];
@@ -93,10 +113,8 @@ class ElementorParser
                 // Handle WordPress [embedyt] shortcodes from youtube-embed-plus
                 if (preg_match('/\[embedyt\]\s*(https?:\/\/[^\s<\]]+)\s*\[\/embedyt\]/i', $html, $matches)) {
                     $embedUrl = html_entity_decode($matches[1]);
-                    // Clean layout=gallery param if present or keep clean embed URL
                     $cleanHtml = trim(strip_tags(preg_replace('/\[embedyt\].*?\[\/embedyt\]/is', '', $html)));
 
-                    // If text-editor is purely the embedyt video/playlist
                     if (empty($cleanHtml)) {
                         return [
                             'id' => $id,
@@ -109,9 +127,13 @@ class ElementorParser
                         ];
                     }
 
-                    // Otherwise replace shortcode inline with responsive iframe
                     $iframe = '<div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl my-6 bg-black"><iframe src="' . htmlspecialchars($embedUrl) . '" class="absolute inset-0 w-full h-full border-0" allowfullscreen></iframe></div>';
                     $html = preg_replace('/\[embedyt\].*?\[\/embedyt\]/is', $iframe, $html);
+                }
+
+                $fontSize = null;
+                if (!empty($settings['typography_font_size']['size'])) {
+                    $fontSize = $settings['typography_font_size']['size'] . ($settings['typography_font_size']['unit'] ?? 'px');
                 }
 
                 return [
@@ -121,6 +143,8 @@ class ElementorParser
                         'html' => $html,
                         'align' => $settings['align'] ?? 'left',
                         'color' => $settings['text_color'] ?? null,
+                        'fontSize' => $fontSize,
+                        'fontWeight' => $settings['typography_font_weight'] ?? null,
                     ],
                 ];
 

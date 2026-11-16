@@ -11,3 +11,18 @@ body {
   color: #1a202c;
   overflow-x: hidden;
 }
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale3d(0.75, 0.75, 0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

@@ -21,6 +21,43 @@ export const ComponentRenderer: React.FC<RendererProps> = ({ nodes, siteSlug }) 
   )
 }
 
+const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; height?: number }> = ({
+  position,
+  color,
+  height = 57,
+}) => {
+  const isTop = position === 'top'
+
+  return (
+    <div
+      className={`absolute left-0 right-0 w-full overflow-hidden leading-none z-10 pointer-events-none ${
+        isTop ? 'top-0 rotate-180' : 'bottom-0'
+      }`}
+      style={{ height: `${height}px` }}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1000 100"
+        preserveAspectRatio="none"
+        className="relative block w-full h-full"
+        style={{ fill: color }}
+      >
+        <path
+          opacity="0.33"
+          d="M473,67.3c-203.9,88.3-263.1-34-320.3,0C66,119.1,0,59.7,0,59.7V0h1000v59.7 c0,0-62.1,26.1-94.9,29.3c-32.8,3.3-62.8-12.3-75.8-22.1C806,49.6,745.3,8.7,694.9,4.7S492.4,59,473,67.3z"
+        />
+        <path
+          opacity="0.66"
+          d="M734,67.3c-45.5,0-77.2-23.2-129.1-39.1c-28.6-8.7-150.3-10.1-254,39.1 s-91.7-34.4-149.2,0C115.7,118.3,0,39.8,0,39.8V0h1000v36.5c0,0-28.2-18.5-92.1-18.5C810.2,18.1,775.7,67.3,734,67.3z"
+        />
+        <path
+          d="M766.1,28.9c-200-57.5-266,65.5-395.1,19.5C242,1.8,242,5.4,184.8,20.6C128,35.8,132.3,44.9,89.9,52.5C28.6,63.7,0,0,0,0 h1000c0,0-9.9,40.9-83.6,48.1S829.6,47,766.1,28.9z"
+        />
+      </svg>
+    </div>
+  )
+}
+
 const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, siteSlug }) => {
   const { type, props = {}, children = [] } = node
 
@@ -30,7 +67,7 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
       if (props.bgImage) {
         bgStyle.backgroundImage = `url('${props.bgImage}')`
         bgStyle.backgroundSize = 'cover'
-        bgStyle.backgroundPosition = 'center'
+        bgStyle.backgroundPosition = 'top center'
       }
       if (props.bgColor) {
         bgStyle.backgroundColor = props.bgColor
@@ -38,18 +75,51 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
       if (props.minHeight) {
         bgStyle.minHeight = `${props.minHeight}px`
       }
+      if (props.bgAttachment === 'fixed') {
+        bgStyle.backgroundAttachment = 'fixed'
+      }
 
       return (
         <section
           id={node.id}
           style={bgStyle}
-          className="relative py-12 md:py-16 transition-all"
+          className="relative py-16 md:py-24 transition-all overflow-hidden flex flex-col justify-center"
         >
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row flex-wrap items-center gap-8">
+          {/* Top Shape Divider */}
+          {props.shapeDividerTop && (
+            <MountainDivider
+              position="top"
+              color={props.shapeDividerTop.color}
+              height={props.shapeDividerTop.height}
+            />
+          )}
+
+          {/* Background Overlay */}
+          {props.bgOverlayColor && (
+            <div
+              className="absolute inset-0 pointer-events-none z-0"
+              style={{
+                backgroundColor: props.bgOverlayColor,
+                opacity: props.bgOverlayOpacity ?? 0.68,
+              }}
+            />
+          )}
+
+          {/* Container Content */}
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-8">
               <ComponentRenderer nodes={children} siteSlug={siteSlug} />
             </div>
           </div>
+
+          {/* Bottom Shape Divider */}
+          {props.shapeDividerBottom && (
+            <MountainDivider
+              position="bottom"
+              color={props.shapeDividerBottom.color}
+              height={props.shapeDividerBottom.height}
+            />
+          )}
         </section>
       )
     }
@@ -61,8 +131,23 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
         props.width === 66 ? 'md:w-[64%] flex-1' :
         'w-full'
 
+      const hasCustomBox = props.bgColor || props.boxShadow
+      const animationClass = props.animation === 'zoomIn' ? 'animate-zoom-in' : ''
+
+      const boxStyle: React.CSSProperties = {}
+      if (props.bgColor) {
+        boxStyle.backgroundColor = props.bgColor
+      }
+
       return (
-        <div className={`${widthClass} space-y-6`}>
+        <div
+          style={boxStyle}
+          className={`${widthClass} ${animationClass} ${
+            hasCustomBox
+              ? 'rounded-3xl p-8 md:p-14 shadow-2xl backdrop-blur-md border border-white/20 my-6 transition-transform'
+              : 'space-y-6'
+          } ${props.align === 'center' ? 'text-center' : ''}`}
+        >
           <ComponentRenderer nodes={children} siteSlug={siteSlug} />
         </div>
       )
@@ -103,10 +188,15 @@ const NodeItem: React.FC<{ node: ComponentNode; siteSlug: string }> = ({ node, s
         props.align === 'center' ? 'text-center' :
         props.align === 'right' ? 'text-right' : 'text-left'
 
+      const customStyle: React.CSSProperties = {}
+      if (props.color) customStyle.color = props.color
+      if (props.fontSize) customStyle.fontSize = props.fontSize
+      if (props.fontWeight) customStyle.fontWeight = props.fontWeight
+
       return (
         <div
-          className={`text-gray-700 leading-relaxed space-y-3 prose max-w-none ${alignClass}`}
-          style={props.color ? { color: props.color } : {}}
+          style={customStyle}
+          className={`leading-relaxed space-y-3 prose max-w-none ${alignClass}`}
           dangerouslySetInnerHTML={{ __html: props.html }}
         />
       )
