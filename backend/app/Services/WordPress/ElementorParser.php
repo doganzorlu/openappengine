@@ -148,13 +148,13 @@ class ElementorParser
         }
 
         if ($elType === 'widget') {
-            return $this->parseWidget($id, $element['widgetType'] ?? 'unknown', $settings, $styles);
+            return $this->parseWidget($id, $element['widgetType'] ?? 'unknown', $settings, $styles, $children);
         }
 
         return null;
     }
 
-    protected function parseWidget(string $id, string $widgetType, array $settings, array $styles): array
+    protected function parseWidget(string $id, string $widgetType, array $settings, array $styles, array $children = []): array
     {
         switch ($widgetType) {
             case 'heading':
@@ -304,6 +304,27 @@ class ElementorParser
                         'styles' => $styles,
                     ];
                 }
+                if (preg_match('/\[contact-form-7.*?title=["\'](.*?)["\']/i', $shortcode, $matches)) {
+                    return [
+                        'id' => $id,
+                        'type' => 'ContactForm',
+                        'props' => [
+                            'formId' => 'cf7-' . $id,
+                            'title' => $matches[1] ?: 'İletişim Formu',
+                        ],
+                        'styles' => $styles,
+                    ];
+                }
+                if (str_contains($shortcode, 'wpda_org_chart')) {
+                    return [
+                        'id' => $id,
+                        'type' => 'OrgChart',
+                        'props' => [
+                            'title' => 'Organizasyon Şeması',
+                        ],
+                        'styles' => $styles,
+                    ];
+                }
                 return [
                     'id' => $id,
                     'type' => 'RichText',
@@ -362,6 +383,19 @@ class ElementorParser
                     'styles' => $styles,
                 ];
 
+            case 'nested-carousel':
+            case 'loop-carousel':
+                return [
+                    'id' => $id,
+                    'type' => 'SlideCarousel',
+                    'props' => [
+                        'slidesToShow' => (int) ($settings['slides_to_show'] ?? 3),
+                        'autoplay' => ($settings['autoplay'] ?? 'yes') === 'yes',
+                    ],
+                    'styles' => $styles,
+                    'children' => $children,
+                ];
+
             case 'icon-box':
                 return [
                     'id' => $id,
@@ -371,6 +405,27 @@ class ElementorParser
                         'description' => $settings['description_text'] ?? '',
                         'icon' => $settings['selected_icon']['value'] ?? 'fas fa-star',
                         'url' => $settings['link']['url'] ?? null,
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'icon-list':
+                $items = [];
+                foreach ($settings['icon_list'] ?? [] as $item) {
+                    $items[] = [
+                        'id' => $item['_id'] ?? uniqid(),
+                        'text' => $item['text'] ?? '',
+                        'icon' => $item['selected_icon']['value'] ?? 'fas fa-check',
+                        'url' => $item['link']['url'] ?? null,
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'IconList',
+                    'props' => [
+                        'items' => $items,
+                        'iconColor' => $settings['icon_color'] ?? '#7C3AED',
+                        'textColor' => $settings['text_color'] ?? null,
                     ],
                     'styles' => $styles,
                 ];
@@ -392,11 +447,14 @@ class ElementorParser
             case 'nested-accordion':
             case 'eael-adv-accordion':
                 $items = [];
-                foreach ($settings['tabs'] ?? [] as $tab) {
+                $rawItems = $settings['items'] ?? $settings['tabs'] ?? [];
+                foreach ($rawItems as $idx => $tab) {
+                    $childForTab = $children[$idx] ?? null;
                     $items[] = [
                         'id' => $tab['_id'] ?? uniqid(),
-                        'title' => $tab['tab_title'] ?? '',
+                        'title' => $tab['item_title'] ?? $tab['tab_title'] ?? ("Bölüm " . ($idx + 1)),
                         'content' => $tab['tab_content'] ?? '',
+                        'child' => $childForTab,
                     ];
                 }
                 return [
@@ -406,6 +464,28 @@ class ElementorParser
                         'items' => $items,
                     ],
                     'styles' => $styles,
+                    'children' => $children,
+                ];
+
+            case 'tabs':
+            case 'nested-tabs':
+                $tabs = [];
+                foreach ($settings['tabs'] ?? [] as $idx => $tab) {
+                    $childForTab = $children[$idx] ?? null;
+                    $tabs[] = [
+                        'id' => $tab['_id'] ?? uniqid(),
+                        'title' => $tab['tab_title'] ?? ("Sekme " . ($idx + 1)),
+                        'child' => $childForTab,
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'Tabs',
+                    'props' => [
+                        'tabs' => $tabs,
+                    ],
+                    'styles' => $styles,
+                    'children' => $children,
                 ];
 
             case 'spacer':
@@ -415,6 +495,7 @@ class ElementorParser
                     'type' => 'Spacer',
                     'props' => [
                         'height' => $height . ($settings['space']['unit'] ?? 'px'),
+                        'anchor' => $settings['_element_id'] ?? null,
                     ],
                     'styles' => $styles,
                 ];
@@ -424,7 +505,7 @@ class ElementorParser
                 foreach ($settings['social_icon_list'] ?? [] as $s) {
                     $socials[] = [
                         'id' => $s['_id'] ?? uniqid(),
-                        'icon' => $s['social_icon']['value'] ?? '',
+                        'icon' => $s['social_icon']['value'] ?? 'fab fa-facebook',
                         'url' => $s['link']['url'] ?? '#',
                     ];
                 }
@@ -434,6 +515,7 @@ class ElementorParser
                     'props' => [
                         'items' => $socials,
                         'align' => $settings['align'] ?? 'center',
+                        'shape' => $settings['shape'] ?? 'rounded',
                     ],
                     'styles' => $styles,
                 ];
@@ -452,7 +534,44 @@ class ElementorParser
                     'styles' => $styles,
                 ];
 
+            case 'wpdmcategory':
+                $categorySlug = $settings['catid'][0] ?? 'downloads';
+                $title = !empty($settings['title']) ? ($categorySlug === 'otobusler' ? 'Otobüs Modları (OMSI2)' : ($categorySlug === 'haritalar' ? 'Harita Modları (ETS2 & OMSI2)' : ucfirst($categorySlug))) : '';
+                return [
+                    'id' => $id,
+                    'type' => 'DownloadsList',
+                    'props' => [
+                        'category' => $categorySlug,
+                        'title' => $title,
+                        'itemsPerPage' => (int) ($settings['items_per_page'] ?? 6),
+                    ],
+                    'styles' => $styles,
+                ];
+
             case 'form':
+                $fields = [];
+                foreach ($settings['form_fields'] ?? [] as $f) {
+                    $fields[] = [
+                        'id' => $f['custom_id'] ?? $f['_id'] ?? uniqid('f_'),
+                        'type' => $f['field_type'] ?? 'text',
+                        'label' => $f['field_label'] ?? '',
+                        'placeholder' => $f['placeholder'] ?? '',
+                        'required' => !empty($f['required']),
+                        'options' => !empty($f['field_options']) ? explode("\n", str_replace("\r", "", $f['field_options'])) : [],
+                    ];
+                }
+                return [
+                    'id' => $id,
+                    'type' => 'ContactForm',
+                    'props' => [
+                        'formId' => $settings['form_name'] ?? 'contact-form',
+                        'title' => $settings['form_name'] ?? 'Kayıt / Başvuru Formu',
+                        'buttonText' => $settings['button_text'] ?? 'Gönder',
+                        'fields' => $fields,
+                    ],
+                    'styles' => $styles,
+                ];
+
             case 'eael-wpforms':
             case 'wpforms':
                 return [

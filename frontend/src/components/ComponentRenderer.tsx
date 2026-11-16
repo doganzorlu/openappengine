@@ -7,6 +7,10 @@ import { Counter } from './Counter'
 import { ImageCarousel } from './ImageCarousel'
 import { Accordion } from './Accordion'
 import { ImageBox } from './ImageBox'
+import { IconList } from './IconList'
+import { DownloadsList } from './DownloadsList'
+import { Tabs } from './Tabs'
+import { SlideCarousel } from './SlideCarousel'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -396,8 +400,83 @@ const NodeItem: React.FC<{
         return <Accordion items={props.items} />
       }
 
+      case 'Tabs': {
+        return (
+          <Tabs
+            tabs={props.tabs}
+            siteSlug={siteSlug}
+            isEditing={isEditing}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={onSelectNode}
+          />
+        )
+      }
+
+      case 'SlideCarousel': {
+        return (
+          <SlideCarousel
+            slides={children}
+            siteSlug={siteSlug}
+            slidesToShow={props.slidesToShow}
+            isEditing={isEditing}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={onSelectNode}
+          />
+        )
+      }
+
+      case 'IconList': {
+        return (
+          <IconList
+            items={props.items}
+            iconColor={props.iconColor}
+            textColor={props.textColor}
+          />
+        )
+      }
+
+      case 'DownloadsList': {
+        return (
+          <DownloadsList
+            category={props.category}
+            title={props.title}
+            itemsPerPage={props.itemsPerPage}
+          />
+        )
+      }
+
+      case 'OrgChart': {
+        return (
+          <div className="w-full my-8 p-8 rounded-2xl bg-gradient-to-b from-gray-50 to-white border border-gray-200 text-center shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">{props.title || 'Organizasyon Şeması'}</h3>
+            <div className="flex flex-col items-center space-y-4">
+              <div className="px-6 py-3 rounded-xl bg-purple-700 text-white font-bold shadow-md">
+                Yönetim Kurulu Başkanlığı
+              </div>
+              <div className="w-0.5 h-6 bg-purple-300" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
+                  Genel Sekreterlik
+                </div>
+                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
+                  Mali İşler & Muhasebe
+                </div>
+                <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-semibold text-gray-800">
+                  Eğitim & Proje Komisyonu
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       case 'Spacer': {
-        return <div style={{ height: props.height || '30px' }} className="w-full" />
+        return (
+          <>
+            {props.anchor && <div id={props.anchor} className="relative -top-24 block invisible" />}
+            <div style={{ height: props.height || '30px' }} className="w-full" />
+          </>
+        )
       }
 
       case 'SocialIcons': {
@@ -488,7 +567,15 @@ const NodeItem: React.FC<{
       }
 
       case 'ContactForm': {
-        return <ContactForm siteSlug={siteSlug} title={props.title} />
+        return (
+          <ContactForm
+            siteSlug={siteSlug}
+            title={props.title}
+            buttonText={props.buttonText}
+            fields={props.fields}
+            formId={props.formId}
+          />
+        )
       }
 
       case 'GenericWidget': {
