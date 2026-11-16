@@ -342,8 +342,20 @@ export function App() {
         </div>
       </header>
 
-      {/* Dynamic Navbar */}
-      <Navbar site={site} menus={menus} />
+      {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
+      {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
+        <header className="w-full bg-white shadow-sm border-b border-gray-100 z-30">
+          <ComponentRenderer
+            nodes={site.settings.header_layout}
+            siteSlug={site.slug}
+            isEditing={false}
+            selectedNodeId={null}
+            onSelectNode={() => {}}
+          />
+        </header>
+      ) : (
+        <Navbar site={site} menus={menus} />
+      )}
 
       {/* Main Workspace (Split layout if Editor is active) */}
       <div className="flex-1 flex w-full">
@@ -368,8 +380,20 @@ export function App() {
         )}
       </div>
 
-      {/* Dynamic Footer */}
-      <Footer site={site} />
+      {/* Dynamic Footer (Render custom Elementor footer if available, otherwise default Footer) */}
+      {site.settings?.footer_layout && site.settings.footer_layout.length > 0 ? (
+        <footer className="w-full">
+          <ComponentRenderer
+            nodes={site.settings.footer_layout}
+            siteSlug={site.slug}
+            isEditing={false}
+            selectedNodeId={null}
+            onSelectNode={() => {}}
+          />
+        </footer>
+      ) : (
+        <Footer site={site} />
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (

@@ -45,44 +45,101 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   )
 }
 
-const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; height?: number }> = ({
-  position,
-  color,
-  height = 57,
-}) => {
+function getYoutubeEmbedUrl(url: string): string {
+  if (!url) return ''
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+  const match = url.match(regExp)
+  const id = match && match[2].length === 11 ? match[2] : null
+  if (id) {
+    return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1`
+  }
+  return url
+}
+
+const ShapeDivider: React.FC<{
+  shape?: string
+  position: 'top' | 'bottom'
+  color: string
+  height?: number
+}> = ({ shape = 'mountains', position, color, height = 57 }) => {
   const isBottom = position === 'bottom'
+  const shapeType = (shape || 'mountains').toLowerCase()
+
+  const renderShapeSvg = () => {
+    switch (shapeType) {
+      case 'drops':
+      case 'drops-negative':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 283.5 27.8"
+            preserveAspectRatio="none"
+            className="relative block w-full h-full"
+            style={{ fill: color }}
+          >
+            <path d="M0 0v1.4c.6.7 1.1 1.4 1.4 2 2 3.8 2.2 6.6 1.8 10.8-.3 3.3-2.4 9.4 0 12.3 1.7 2 3.7 1.4 4.6-.9 1.4-3.8-.7-8.2-.6-12 .1-3.7 3.2-5.5 6.9-4.9 4 .6 4.8 4 4.9 7.4.1 1.8-1.1 7 0 8.5.6.8 1.6 1.2 2.4.5 1.4-1.1.1-5.4.1-6.9.1-3.7.3-8.6 4.1-10.5 5-2.5 6.2 1.6 5.4 5.6-.4 1.7-1 9.2 2.9 6.3 1.5-1.1.7-3.5.5-4.9-.4-2.4-.4-4.3 1-6.5.9-1.4 2.4-3.1 4.2-3 2.4.1 2.7 2.2 4 3.7 1.5 1.8 1.8 2.2 3 .1 1.1-1.9 1.2-2.8 3.6-3.3 1.3-.3 4.8-1.4 5.9-.5 1.5 1.1.6 2.8.4 4.3-.2 1.1-.6 4 1.8 3.4 1.7-.4-.3-4.1.6-5.6 1.3-2.2 5.8-1.4 7 .5 1.3 2.1.5 5.8.1 8.1s-1.2 5-.6 7.4c1.3 5.1 4.4.9 4.3-2.4-.1-4.4-2-8.8-.5-13 .9-2.4 4.6-6.6 7.7-4.5 2.7 1.8.5 7.8.2 10.3-.2 1.7-.8 4.6.2 6.2.9 1.4 2 1.5 2.6-.3.5-1.5-.9-4.5-1-6.1-.2-1.7-.4-3.7.2-5.4 1.8-5.6 3.5 2.4 6.3.6 1.4-.9 4.3-9.4 6.1-3.1.6 2.2-1.3 7.8.7 8.9 4.2 2.3 1.5-7.1 2.2-8 3.1-4 4.7 3.8 6.1 4.1 3.1.7 2.8-7.9 8.1-4.5 1.7 1.1 2.9 3.3 3.2 5.2.4 2.2-1 4.5-.6 6.6 1 4.3 4.4 1.5 4.4-1.7 0-2.7-3-8.3 1.4-9.1 4.4-.9 7.3 3.5 7.8 6.9.3 2-1.5 10.9 1.3 11.3 4.1.6-3.2-15.7 4.8-15.8 4.7-.1 2.8 4.1 3.9 6.6 1 2.4 2.1 1 2.3-.8.3-1.9-.9-3.2 1.3-4.3 5.9-2.9 5.9 5.4 5.5 8.5-.3 2-1.7 8.4 2 8.1 6.9-.5-2.8-16.9 4.8-18.7 4.7-1.2 6.1 3.6 6.3 7.1.1 1.7-1.2 8.1.6 9.1 3.5 2 1.9-7 2-8.4.2-4 1.2-9.6 6.4-9.8 4.7-.2 3.2 4.6 2.7 7.5-.4 2.2 1.3 8.6 3.8 4.4 1.1-1.9-.3-4.1-.3-6 0-1.7.4-3.2 1.3-4.6 1-1.6 2.9-3.5 5.1-2.9 2.5.6 2.3 4.1 4.1 4.9 1.9.8 1.6-.9 2.3-2.1 1.2-2.1 2.1-2.1 4.4-2.4 1.4-.2 3.6-1.5 4.9-.5 2.3 1.7-.7 4.4.1 6.5.6 1.5 2.1 1.7 2.8.3.7-1.4-1.1-3.4-.3-4.8 1.4-2.5 6.2-1.2 7.2 1 2.3 4.8-3.3 12-.2 16.3 3 4.1 3.9-2.8 3.8-4.8-.4-4.3-2.1-8.9 0-13.1 1.3-2.5 5.9-5.7 7.9-2.4 2 3.2-1.3 9.8-.8 13.4.5 4.4 3.5 3.3 2.7-.8-.4-1.9-2.4-10 .6-11.1 3.7-1.4 2.8 7.2 6.5.4 2.2-4.1 4.9-3.1 5.2 1.2.1 1.5-.6 3.1-.4 4.6.2 1.9 1.8 3.7 3.3 1.3 1-1.6-2.6-10.4 2.9-7.3 2.6 1.5 1.6 6.5 4.8 2.7 1.3-1.5 1.7-3.6 4-3.7 2.2-.1 4 2.3 4.8 4.1 1.3 2.9-1.5 8.4.9 10.3 4.2 3.3 3-5.5 2.7-6.9-.6-3.9 1-7.2 5.5-5 4.1 2.1 4.3 7.7 4.1 11.6 0 .8-.6 9.5 2.5 5.2 1.2-1.7-.1-7.7.1-9.6.3-2.9 1.2-5.5 4.3-6.2 4.5-1 7.7 1.5 7.4 5.8-.2 3.5-1.8 7.7-.5 11.1 1 2.7 3.6 2.8 5 .2 1.6-3.1 0-8.3-.4-11.6-.4-4.2-.2-7 1.8-10.8 0 0-.1.1-.1.2-.2.4-.3.7-.4.8v.1c-.1.2-.1.2 0 0v-.1l.4-.8c0-.1.1-.1.1-.2.2-.4.5-.8.8-1.2V0H0z" />
+          </svg>
+        )
+      case 'tilt':
+      case 'opacity-tilt':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1000 100"
+            preserveAspectRatio="none"
+            className="relative block w-full h-full"
+            style={{ fill: color }}
+          >
+            <path d="M0,6V0h1000v100L0,6z" />
+          </svg>
+        )
+      case 'waves':
+      case 'waves-negative':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1000 100"
+            preserveAspectRatio="none"
+            className="relative block w-full h-full"
+            style={{ fill: color }}
+          >
+            <path d="M421.9,6.5c22.6-2.5,51.5,0.4,75.5,5.3c23.6,4.9,70.9,23.5,100.5,35.7c75.8,32.2,133.7,44.5,192.6,49.7 c23.6,2.1,48.7,3.5,103.4-2.5c54.7-6,106.2-25.6,106.2-25.6V0H0v30.3c0,0,72,32.6,158.4,30.5c39.2-0.7,92.8-6.7,134-22.4 c21.2-8.1,52.2-18.2,79.7-24.2C399.3,7.9,411.6,7.5,421.9,6.5z" />
+          </svg>
+        )
+      case 'mountains':
+      default:
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1000 100"
+            preserveAspectRatio="none"
+            className="relative block w-full h-full"
+            style={{ fill: color }}
+          >
+            <path
+              opacity="0.33"
+              d="M473,67.3c-203.9,88.3-263.1-34-320.3,0C66,119.1,0,59.7,0,59.7V0h1000v59.7 c0,0-62.1,26.1-94.9,29.3c-32.8,3.3-62.8-12.3-75.8-22.1C806,49.6,745.3,8.7,694.9,4.7S492.4,59,473,67.3z"
+            />
+            <path
+              opacity="0.66"
+              d="M734,67.3c-45.5,0-77.2-23.2-129.1-39.1c-28.6-8.7-150.3-10.1-254,39.1 s-91.7-34.4-149.2,0C115.7,118.3,0,39.8,0,39.8V0h1000v36.5c0,0-28.2-18.5-92.1-18.5C810.2,18.1,775.7,67.3,734,67.3z"
+            />
+            <path
+              d="M766.1,28.9c-200-57.5-266,65.5-395.1,19.5C242,1.8,242,5.4,184.8,20.6C128,35.8,132.3,44.9,89.9,52.5C28.6,63.7,0,0,0,0 h1000c0,0-9.9,40.9-83.6,48.1S829.6,47,766.1,28.9z"
+            />
+          </svg>
+        )
+    }
+  }
 
   return (
     <div
       className={`absolute left-0 right-0 w-full overflow-hidden leading-none z-10 pointer-events-none ${
-        isBottom ? '-bottom-[1px] rotate-180' : '-top-[1px]'
+        isBottom ? '-bottom-[1px]' : '-top-[1px] rotate-180'
       }`}
       style={{ height: `${height}px` }}
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 1000 100"
-        preserveAspectRatio="none"
-        className="relative block w-full h-full"
-        style={{
-          fill: color,
-          width: 'calc(100% + 1.3px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }}
-      >
-        <path
-          opacity="0.33"
-          d="M473,67.3c-203.9,88.3-263.1-34-320.3,0C66,119.1,0,59.7,0,59.7V0h1000v59.7 c0,0-62.1,26.1-94.9,29.3c-32.8,3.3-62.8-12.3-75.8-22.1C806,49.6,745.3,8.7,694.9,4.7S492.4,59,473,67.3z"
-        />
-        <path
-          opacity="0.66"
-          d="M734,67.3c-45.5,0-77.2-23.2-129.1-39.1c-28.6-8.7-150.3-10.1-254,39.1 s-91.7-34.4-149.2,0C115.7,118.3,0,39.8,0,39.8V0h1000v36.5c0,0-28.2-18.5-92.1-18.5C810.2,18.1,775.7,67.3,734,67.3z"
-        />
-        <path
-          d="M766.1,28.9c-200-57.5-266,65.5-395.1,19.5C242,1.8,242,5.4,184.8,20.6C128,35.8,132.3,44.9,89.9,52.5C28.6,63.7,0,0,0,0 h1000c0,0-9.9,40.9-83.6,48.1S829.6,47,766.1,28.9z"
-        />
-      </svg>
+      {renderShapeSvg()}
     </div>
   )
 }
@@ -137,11 +194,24 @@ const NodeItem: React.FC<{
           >
             {/* Top Shape Divider */}
             {props.shapeDividerTop && (
-              <MountainDivider
+              <ShapeDivider
+                shape={props.shapeDividerTop.shape}
                 position="top"
                 color={props.shapeDividerTop.color}
                 height={props.shapeDividerTop.height}
               />
+            )}
+
+            {/* Video Background */}
+            {props.bgVideo && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <iframe
+                  src={getYoutubeEmbedUrl(props.bgVideo)}
+                  className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-80"
+                  allow="autoplay; encrypted-media"
+                  frameBorder="0"
+                />
+              </div>
             )}
 
             {/* Background Overlay */}
@@ -170,7 +240,8 @@ const NodeItem: React.FC<{
 
             {/* Bottom Shape Divider */}
             {props.shapeDividerBottom && (
-              <MountainDivider
+              <ShapeDivider
+                shape={props.shapeDividerBottom.shape}
                 position="bottom"
                 color={props.shapeDividerBottom.color}
                 height={props.shapeDividerBottom.height}
@@ -325,11 +396,13 @@ const NodeItem: React.FC<{
           align === 'right' ? 'justify-end' : 'justify-start'
 
         const btnStyle: React.CSSProperties = {}
-        if (styles.backgroundColor) btnStyle.backgroundColor = styles.backgroundColor
-        if (styles.color) btnStyle.color = styles.color
+        if (styles.backgroundColor || props.bgColor) btnStyle.backgroundColor = styles.backgroundColor || props.bgColor
+        if (styles.color || props.color) btnStyle.color = styles.color || props.color
         if (styles.borderRadius) btnStyle.borderRadius = styles.borderRadius
         if (styles.boxShadow) btnStyle.boxShadow = styles.boxShadow
         if (styles.padding) btnStyle.padding = styles.padding
+
+        const hasCustomBg = Boolean(btnStyle.backgroundColor)
 
         return (
           <div className={`flex w-full ${alignClass} my-3`}>
@@ -338,7 +411,9 @@ const NodeItem: React.FC<{
               target={props.target || '_self'}
               rel="noopener noreferrer"
               style={btnStyle}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 ${
+                hasCustomBg ? '' : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+              }`}
             >
               {props.icon && <i className={props.icon} />}
               <span>{props.text || 'Tıklayınız'}</span>
@@ -383,16 +458,77 @@ const NodeItem: React.FC<{
       }
 
       case 'IconBox': {
+        const iconColor = props.iconColor || '#3B82F6'
+        const titleColor = props.titleColor || '#1F2937'
+        const descColor = props.descColor || '#6B7280'
         return (
-          <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-bold">
-              ★
+          <div
+            className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition flex flex-col items-center gap-2"
+            style={styles}
+          >
+            <div
+              className="w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center text-xl font-bold shadow-sm"
+              style={{ backgroundColor: `${iconColor}18`, color: iconColor }}
+            >
+              <i className={props.icon || 'fas fa-star'} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">{props.title}</h3>
+            {props.title && (
+              <h3 className="text-lg font-bold" style={{ color: titleColor }}>
+                {props.title}
+              </h3>
+            )}
             {props.description && (
-              <p className="text-sm text-gray-600 leading-relaxed">{props.description}</p>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: descColor }}
+                dangerouslySetInnerHTML={{ __html: props.description }}
+              />
+            )}
+            {props.url && (
+              <a
+                href={props.url}
+                className="text-xs font-semibold hover:underline mt-2 inline-flex items-center gap-1"
+                style={{ color: iconColor }}
+              >
+                İncele &rarr;
+              </a>
             )}
           </div>
+        )
+      }
+
+      case 'SiteLogo': {
+        const logoUrl = props.logoUrl
+        return (
+          <div className="flex items-center" style={styles}>
+            <a href="/" className="inline-block transition-transform hover:scale-105">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt="Site Logo"
+                  style={{ width: props.width || 'auto', maxHeight: '70px', objectFit: 'contain' }}
+                />
+              ) : (
+                <span className="text-2xl font-black tracking-tight text-gray-900">{siteSlug}</span>
+              )}
+            </a>
+          </div>
+        )
+      }
+
+      case 'NavMenu': {
+        return (
+          <nav className="flex items-center gap-6" style={styles}>
+            <a href="/" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
+              Ana Sayfa
+            </a>
+            <a href="/#hakkimizda" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
+              Hakkımızda
+            </a>
+            <a href="/#iletisim" className="text-sm font-semibold text-gray-700 hover:text-purple-600 transition">
+              İletişim
+            </a>
+          </nav>
         )
       }
 

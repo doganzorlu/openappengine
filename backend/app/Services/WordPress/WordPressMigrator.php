@@ -29,6 +29,14 @@ class WordPressMigrator
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
 
+        // Auto-detect table prefix if default wp_ doesn't match
+        if ($prefix === 'wp_') {
+            $foundTable = $pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema = '{$wpDbName}' AND table_name LIKE '%options' LIMIT 1")->fetchColumn();
+            if ($foundTable && str_ends_with($foundTable, 'options')) {
+                $prefix = substr($foundTable, 0, -7);
+            }
+        }
+
         $stats = [
             'site' => null,
             'pages' => 0,
@@ -37,7 +45,72 @@ class WordPressMigrator
             'forms' => 0,
         ];
 
-        // 1. SITE & OPTIONS
+        // 1. EXTRACT ELEMENTOR GLOBAL COLORS (Active Kit)
+        $globalColors = [];
+        $kitId = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name = 'elementor_active_kit'")->fetchColumn();
+        if ($kitId) {
+            $kitMeta = $pdo->query("SELECT meta_value FROM {$prefix}postmeta WHERE post_id = {$kitId} AND meta_key = '_elementor_page_settings'")->fetchColumn();
+            if ($kitMeta) {
+                $kitData = @unserialize($kitMeta) ?: json_decode($kitMeta, true);
+                if (is_array($kitData)) {
+                    foreach ($kitData['system_colors'] ?? [] as $sc) {
+                        if (!empty($sc['_id']) && !empty($sc['color'])) {
+                            $globalColors[$sc['_id']] = $sc['color'];
+                        }
+                    }
+                    foreach ($kitData['custom_colors'] ?? [] as $cc) {
+                        if (!empty($cc['_id']) && !empty($cc['color'])) {
+                            $globalColors[$cc['_id']] = $cc['color'];
+                        }
+                    }
+                }
+            }
+        }
+        $this->parser->setGlobalColors($globalColors);
+
+        // 2. EXTRACT SITE LOGO
+        $logoUrl = null;
+        $logoId = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name = 'site_logo'")->fetchColumn();
+        if (!$logoId) {
+            $mods = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name LIKE 'theme_mods_%'")->fetchColumn();
+            if ($mods) {
+                $u = @unserialize($mods);
+                if (isset($u['custom_logo'])) {
+                    $logoId = $u['custom_logo'];
+                }
+            }
+        }
+        if ($logoId) {
+            $logoUrl = $pdo->query("SELECT guid FROM {$prefix}posts WHERE ID = {$logoId}")->fetchColumn() ?: null;
+        }
+
+        // 3. EXTRACT ELEMENTOR HEADER & FOOTER TEMPLATES
+        $headerLayout = null;
+        $footerLayout = null;
+
+        $tmplStmt = $pdo->query("
+            SELECT p.ID, pm.meta_value as template_type
+            FROM {$prefix}posts p
+            JOIN {$prefix}postmeta pm ON p.ID = pm.post_id AND pm.meta_key = '_elementor_template_type'
+            WHERE p.post_type IN ('elementor_library', 'elementor-hf') AND p.post_status = 'publish'
+        ");
+        while ($tmpl = $tmplStmt->fetch(PDO::FETCH_ASSOC)) {
+            $tId = $tmpl['ID'];
+            $tType = $tmpl['template_type'];
+            $tJson = $pdo->query("SELECT meta_value FROM {$prefix}postmeta WHERE post_id = {$tId} AND meta_key = '_elementor_data'")->fetchColumn();
+            if ($tJson) {
+                $tArr = json_decode($tJson, true);
+                if (is_array($tArr)) {
+                    if ($tType === 'header' && empty($headerLayout)) {
+                        $headerLayout = $this->parser->parse($tArr, $globalColors);
+                    } elseif ($tType === 'footer' && empty($footerLayout)) {
+                        $footerLayout = $this->parser->parse($tArr, $globalColors);
+                    }
+                }
+            }
+        }
+
+        // 4. SITE & OPTIONS
         $optionsStmt = $pdo->query("SELECT option_name, option_value FROM {$prefix}options WHERE option_name IN ('blogname', 'blogdescription', 'siteurl', 'home', 'page_on_front')");
         $options = $optionsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
@@ -45,19 +118,31 @@ class WordPressMigrator
         $domain = parse_url($options['home'] ?? "https://{$siteSlug}.com", PHP_URL_HOST) ?? "{$siteSlug}.com";
         $pageOnFront = (int) ($options['page_on_front'] ?? 0);
 
+        $primaryColor = $globalColors['primary'] ?? '#BB0096';
+        $siteSettings = [
+            'original_home' => $options['home'] ?? '',
+            'original_siteurl' => $options['siteurl'] ?? '',
+            'logo_url' => $logoUrl,
+            'global_colors' => $globalColors,
+        ];
+        if ($headerLayout) {
+            $siteSettings['header_layout'] = $headerLayout;
+        }
+        if ($footerLayout) {
+            $siteSettings['footer_layout'] = $footerLayout;
+        }
+
         $site = Site::updateOrCreate(
             ['slug' => $siteSlug],
             [
                 'name' => $siteName,
                 'domain' => $domain,
                 'description' => $options['blogdescription'] ?? '',
-                'settings' => [
-                    'original_home' => $options['home'] ?? '',
-                    'original_siteurl' => $options['siteurl'] ?? '',
-                ],
+                'settings' => $siteSettings,
                 'theme_config' => [
-                    'primary_color' => '#BB0096',
+                    'primary_color' => $primaryColor,
                     'font_family' => 'Roboto, sans-serif',
+                    'logo_url' => $logoUrl,
                 ],
                 'status' => 'active',
             ]
@@ -121,7 +206,7 @@ class WordPressMigrator
             if ($elementorJsonRaw) {
                 $elementorArray = json_decode($elementorJsonRaw, true);
                 if (is_array($elementorArray)) {
-                    $layout = $this->parser->parse($elementorArray);
+                    $layout = $this->parser->parse($elementorArray, $globalColors);
                 }
             }
 

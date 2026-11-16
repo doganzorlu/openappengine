@@ -4,11 +4,39 @@ namespace App\Services\WordPress;
 
 class ElementorParser
 {
+    protected array $globalColors = [];
+
+    public function setGlobalColors(array $colors): void
+    {
+        $this->globalColors = $colors;
+    }
+
+    public function resolveColor(?string $color, ?string $globalRef = null): ?string
+    {
+        if ($globalRef && preg_match('/id=([a-zA-Z0-9_-]+)/', $globalRef, $m)) {
+            $id = $m[1];
+            if (isset($this->globalColors[$id])) {
+                return $this->globalColors[$id];
+            }
+        }
+        if ($color && !empty($this->globalColors[$color])) {
+            return $this->globalColors[$color];
+        }
+        if (!empty($color) && is_string($color) && !str_starts_with($color, 'globals/')) {
+            return $color;
+        }
+        return null;
+    }
+
     /**
      * Parse the raw Elementor JSON array into OpenAppEngine Component Tree
      */
-    public function parse(array $elementorElements): array
+    public function parse(array $elementorElements, array $globalColors = []): array
     {
+        if (!empty($globalColors)) {
+            $this->globalColors = $globalColors;
+        }
+
         $components = [];
 
         foreach ($elementorElements as $element) {
@@ -41,8 +69,28 @@ class ElementorParser
         $styles = $this->extractStyles($settings);
 
         if ($elType === 'section') {
-            $overlayColor = $settings['background_overlay_color'] ?? null;
+            $overlayColor = $this->resolveColor(
+                $settings['background_overlay_color'] ?? null,
+                $settings['__globals__']['background_overlay_color'] ?? null
+            );
             $overlayOpacity = $settings['background_overlay_opacity']['size'] ?? 0.5;
+
+            $bgColor = $this->resolveColor(
+                $settings['background_color'] ?? null,
+                $settings['__globals__']['background_color'] ?? null
+            );
+
+            $topColor = $this->resolveColor(
+                $settings['shape_divider_top_color'] ?? null,
+                $settings['__globals__']['shape_divider_top_color'] ?? null
+            ) ?? '#ffffff';
+
+            $bottomColor = $this->resolveColor(
+                $settings['shape_divider_bottom_color'] ?? null,
+                $settings['__globals__']['shape_divider_bottom_color'] ?? null
+            ) ?? '#ffffff';
+
+            $isBgVideo = ($settings['background_background'] ?? '') === 'video' || !empty($settings['background_video_link']);
 
             return [
                 'id' => $id,
@@ -50,18 +98,19 @@ class ElementorParser
                 'props' => [
                     'minHeight' => $settings['custom_height']['size'] ?? null,
                     'bgImage' => $settings['background_image']['url'] ?? null,
-                    'bgColor' => $settings['background_color'] ?? null,
+                    'bgColor' => $bgColor,
+                    'bgVideo' => $isBgVideo ? ($settings['background_video_link'] ?? null) : null,
                     'bgAttachment' => $settings['background_attachment'] ?? 'scroll',
                     'bgOverlayColor' => $overlayColor,
                     'bgOverlayOpacity' => $overlayColor ? $overlayOpacity : null,
                     'shapeDividerTop' => !empty($settings['shape_divider_top']) ? [
                         'shape' => $settings['shape_divider_top'],
-                        'color' => $settings['shape_divider_top_color'] ?? '#ffffff',
+                        'color' => $topColor,
                         'height' => $settings['shape_divider_top_height']['size'] ?? 57,
                     ] : null,
                     'shapeDividerBottom' => !empty($settings['shape_divider_bottom']) ? [
                         'shape' => $settings['shape_divider_bottom'],
-                        'color' => $settings['shape_divider_bottom_color'] ?? '#ffffff',
+                        'color' => $bottomColor,
                         'height' => $settings['shape_divider_bottom_height']['size'] ?? 61,
                     ] : null,
                     'layout' => $settings['layout'] ?? 'boxed',
@@ -75,8 +124,28 @@ class ElementorParser
         // Elementor Flexbox Container (Elementor 3.16+)
         if ($elType === 'container') {
             $bgImage = $settings['background_image']['url'] ?? $settings['background_overlay_image']['url'] ?? null;
-            $overlayColor = $settings['background_overlay_color'] ?? null;
+            $overlayColor = $this->resolveColor(
+                $settings['background_overlay_color'] ?? null,
+                $settings['__globals__']['background_overlay_color'] ?? null
+            );
             $overlayOpacity = $settings['background_overlay_opacity']['size'] ?? 0.5;
+
+            $bgColor = $this->resolveColor(
+                $settings['background_color'] ?? null,
+                $settings['__globals__']['background_color'] ?? null
+            );
+
+            $topColor = $this->resolveColor(
+                $settings['shape_divider_top_color'] ?? null,
+                $settings['__globals__']['shape_divider_top_color'] ?? null
+            ) ?? '#ffffff';
+
+            $bottomColor = $this->resolveColor(
+                $settings['shape_divider_bottom_color'] ?? null,
+                $settings['__globals__']['shape_divider_bottom_color'] ?? null
+            ) ?? '#ffffff';
+
+            $isBgVideo = ($settings['background_background'] ?? '') === 'video' || !empty($settings['background_video_link']);
 
             $minHeight = null;
             if (!empty($settings['min_height']['size'])) {
@@ -90,18 +159,19 @@ class ElementorParser
                     'props' => [
                         'minHeight' => $minHeight,
                         'bgImage' => $bgImage,
-                        'bgColor' => $settings['background_color'] ?? null,
+                        'bgColor' => $bgColor,
+                        'bgVideo' => $isBgVideo ? ($settings['background_video_link'] ?? null) : null,
                         'bgAttachment' => $settings['background_attachment'] ?? $settings['background_overlay_attachment'] ?? 'scroll',
                         'bgOverlayColor' => $overlayColor,
                         'bgOverlayOpacity' => $overlayColor ? $overlayOpacity : null,
                         'shapeDividerTop' => !empty($settings['shape_divider_top']) ? [
                             'shape' => $settings['shape_divider_top'],
-                            'color' => $settings['shape_divider_top_color'] ?? '#ffffff',
+                            'color' => $topColor,
                             'height' => $settings['shape_divider_top_height']['size'] ?? 57,
                         ] : null,
                         'shapeDividerBottom' => !empty($settings['shape_divider_bottom']) ? [
                             'shape' => $settings['shape_divider_bottom'],
-                            'color' => $settings['shape_divider_bottom_color'] ?? '#ffffff',
+                            'color' => $bottomColor,
                             'height' => $settings['shape_divider_bottom_height']['size'] ?? 61,
                         ] : null,
                         'layout' => $settings['content_width'] ?? 'boxed',
@@ -123,7 +193,7 @@ class ElementorParser
                     'flexDirection' => $settings['flex_direction'] ?? 'column',
                     'justifyContent' => $settings['flex_justify_content'] ?? 'start',
                     'alignItems' => $settings['flex_align_items'] ?? 'stretch',
-                    'bgColor' => $settings['background_color'] ?? null,
+                    'bgColor' => $bgColor,
                 ],
                 'styles' => $styles,
                 'children' => $children,
@@ -131,13 +201,17 @@ class ElementorParser
         }
 
         if ($elType === 'column') {
+            $colBg = $this->resolveColor(
+                $settings['background_color'] ?? null,
+                $settings['__globals__']['background_color'] ?? null
+            );
             return [
                 'id' => $id,
                 'type' => 'Column',
                 'props' => [
                     'width' => $settings['_column_size'] ?? 100,
                     'inlineSize' => $settings['_inline_size'] ?? null,
-                    'bgColor' => $settings['background_color'] ?? null,
+                    'bgColor' => $colBg,
                     'boxShadow' => !empty($settings['box_shadow_box_shadow_type']),
                     'animation' => $settings['animation'] ?? null,
                     'align' => $settings['align'] ?? 'left',
@@ -158,6 +232,10 @@ class ElementorParser
     {
         switch ($widgetType) {
             case 'heading':
+                $headingColor = $this->resolveColor(
+                    $settings['title_color'] ?? null,
+                    $settings['__globals__']['title_color'] ?? null
+                );
                 return [
                     'id' => $id,
                     'type' => 'Heading',
@@ -165,7 +243,7 @@ class ElementorParser
                         'text' => $settings['title'] ?? '',
                         'level' => $settings['header_size'] ?? 'h2',
                         'align' => $settings['align'] ?? 'left',
-                        'color' => $settings['title_color'] ?? null,
+                        'color' => $headingColor,
                     ],
                     'styles' => $styles,
                 ];
@@ -200,13 +278,18 @@ class ElementorParser
                     $fontSize = $settings['typography_font_size']['size'] . ($settings['typography_font_size']['unit'] ?? 'px');
                 }
 
+                $textColor = $this->resolveColor(
+                    $settings['text_color'] ?? null,
+                    $settings['__globals__']['text_color'] ?? null
+                );
+
                 return [
                     'id' => $id,
                     'type' => 'RichText',
                     'props' => [
                         'html' => $html,
                         'align' => $settings['align'] ?? 'left',
-                        'color' => $settings['text_color'] ?? null,
+                        'color' => $textColor,
                         'fontSize' => $fontSize,
                         'fontWeight' => $settings['typography_font_weight'] ?? null,
                     ],
@@ -335,6 +418,14 @@ class ElementorParser
                 ];
 
             case 'button':
+                $btnBg = $this->resolveColor(
+                    $settings['button_background_color'] ?? $settings['background_color'] ?? null,
+                    $settings['__globals__']['button_background_color'] ?? $settings['__globals__']['background_color'] ?? null
+                );
+                $btnColor = $this->resolveColor(
+                    $settings['button_text_color'] ?? $settings['text_color'] ?? null,
+                    $settings['__globals__']['button_text_color'] ?? $settings['__globals__']['text_color'] ?? null
+                );
                 return [
                     'id' => $id,
                     'type' => 'Button',
@@ -344,6 +435,8 @@ class ElementorParser
                         'target' => !empty($settings['link']['is_external']) ? '_blank' : '_self',
                         'align' => $settings['align'] ?? 'left',
                         'icon' => $settings['selected_icon']['value'] ?? null,
+                        'bgColor' => $btnBg,
+                        'color' => $btnColor,
                     ],
                     'styles' => $styles,
                 ];
@@ -397,6 +490,18 @@ class ElementorParser
                 ];
 
             case 'icon-box':
+                $iconColor = $this->resolveColor(
+                    $settings['primary_color'] ?? null,
+                    $settings['__globals__']['primary_color'] ?? null
+                );
+                $titleColor = $this->resolveColor(
+                    $settings['title_color'] ?? null,
+                    $settings['__globals__']['title_color'] ?? null
+                );
+                $descColor = $this->resolveColor(
+                    $settings['description_color'] ?? null,
+                    $settings['__globals__']['description_color'] ?? null
+                );
                 return [
                     'id' => $id,
                     'type' => 'IconBox',
@@ -405,6 +510,9 @@ class ElementorParser
                         'description' => $settings['description_text'] ?? '',
                         'icon' => $settings['selected_icon']['value'] ?? 'fas fa-star',
                         'url' => $settings['link']['url'] ?? null,
+                        'iconColor' => $iconColor,
+                        'titleColor' => $titleColor,
+                        'descColor' => $descColor,
                     ],
                     'styles' => $styles,
                 ];
@@ -584,6 +692,86 @@ class ElementorParser
                     'styles' => $styles,
                 ];
 
+            case 'theme-site-logo':
+                $imgUrl = $settings['image']['url'] ?? null;
+                $logoWidth = $settings['width']['size'] ?? $settings['space']['size'] ?? 160;
+                $unit = $settings['width']['unit'] ?? $settings['space']['unit'] ?? 'px';
+                return [
+                    'id' => $id,
+                    'type' => 'SiteLogo',
+                    'props' => [
+                        'logoUrl' => $imgUrl,
+                        'width' => is_numeric($logoWidth) ? ($logoWidth . $unit) : $logoWidth,
+                        'align' => $settings['align'] ?? 'left',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'nav-menu':
+                return [
+                    'id' => $id,
+                    'type' => 'NavMenu',
+                    'props' => [
+                        'menuSlug' => $settings['menu'] ?? 'header',
+                        'align' => $settings['align_items'] ?? $settings['align'] ?? 'right',
+                        'sticky' => !empty($settings['sticky']),
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'theme-post-title':
+                return [
+                    'id' => $id,
+                    'type' => 'Heading',
+                    'props' => [
+                        'text' => '{{post.title}}',
+                        'level' => $settings['header_size'] ?? 'h1',
+                        'align' => $settings['align'] ?? 'left',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'theme-post-featured-image':
+                return [
+                    'id' => $id,
+                    'type' => 'Image',
+                    'props' => [
+                        'url' => '{{post.featured_image}}',
+                        'align' => 'center',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'theme-post-content':
+                return [
+                    'id' => $id,
+                    'type' => 'RichText',
+                    'props' => [
+                        'html' => '{{post.content}}',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'theme-post-excerpt':
+                return [
+                    'id' => $id,
+                    'type' => 'RichText',
+                    'props' => [
+                        'html' => '{{post.excerpt}}',
+                    ],
+                    'styles' => $styles,
+                ];
+
+            case 'post-info':
+                return [
+                    'id' => $id,
+                    'type' => 'RichText',
+                    'props' => [
+                        'html' => '<div class="text-sm text-gray-500 py-2">📅 {{post.date}}</div>',
+                    ],
+                    'styles' => $styles,
+                ];
+
             default:
                 return [
                     'id' => $id,
@@ -603,10 +791,12 @@ class ElementorParser
     protected function extractStyles(array $settings): array
     {
         $styles = [];
+        $globals = $settings['__globals__'] ?? [];
 
         // 1. Background
-        if (!empty($settings['background_color'])) {
-            $styles['backgroundColor'] = $settings['background_color'];
+        $bg = $this->resolveColor($settings['background_color'] ?? null, $globals['background_color'] ?? null);
+        if (!empty($bg)) {
+            $styles['backgroundColor'] = $bg;
         }
 
         // 2. Sizing & Dimensions (Independent width & height for boxes)
@@ -639,7 +829,8 @@ class ElementorParser
         // 3. Borders
         if (!empty($settings['border_border'])) {
             $styles['borderStyle'] = $settings['border_border'];
-            $styles['borderColor'] = $settings['border_color'] ?? '#e2e8f0';
+            $borderCol = $this->resolveColor($settings['border_color'] ?? null, $globals['border_color'] ?? null) ?? '#e2e8f0';
+            $styles['borderColor'] = $borderCol;
             if (!empty($settings['border_width'])) {
                 $bw = $settings['border_width'];
                 $u = $bw['unit'] ?? 'px';
@@ -689,8 +880,12 @@ class ElementorParser
         if (!empty($settings['typography_font_family'])) {
             $styles['fontFamily'] = $settings['typography_font_family'];
         }
-        if (!empty($settings['text_color']) || !empty($settings['title_color'])) {
-            $styles['color'] = $settings['text_color'] ?? $settings['title_color'];
+        $textColor = $this->resolveColor(
+            $settings['text_color'] ?? $settings['title_color'] ?? null,
+            $globals['text_color'] ?? $globals['title_color'] ?? null
+        );
+        if (!empty($textColor)) {
+            $styles['color'] = $textColor;
         }
         if (!empty($settings['align'])) {
             $styles['textAlign'] = $settings['align'];
