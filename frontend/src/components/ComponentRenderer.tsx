@@ -26,12 +26,12 @@ const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; hei
   color,
   height = 57,
 }) => {
-  const isTop = position === 'top'
+  const isBottom = position === 'bottom'
 
   return (
     <div
       className={`absolute left-0 right-0 w-full overflow-hidden leading-none z-10 pointer-events-none ${
-        isTop ? 'top-0 rotate-180' : 'bottom-0'
+        isBottom ? '-bottom-[1px] rotate-180' : '-top-[1px]'
       }`}
       style={{ height: `${height}px` }}
     >
@@ -40,7 +40,12 @@ const MountainDivider: React.FC<{ position: 'top' | 'bottom'; color: string; hei
         viewBox="0 0 1000 100"
         preserveAspectRatio="none"
         className="relative block w-full h-full"
-        style={{ fill: color }}
+        style={{
+          fill: color,
+          width: 'calc(100% + 1.3px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
       >
         <path
           opacity="0.33"
