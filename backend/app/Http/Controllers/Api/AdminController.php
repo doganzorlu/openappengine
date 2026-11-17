@@ -152,6 +152,46 @@ class AdminController extends Controller
         return response()->json(['success' => true, 'message' => 'Sayfa silindi.']);
     }
 
+    public function updatePage(Request $request, string $siteSlug, int $pageId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $page = Page::where('site_id', $site->id)->where('id', $pageId)->firstOrFail();
+
+        $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'slug' => 'nullable|string|max:255',
+            'is_home' => 'nullable|boolean',
+            'seo_title' => 'nullable|string|max:255',
+            'seo_description' => 'nullable|string|max:500',
+        ]);
+
+        if ($request->boolean('is_home')) {
+            Page::where('site_id', $site->id)->where('id', '!=', $page->id)->update(['is_home' => false]);
+            $page->is_home = true;
+        } elseif ($request->has('is_home')) {
+            $page->is_home = false;
+        }
+
+        if ($request->filled('title')) {
+            $page->title = $request->input('title');
+        }
+        if ($request->filled('slug')) {
+            $page->slug = Str::slug($request->input('slug'));
+        }
+
+        $seo = $page->seo ?? [];
+        if ($request->has('seo_title')) {
+            $seo['title'] = $request->input('seo_title');
+        }
+        if ($request->has('seo_description')) {
+            $seo['description'] = $request->input('seo_description');
+        }
+        $page->seo = $seo;
+        $page->save();
+
+        return response()->json(['success' => true, 'page' => $page, 'message' => 'Sayfa ayarları güncellendi.']);
+    }
+
     // ==========================================
     // 2. POSTS / BLOG CRUD
     // ==========================================
@@ -221,6 +261,81 @@ class AdminController extends Controller
             ->paginate(30);
 
         return response()->json(['success' => true, 'submissions' => $submissions]);
+    }
+
+    public function createForm(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'slug' => 'nullable|string|max:150',
+            'recipient_email' => 'nullable|email',
+            'fields' => 'nullable|array',
+        ]);
+
+        $slug = $request->filled('slug') ? Str::slug($request->input('slug')) : Str::slug($request->input('name'));
+        $defaultFields = [
+            ['name' => 'name', 'label' => 'Adınız Soyadınız', 'type' => 'text', 'required' => true],
+            ['name' => 'email', 'label' => 'E-Posta Adresiniz', 'type' => 'email', 'required' => true],
+            ['name' => 'phone', 'label' => 'Telefon Numaranız', 'type' => 'tel', 'required' => false],
+            ['name' => 'message', 'label' => 'Mesajınız', 'type' => 'textarea', 'required' => true],
+        ];
+
+        $form = Form::create([
+            'site_id' => $site->id,
+            'name' => $request->input('name'),
+            'slug' => $slug ?: 'iletisim-formu',
+            'fields' => $request->input('fields', $defaultFields),
+            'settings' => [
+                'recipient_email' => $request->input('recipient_email', ''),
+            ],
+        ]);
+
+        return response()->json(['success' => true, 'form' => $form]);
+    }
+
+    public function updateForm(Request $request, string $siteSlug, int $formId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $form = Form::where('site_id', $site->id)->where('id', $formId)->firstOrFail();
+
+        if ($request->filled('name')) {
+            $form->name = $request->input('name');
+        }
+        if ($request->filled('slug')) {
+            $form->slug = Str::slug($request->input('slug'));
+        }
+        if ($request->has('fields') && is_array($request->input('fields'))) {
+            $form->fields = $request->input('fields');
+        }
+        if ($request->has('recipient_email')) {
+            $settings = $form->settings ?? [];
+            $settings['recipient_email'] = $request->input('recipient_email');
+            $form->settings = $settings;
+        }
+        $form->save();
+
+        return response()->json(['success' => true, 'form' => $form]);
+    }
+
+    public function deleteForm(Request $request, string $siteSlug, int $formId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'admin');
+        $form = Form::where('site_id', $site->id)->where('id', $formId)->firstOrFail();
+        FormSubmission::where('form_id', $form->id)->delete();
+        $form->delete();
+
+        return response()->json(['success' => true, 'message' => 'Form silindi.']);
+    }
+
+    public function deleteSubmission(Request $request, string $siteSlug, int $submissionId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $sub = FormSubmission::where('site_id', $site->id)->where('id', $submissionId)->firstOrFail();
+        $sub->delete();
+
+        return response()->json(['success' => true, 'message' => 'İleti silindi.']);
     }
 
     // ==========================================

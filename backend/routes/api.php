@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function () {
             // Pages
             Route::get('/pages', [AdminController::class, 'listPages']);
             Route::post('/pages', [AdminController::class, 'createPage']);
+            Route::put('/pages/{pageId}', [AdminController::class, 'updatePage']);
             Route::delete('/pages/{pageId}', [AdminController::class, 'deletePage']);
 
             // Posts / Blog
@@ -61,7 +62,11 @@ Route::prefix('v1')->group(function () {
 
             // Forms & Submissions
             Route::get('/forms', [AdminController::class, 'listForms']);
+            Route::post('/forms', [AdminController::class, 'createForm']);
+            Route::put('/forms/{formId}', [AdminController::class, 'updateForm']);
+            Route::delete('/forms/{formId}', [AdminController::class, 'deleteForm']);
             Route::get('/submissions', [AdminController::class, 'listSubmissions']);
+            Route::delete('/submissions/{submissionId}', [AdminController::class, 'deleteSubmission']);
 
             // Media / Gallery
             Route::get('/media', [AdminController::class, 'listMedia']);
