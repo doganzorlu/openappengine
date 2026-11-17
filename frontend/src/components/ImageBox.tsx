@@ -43,7 +43,7 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
         isMinimal
           ? 'p-4 bg-transparent text-white hover:scale-105'
           : isIconCard
-          ? 'p-4 bg-transparent hover:-translate-y-1'
+          ? 'p-6 bg-white rounded-2xl shadow-sm border border-gray-100/80 hover:shadow-xl hover:-translate-y-1.5 w-full'
           : 'p-5 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1'
       }`}
     >
@@ -55,11 +55,11 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
 
       {normImageUrl && (
         <div
-          className={`overflow-hidden mb-3 flex items-center justify-center transition-transform duration-300 ${
+          className={`overflow-hidden mb-4 flex items-center justify-center transition-transform duration-300 ${
             isMinimal
               ? 'w-28 h-28 sm:w-36 sm:h-36 p-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 group-hover:border-white/40 shadow-lg'
               : isIconCard
-              ? 'w-28 h-28 sm:w-32 sm:h-32 mx-auto'
+              ? 'w-24 h-24 sm:w-28 sm:h-28 mx-auto p-2 bg-blue-50/50 rounded-2xl border border-blue-100/60 group-hover:scale-105 shadow-sm'
               : isPosterCard
               ? 'w-full aspect-[3/4] bg-gray-50 rounded-lg p-1'
               : 'w-full aspect-[4/3] bg-gray-50 rounded-xl p-2'
@@ -68,15 +68,15 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
           <img
             src={normImageUrl}
             alt={title || description}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain"
             loading="lazy"
           />
         </div>
       )}
 
-      <div className="flex-1 flex flex-col justify-center">
+      <div className="flex-1 flex flex-col justify-center w-full">
         {!titleTop && title ? (
-          <h3 className="text-base sm:text-lg font-extrabold text-[#023E8A] group-hover:text-[#0077B6] transition mb-1.5">
+          <h3 className="text-sm sm:text-base font-extrabold text-[#023E8A] group-hover:text-[#0077B6] transition mb-1.5 uppercase tracking-wide">
             {title}
           </h3>
         ) : !title && description ? (
@@ -90,7 +90,7 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
         ) : null}
 
         {title && description && (
-          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
+          <p className="text-gray-500 text-xs leading-relaxed line-clamp-3">
             {description}
           </p>
         )}

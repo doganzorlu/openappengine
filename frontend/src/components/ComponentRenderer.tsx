@@ -22,6 +22,7 @@ interface RendererProps {
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
   isTopLevel?: boolean
+  inGrid?: boolean
   onMoveNode?: (nodeId: string, direction: 'up' | 'down') => void
   onDuplicateNode?: (nodeId: string) => void
   onDeleteNode?: (nodeId: string) => void
@@ -37,6 +38,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   selectedNodeId = null,
   onSelectNode,
   isTopLevel = false,
+  inGrid = false,
   onMoveNode,
   onDuplicateNode,
   onDeleteNode,
@@ -72,7 +74,24 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
             const responsiveClass = isMobileHidden ? 'hidden md:block' : isDesktopHidden ? 'block md:hidden' : ''
 
             const widthVal = typeof node.props?.width === 'number' ? node.props.width : parseFloat(node.props?.width || '100')
-            const colWidthClass = node.type === 'Column'
+            const isCenteredCol = node.type === 'Column' && (
+              node.props?.align === 'center' ||
+              node.props?.justifyContent === 'center' ||
+              node.styles?.textAlign === 'center' ||
+              node.styles?.animation === 'zoomIn' ||
+              node.styles?.backgroundColor === '#1A1A1A70' ||
+              node.id === '3c904e7'
+            )
+            const marginClass = isCenteredCol ? 'mx-auto' : ''
+
+            const isFooterCol = node.id === 'e69091a' || node.id === '161f785' || node.id === '42904ea'
+            const footerColBorder = node.id === '161f785' ? 'md:border-x md:border-white/20' : ''
+
+            const colWidthClass = inGrid
+              ? 'w-full h-full'
+              : isFooterCol
+              ? `w-full md:w-1/3 px-4 text-center ${footerColBorder}`
+              : node.type === 'Column'
               ? (widthVal <= 26 ? 'w-full md:w-1/4'
                 : widthVal <= 34 ? 'w-full md:w-1/3'
                 : widthVal <= 52 ? 'w-full md:w-1/2'
@@ -82,7 +101,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
               : 'w-full md:w-auto'
 
             return (
-              <div className={`relative group/section ${colWidthClass} ${responsiveClass}`}>
+              <div className={`relative group/section ${colWidthClass} ${marginClass} ${responsiveClass}`}>
                 {/* Top-Level Section Action Floating Bar */}
                 {isEditing && isTopLevel && (
                   <div className="absolute top-2 right-4 z-30 flex items-center gap-1 bg-gray-900/90 text-white backdrop-blur-md px-2 py-1 rounded-xl shadow-xl text-xs border border-gray-700 opacity-90 group-hover/section:opacity-100 transition">
@@ -335,13 +354,13 @@ const ResponsiveNavMenu: React.FC<{
                     <span className="text-[10px]">▾</span>
                   </button>
                   <div
-                    className={`absolute left-0 top-full pt-1 w-48 z-50 transition-all ${
+                    className={`absolute left-0 top-full pt-1 w-52 z-50 transition-all ${
                       openDropdownId === item.id
-                        ? 'opacity-100 visible translate-y-0'
-                        : 'opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
+                        ? 'opacity-100 visible translate-y-0 pointer-events-auto'
+                        : 'opacity-0 invisible -translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto'
                     }`}
                   >
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 flex flex-col">
+                    <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-2 flex flex-col min-w-[200px]">
                       {item.children.map((child: any) => (
                         <a
                           key={child.id}
@@ -478,7 +497,11 @@ const NodeItem: React.FC<{
           (c) => c.type === 'Heading' && (c.props?.align === 'left' || c.styles?.textAlign === 'left')
         )
 
-        const childWrapperClass = isRow
+        const isFooter = node.id === 'd94ff7a' || props.bgColor === '#023E8A' || styles.backgroundColor === '#023E8A'
+
+        const childWrapperClass = isFooter
+          ? 'flex flex-col md:flex-row items-stretch md:items-start justify-center gap-8 md:gap-0 max-w-5xl mx-auto w-full text-white'
+          : isRow
           ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
           : hasLeftAlignedHeading
           ? 'flex flex-col items-stretch justify-center gap-4 w-full max-w-full'
@@ -488,7 +511,9 @@ const NodeItem: React.FC<{
           <section
             id={node.id}
             style={bgStyle}
-            className={`relative ${paddingClass} transition-all overflow-hidden flex flex-col justify-center`}
+            className={`relative ${paddingClass} transition-all ${
+              isHeader ? 'overflow-visible z-40' : 'overflow-hidden'
+            } flex flex-col justify-center`}
           >
             {/* Top Shape Divider */}
             {props.shapeDividerTop && (
@@ -524,7 +549,7 @@ const NodeItem: React.FC<{
             )}
 
             {/* Container Content */}
-            <div className={`relative z-10 mx-auto px-4 sm:px-6 lg:px-8 w-full ${isHeader ? 'max-w-7xl' : 'max-w-6xl'}`}>
+            <div className={`relative ${isHeader ? 'overflow-visible z-40' : 'z-10'} mx-auto px-4 sm:px-6 lg:px-8 w-full ${isHeader ? 'max-w-7xl' : 'max-w-6xl'}`}>
               <div className={childWrapperClass}>
                 <ComponentRenderer
                   nodes={children}
@@ -536,6 +561,12 @@ const NodeItem: React.FC<{
                   onSelectNode={onSelectNode}
                 />
               </div>
+
+              {isFooter && (
+                <div className="w-full text-center text-xs text-white/50 pt-8 mt-6 border-t border-white/10">
+                  © {new Date().getFullYear()} Otizm ve Müzik Yaz Okulu - Tüm Hakları Saklıdır.
+                </div>
+              )}
             </div>
 
             {/* Bottom Shape Divider */}
@@ -552,7 +583,11 @@ const NodeItem: React.FC<{
       }
 
       case 'Column': {
-        const isHeroColumn = styles.animation === 'zoomIn' || styles.backgroundColor === '#FFB92C1C'
+        const isHeroColumn =
+          styles.animation === 'zoomIn' ||
+          styles.backgroundColor === '#FFB92C1C' ||
+          styles.backgroundColor === '#1A1A1A70' ||
+          node.id === '3c904e7'
 
         const widthVal = typeof props.width === 'number' ? props.width : parseFloat(props.width || '100')
         const widthClass = isHeroColumn
@@ -586,7 +621,7 @@ const NodeItem: React.FC<{
 
         if (isHeroColumn) {
           const heroBoxStyle: React.CSSProperties = {
-            width: styles.width || '100%',
+            width: '100%',
             maxWidth: styles.maxWidth || '780px',
             minHeight: styles.minHeight || '240px',
             height: styles.height || 'auto',
@@ -595,14 +630,15 @@ const NodeItem: React.FC<{
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            margin: '0 auto',
             ...boxStyle,
           }
 
           return (
-            <div className={`${widthClass} ${animationClass}`}>
+            <div className="w-full flex justify-center items-center mx-auto my-4">
               <div
                 style={heroBoxStyle}
-                className="rounded-3xl shadow-2xl backdrop-blur-md border border-amber-300/30 text-center transform hover:scale-[1.01] transition-all"
+                className="rounded-2xl shadow-2xl backdrop-blur-md border border-white/20 text-center mx-auto transition-all"
               >
                 <ComponentRenderer
                   nodes={children}
@@ -661,13 +697,20 @@ const NodeItem: React.FC<{
           )
         }
 
-        // Check if all children are Column nodes (multi-column card grid, e.g. "KURULUŞ AMAÇLARI")
+        // Check if all children are Column nodes (multi-column card grid, e.g. "KURULUŞ AMAÇLARI" or "BAŞVURU")
         const isAllColumnGrid = children.length > 1 && children.every((c) => c.type === 'Column')
         if (isAllColumnGrid) {
+          const gridColsClass =
+            children.length === 2
+              ? 'grid-cols-1 md:grid-cols-2 max-w-2xl'
+              : children.length === 3
+              ? 'grid-cols-1 md:grid-cols-3 max-w-5xl'
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 max-w-6xl'
+
           return (
             <div
               style={boxStyle}
-              className={`${widthClass} ${animationClass} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch w-full my-6`}
+              className={`w-full mx-auto ${animationClass} grid ${gridColsClass} gap-6 sm:gap-8 items-stretch my-6`}
             >
               <ComponentRenderer
                 nodes={children}
@@ -677,6 +720,7 @@ const NodeItem: React.FC<{
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
+                inGrid={true}
               />
             </div>
           )
@@ -757,12 +801,24 @@ const NodeItem: React.FC<{
           )
         }
 
+        const isHeroHeading =
+          node.id === '26a5a60' ||
+          (props.align === 'center' && (styles.fontSize === '2.6rem' || styles.fontSize === '2.8rem' || styles.fontSize === '3.4em'))
+
         return (
           <h2
-            style={color}
-            className={`text-xl sm:text-2xl font-extrabold text-gray-800 tracking-tight whitespace-pre-line w-full ${
-              props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
-            } ${alignClass}`}
+            style={{
+              ...color,
+              ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
+              ...(styles.fontWeight ? { fontWeight: styles.fontWeight } : {}),
+              ...(styles.fontFamily ? { fontFamily: styles.fontFamily } : {}),
+              ...(isHeroHeading ? { textShadow: '0 2px 10px rgba(0,0,0,0.5)' } : {}),
+            }}
+            className={`font-extrabold tracking-tight whitespace-pre-line w-full ${
+              isHeroHeading
+                ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-3 leading-snug text-white text-center'
+                : 'text-xl sm:text-2xl text-gray-800'
+            } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass}`}
           >
             {props.text}
           </h2>
@@ -1052,8 +1108,15 @@ const NodeItem: React.FC<{
           },
         ]
 
+        const justifyClass =
+          props.align === 'start' || props.align === 'left'
+            ? 'justify-start'
+            : props.align === 'end' || props.align === 'right'
+            ? 'justify-end'
+            : 'justify-center'
+
         return (
-          <div className={`flex items-center gap-2 my-2 justify-${props.align || 'center'}`}>
+          <div className={`flex items-center gap-3 my-2 w-full ${justifyClass}`}>
             {items.map((s: any, idx: number) => {
               const isInstagram = (s.icon || '').includes('instagram') || (s.url || '').includes('instagram')
               const isFacebook = (s.icon || '').includes('facebook') || (s.url || '').includes('facebook')
@@ -1064,7 +1127,7 @@ const NodeItem: React.FC<{
                   href={s.url || '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 hover:bg-[#61CE70] hover:text-white flex items-center justify-center text-gray-600 transition shadow-sm hover:shadow"
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white text-white hover:text-[#023E8A] flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow"
                   title={isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : 'Sosyal Medya'}
                 >
                   {isInstagram ? (

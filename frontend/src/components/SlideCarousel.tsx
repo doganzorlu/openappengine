@@ -32,6 +32,7 @@ export const SlideCarousel: React.FC<SlideCarouselProps> = ({
 
   const effectiveSlides = isMobile ? 1 : slidesToShow
   const maxIndex = Math.max(0, slides.length - effectiveSlides)
+  const isCentered = !isMobile && slides.length < effectiveSlides
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1))
@@ -45,16 +46,26 @@ export const SlideCarousel: React.FC<SlideCarouselProps> = ({
     <div className="relative w-full my-8 group">
       <div className="overflow-hidden p-2">
         <div
-          className="flex transition-transform duration-500 ease-out gap-6"
-          style={{
-            transform: `translateX(-${currentIndex * (100 / effectiveSlides)}%)`,
-          }}
+          className={`flex transition-transform duration-500 ease-out gap-6 sm:gap-8 ${
+            isCentered ? 'justify-center items-stretch' : ''
+          }`}
+          style={
+            isCentered
+              ? undefined
+              : {
+                  transform: `translateX(-${currentIndex * (100 / effectiveSlides)}%)`,
+                }
+          }
         >
           {slides.map((slide) => (
             <div
               key={slide.id}
-              className="flex-shrink-0"
-              style={{ width: `calc(${100 / effectiveSlides}% - 1rem)` }}
+              className={`${isCentered ? 'w-full max-w-[280px] sm:max-w-[320px] flex-shrink-0' : 'flex-shrink-0'}`}
+              style={
+                isCentered
+                  ? undefined
+                  : { width: `calc(${100 / effectiveSlides}% - 1rem)` }
+              }
             >
               <ComponentRenderer
                 nodes={[slide]}

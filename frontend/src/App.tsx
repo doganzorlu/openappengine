@@ -538,7 +538,7 @@ export function App() {
 
       {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
       {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
-        <header className="w-full bg-white shadow-sm border-b border-gray-100 z-30">
+        <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
           <ComponentRenderer
             nodes={site.settings.header_layout}
             siteSlug={site.slug}
