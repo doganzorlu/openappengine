@@ -276,8 +276,26 @@ const ShapeDivider: React.FC<{
   )
 }
 
-const ResponsiveNavMenu: React.FC<{ menuItems: any[]; styles?: React.CSSProperties }> = ({ menuItems, styles }) => {
+const ResponsiveNavMenu: React.FC<{
+  menuItems: any[]
+  showDivider?: boolean
+  styles?: React.CSSProperties
+}> = ({ menuItems, showDivider = false, styles }) => {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [openDropdownId, setOpenDropdownId] = React.useState<number | string | null>(null)
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, url?: string) => {
+    if (url && url.includes('post=')) {
+      e.preventDefault()
+      const params = new URLSearchParams(url.split('?')[1] || '')
+      const postSlug = params.get('post')
+      if (postSlug) {
+        window.dispatchEvent(new CustomEvent('openappengine:open-post', { detail: { slug: postSlug } }))
+      }
+      setIsOpen(false)
+      setOpenDropdownId(null)
+    }
+  }
 
   return (
     <div className="relative w-full sm:w-auto" style={styles}>
@@ -286,7 +304,7 @@ const ResponsiveNavMenu: React.FC<{ menuItems: any[]; styles?: React.CSSProperti
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:text-green-600 hover:border-green-500 font-medium text-xs flex items-center gap-1.5 shadow-sm transition bg-white"
+          className="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:text-blue-600 hover:border-blue-500 font-medium text-xs flex items-center gap-1.5 shadow-sm transition bg-white"
         >
           <span>{isOpen ? '✕' : '☰'}</span>
           <span>Menü</span>
@@ -294,32 +312,96 @@ const ResponsiveNavMenu: React.FC<{ menuItems: any[]; styles?: React.CSSProperti
       </div>
 
       {/* Desktop Menu */}
-      <nav className="hidden sm:flex flex-nowrap items-center gap-2 sm:gap-3 lg:gap-4 whitespace-nowrap">
-        {menuItems.map((item: any) => (
-          <a
-            key={item.id}
-            href={item.url}
-            target={item.target || '_self'}
-            className="text-xs sm:text-sm font-semibold text-[#7A7A7A] hover:text-[#61CE70] transition-colors duration-200 py-1"
-          >
-            {item.title}
-          </a>
-        ))}
+      <nav className="hidden sm:flex flex-nowrap items-center gap-1.5 lg:gap-2.5 whitespace-nowrap">
+        {menuItems.map((item: any, idx: number) => {
+          const hasChildren = Array.isArray(item.children) && item.children.length > 0
+          return (
+            <React.Fragment key={item.id || idx}>
+              {showDivider && idx > 0 && (
+                <span className="text-gray-300 select-none text-xs px-0.5">|</span>
+              )}
+              {hasChildren ? (
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setOpenDropdownId(item.id)}
+                  onMouseLeave={() => setOpenDropdownId(null)}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : item.id)}
+                    className="text-xs sm:text-[13px] font-semibold text-[#333333] hover:text-[#0077B6] transition-colors duration-200 py-1.5 px-1.5 inline-flex items-center gap-1"
+                  >
+                    <span>{item.title}</span>
+                    <span className="text-[10px]">▾</span>
+                  </button>
+                  <div
+                    className={`absolute left-0 top-full pt-1 w-48 z-50 transition-all ${
+                      openDropdownId === item.id
+                        ? 'opacity-100 visible translate-y-0'
+                        : 'opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
+                    }`}
+                  >
+                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 flex flex-col">
+                      {item.children.map((child: any) => (
+                        <a
+                          key={child.id}
+                          href={child.url || '#'}
+                          target={child.target || '_self'}
+                          onClick={(e) => handleLinkClick(e, child.url)}
+                          className="px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0077B6] transition text-left"
+                        >
+                          {child.title}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  href={item.url}
+                  target={item.target || '_self'}
+                  onClick={(e) => handleLinkClick(e, item.url)}
+                  className="text-xs sm:text-[13px] font-semibold text-[#333333] hover:text-[#0077B6] transition-colors duration-200 py-1.5 px-1.5"
+                >
+                  {item.title}
+                </a>
+              )}
+            </React.Fragment>
+          )
+        })}
       </nav>
 
       {/* Mobile Dropdown Menu */}
       {isOpen && (
-        <div className="sm:hidden flex flex-col bg-white border border-gray-100 rounded-xl shadow-xl p-3 mt-2 gap-2 w-full z-40 text-center">
+        <div className="sm:hidden flex flex-col bg-white border border-gray-100 rounded-xl shadow-xl p-3 mt-2 gap-1.5 w-full z-40 text-center">
           {menuItems.map((item: any) => (
-            <a
-              key={item.id}
-              href={item.url}
-              onClick={() => setIsOpen(false)}
-              target={item.target || '_self'}
-              className="text-xs font-semibold text-[#7A7A7A] hover:text-[#61CE70] hover:bg-gray-50 rounded-lg py-2 transition"
-            >
-              {item.title}
-            </a>
+            <React.Fragment key={item.id}>
+              <a
+                href={item.url}
+                onClick={(e) => {
+                  handleLinkClick(e, item.url)
+                  setIsOpen(false)
+                }}
+                target={item.target || '_self'}
+                className="text-xs font-semibold text-gray-700 hover:text-[#0077B6] hover:bg-gray-50 rounded-lg py-2 transition"
+              >
+                {item.title}
+              </a>
+              {Array.isArray(item.children) &&
+                item.children.map((child: any) => (
+                  <a
+                    key={child.id}
+                    href={child.url}
+                    onClick={(e) => {
+                      handleLinkClick(e, child.url)
+                      setIsOpen(false)
+                    }}
+                    className="text-[11px] font-medium text-gray-500 hover:text-[#0077B6] py-1.5 pl-4"
+                  >
+                    ↳ {child.title}
+                  </a>
+                ))}
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -375,8 +457,10 @@ const NodeItem: React.FC<{
         const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
         const isHeader = children.some(
           (c) =>
-            c.type === 'Column' &&
-            c.children?.some((sc) => sc.type === 'SiteLogo' || sc.type === 'NavMenu')
+            c.type === 'SiteLogo' ||
+            c.type === 'NavMenu' ||
+            (c.type === 'Column' &&
+              c.children?.some((sc) => sc.type === 'SiteLogo' || sc.type === 'NavMenu'))
         )
         const isSpacerOnly =
           children.length === 1 &&
@@ -388,10 +472,16 @@ const NodeItem: React.FC<{
           ? 'py-2 sm:py-3'
           : styles.padding
           ? ''
-          : 'py-12 md:py-20'
+          : 'py-10 md:py-14'
+
+        const hasLeftAlignedHeading = children.some(
+          (c) => c.type === 'Heading' && (c.props?.align === 'left' || c.styles?.textAlign === 'left')
+        )
 
         const childWrapperClass = isRow
           ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
+          : hasLeftAlignedHeading
+          ? 'flex flex-col items-stretch justify-center gap-4 w-full max-w-full'
           : 'flex flex-col items-center justify-center gap-4 w-full max-w-full text-center'
 
         return (
@@ -528,27 +618,6 @@ const NodeItem: React.FC<{
           )
         }
 
-        // Check if all children are Column nodes (multi-column card grid, e.g. "KURULUŞ AMAÇLARI")
-        const isAllColumnGrid = children.length > 1 && children.every((c) => c.type === 'Column')
-        if (isAllColumnGrid) {
-          return (
-            <div
-              style={boxStyle}
-              className={`${widthClass} ${animationClass} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch w-full my-6`}
-            >
-              <ComponentRenderer
-                nodes={children}
-                siteSlug={siteSlug}
-                site={site}
-                menus={menus}
-                isEditing={isEditing}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={onSelectNode}
-              />
-            </div>
-          )
-        }
-
         const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
         if (isRow) {
           const isImageBoxGrid = children.length > 0 && children.every((c) => c.type === 'ImageBox')
@@ -576,8 +645,29 @@ const NodeItem: React.FC<{
             <div
               style={boxStyle}
               className={`${widthClass} ${animationClass} flex flex-col md:flex-row items-center ${
-                isHeaderRight ? 'justify-end gap-6' : 'justify-between gap-4'
-              } w-full`}
+                isHeaderRight ? 'justify-end gap-6' : 'justify-between gap-6'
+              } w-full my-2`}
+            >
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                site={site}
+                menus={menus}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+              />
+            </div>
+          )
+        }
+
+        // Check if all children are Column nodes (multi-column card grid, e.g. "KURULUŞ AMAÇLARI")
+        const isAllColumnGrid = children.length > 1 && children.every((c) => c.type === 'Column')
+        if (isAllColumnGrid) {
+          return (
+            <div
+              style={boxStyle}
+              className={`${widthClass} ${animationClass} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch w-full my-6`}
             >
               <ComponentRenderer
                 nodes={children}
@@ -658,7 +748,9 @@ const NodeItem: React.FC<{
           return (
             <h1
               style={color}
-              className={`text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight ${alignClass}`}
+              className={`text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight w-full ${
+                props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
+              } ${alignClass}`}
             >
               {props.text}
             </h1>
@@ -668,7 +760,9 @@ const NodeItem: React.FC<{
         return (
           <h2
             style={color}
-            className={`text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight ${alignClass}`}
+            className={`text-xl sm:text-2xl font-extrabold text-gray-800 tracking-tight whitespace-pre-line w-full ${
+              props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
+            } ${alignClass}`}
           >
             {props.text}
           </h2>
@@ -782,6 +876,8 @@ const NodeItem: React.FC<{
             imageUrl={props.imageUrl}
             url={props.url}
             siteSlug={siteSlug}
+            aspectRatio={props.aspectRatio}
+            titleTop={props.titleTop}
           />
         )
       }
@@ -832,7 +928,8 @@ const NodeItem: React.FC<{
           logoUrl = '/storage/sites/otizmkonfederasyonu/media/2024/02/cropped-konfederasyon_logo.png'
         }
         logoUrl = normalizeMediaUrl(logoUrl, siteSlug)
-        const logoWidth = props.width || '89px'
+        const rawWidth = String(props.width || '89px')
+        const effectiveMaxWidth = rawWidth.includes('%') ? '240px' : rawWidth
 
         return (
           <div className="flex items-center" style={{ ...styles, width: 'auto' }}>
@@ -841,8 +938,8 @@ const NodeItem: React.FC<{
                 <img
                   src={logoUrl}
                   alt={site?.name || siteSlug}
-                  className="h-14 sm:h-16 w-auto object-contain"
-                  style={{ maxWidth: logoWidth || '96px', maxHeight: '72px' }}
+                  className="h-12 sm:h-14 w-auto object-contain"
+                  style={{ maxWidth: effectiveMaxWidth, maxHeight: '64px' }}
                 />
               ) : (
                 <span className="text-2xl font-black tracking-tight text-gray-900">{site?.name || siteSlug}</span>
@@ -865,7 +962,13 @@ const NodeItem: React.FC<{
                 { id: 6, title: 'İletişim', url: '#contact' },
               ]
 
-        return <ResponsiveNavMenu menuItems={menuItems} styles={styles} />
+        return (
+          <ResponsiveNavMenu
+            menuItems={menuItems}
+            showDivider={Boolean(props.showDivider || siteSlug === 'otizmuzikokulu')}
+            styles={styles}
+          />
+        )
       }
 
       case 'Accordion': {
@@ -1002,9 +1105,17 @@ const NodeItem: React.FC<{
       case 'Image': {
         const imgStyle: React.CSSProperties = {}
         if (styles.boxShadow) imgStyle.boxShadow = styles.boxShadow
+        if (props.maxWidth) imgStyle.maxWidth = props.maxWidth
+
+        const justifyClass =
+          props.align === 'right'
+            ? 'justify-end'
+            : props.align === 'left'
+            ? 'justify-start'
+            : 'justify-center'
 
         return (
-          <div className={`flex justify-${props.align || 'center'} my-3 w-full`}>
+          <div className={`flex ${justifyClass} my-3 w-full`}>
             <img
               src={normalizeMediaUrl(props.url, siteSlug)}
               alt={props.alt || ''}

@@ -16,6 +16,8 @@ interface ImageBoxProps {
   imageUrl?: string
   url?: string
   siteSlug?: string
+  aspectRatio?: 'poster' | 'icon' | 'default'
+  titleTop?: boolean
   styles?: React.CSSProperties
 }
 
@@ -25,26 +27,42 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
   imageUrl,
   url,
   siteSlug = 'otizmkonfederasyonu',
+  aspectRatio = 'default',
+  titleTop = false,
   styles = {},
 }) => {
   const normImageUrl = normalizeMediaUrl(imageUrl, siteSlug)
   const isMinimal = !title && Boolean(description)
+  const isIconCard = aspectRatio === 'icon'
+  const isPosterCard = aspectRatio === 'poster'
 
   const content = (
     <div
       style={styles}
-      className={`flex flex-col items-center text-center p-4 transition-all duration-300 group h-full justify-between ${
+      className={`flex flex-col items-center text-center transition-all duration-300 group h-full justify-between ${
         isMinimal
-          ? 'bg-transparent text-white hover:scale-105'
-          : 'bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1'
+          ? 'p-4 bg-transparent text-white hover:scale-105'
+          : isIconCard
+          ? 'p-4 bg-transparent hover:-translate-y-1'
+          : 'p-5 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1'
       }`}
     >
+      {titleTop && title && (
+        <h3 className="text-base sm:text-lg font-extrabold text-[#023E8A] group-hover:text-[#0077B6] transition mb-3">
+          {title}
+        </h3>
+      )}
+
       {normImageUrl && (
         <div
-          className={`overflow-hidden mb-3 flex items-center justify-center p-2 transition-transform duration-300 ${
+          className={`overflow-hidden mb-3 flex items-center justify-center transition-transform duration-300 ${
             isMinimal
-              ? 'w-28 h-28 sm:w-36 sm:h-36 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 group-hover:border-white/40 shadow-lg'
-              : 'w-full aspect-[4/3] bg-gray-50 rounded-xl'
+              ? 'w-28 h-28 sm:w-36 sm:h-36 p-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 group-hover:border-white/40 shadow-lg'
+              : isIconCard
+              ? 'w-28 h-28 sm:w-32 sm:h-32 mx-auto'
+              : isPosterCard
+              ? 'w-full aspect-[3/4] bg-gray-50 rounded-lg p-1'
+              : 'w-full aspect-[4/3] bg-gray-50 rounded-xl p-2'
           }`}
         >
           <img
@@ -55,12 +73,13 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
           />
         </div>
       )}
+
       <div className="flex-1 flex flex-col justify-center">
-        {title ? (
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition mb-2">
+        {!titleTop && title ? (
+          <h3 className="text-base sm:text-lg font-extrabold text-[#023E8A] group-hover:text-[#0077B6] transition mb-1.5">
             {title}
           </h3>
-        ) : description ? (
+        ) : !title && description ? (
           <h4
             className={`text-sm sm:text-base font-bold transition leading-snug ${
               isMinimal ? 'text-white' : 'text-gray-800 group-hover:text-purple-600'
@@ -80,8 +99,24 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
   )
 
   if (url) {
+    const isExternal = url.startsWith('http://') || url.startsWith('https://')
     return (
-      <a href={url} className="block h-full">
+      <a
+        href={url}
+        target={isExternal ? '_blank' : '_self'}
+        rel={isExternal ? 'noopener noreferrer' : undefined}
+        onClick={(e) => {
+          if (url.includes('post=')) {
+            e.preventDefault()
+            const params = new URLSearchParams(url.split('?')[1] || '')
+            const postSlug = params.get('post')
+            if (postSlug) {
+              window.dispatchEvent(new CustomEvent('openappengine:open-post', { detail: { slug: postSlug } }))
+            }
+          }
+        }}
+        className="block h-full"
+      >
         {content}
       </a>
     )

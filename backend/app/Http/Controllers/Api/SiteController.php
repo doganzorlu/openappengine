@@ -74,16 +74,27 @@ class SiteController extends Controller
                 'theme_config' => $site->theme_config,
             ],
             'menus' => $site->menus->map(function ($menu) {
+                $allItems = $menu->items;
+                $topItems = $allItems->filter(fn($i) => empty($i->parent_id))->values();
                 return [
                     'id' => $menu->id,
                     'name' => $menu->name,
                     'location' => $menu->location,
-                    'items' => $menu->items->map(function ($item) {
+                    'items' => $topItems->map(function ($item) use ($allItems) {
+                        $children = $allItems->where('parent_id', $item->id)->values()->map(function ($child) {
+                            return [
+                                'id' => $child->id,
+                                'title' => $child->title,
+                                'url' => $child->url,
+                                'target' => $child->target,
+                            ];
+                        });
                         return [
                             'id' => $item->id,
                             'title' => $item->title,
                             'url' => $item->url,
                             'target' => $item->target,
+                            'children' => $children,
                         ];
                     }),
                 ];

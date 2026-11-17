@@ -48,6 +48,7 @@ export function App() {
   const [page, setPage] = useState<PageData | null>(null)
   const [posts, setPosts] = useState<any[]>([])
   const [activePost, setActivePost] = useState<any | null>(null)
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -99,6 +100,7 @@ export function App() {
         const siteData = await siteRes.json()
         setSite(siteData.site)
         setMenus(siteData.menus || [])
+        setIsPopupOpen(Boolean(siteData.site?.settings?.popup?.enabled))
         const activeSlug = siteData.site.slug
         if (!currentSlug) {
           setCurrentSlug(activeSlug)
@@ -165,6 +167,30 @@ export function App() {
 
     loadData()
   }, [currentSlug, currentPageSlug])
+
+  // Listen to custom open-post events from cards and nav menus
+  useEffect(() => {
+    const handleOpenPost = async (e: any) => {
+      const slug = e.detail?.slug
+      if (!slug) return
+      const found = posts.find((p) => p.slug === slug)
+      if (found) {
+        setActivePost(found)
+        return
+      }
+      try {
+        const res = await fetch(`/api/v1/sites/${currentSlug || site?.slug}/posts/${slug}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.post) setActivePost(data.post)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    window.addEventListener('openappengine:open-post', handleOpenPost as EventListener)
+    return () => window.removeEventListener('openappengine:open-post', handleOpenPost as EventListener)
+  }, [posts, currentSlug, site])
 
   // Site switch handler
   const handleSiteChange = (newSlug: string) => {
@@ -548,8 +574,9 @@ export function App() {
             }}
           />
 
-          {/* Published Blog Posts / Articles Section (Shown when site has multiple posts) */}
-          {posts.length > 1 && (
+          {/* Published Blog Posts / Articles Section (Shown when site has multiple posts and no custom loop carousel) */}
+          {posts.length > 1 &&
+            !page.layout?.some((s: any) => s.children?.some((c: any) => c.type === 'SlideCarousel')) && (
             <section className="py-16 bg-slate-50 border-t border-gray-100">
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                 <div className="text-center max-w-2xl mx-auto">
@@ -624,6 +651,52 @@ export function App() {
         </footer>
       ) : (
         <Footer site={site} />
+      )}
+
+      {/* Site Announcement Popup Modal (e.g. OMYO 2026) */}
+      {isPopupOpen && (site.settings as any)?.popup?.image_url && (
+        <div
+          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setIsPopupOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-2xl max-w-[460px] w-full p-4 relative flex flex-col items-center animate-zoom-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsPopupOpen(false)}
+              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-sm shadow z-10"
+              aria-label="Kapat"
+            >
+              ✕
+            </button>
+            <img
+              src={(site.settings as any).popup.image_url}
+              alt={site.name}
+              className="w-full h-auto max-h-[72vh] object-contain rounded"
+            />
+            {(site.settings as any).popup.button_text && (
+              <button
+                type="button"
+                onClick={() => {
+                  const btnUrl = (site.settings as any).popup.button_url || ''
+                  setIsPopupOpen(false)
+                  if (btnUrl.includes('post=')) {
+                    const params = new URLSearchParams(btnUrl.split('?')[1] || '')
+                    const postSlug = params.get('post')
+                    if (postSlug) {
+                      window.dispatchEvent(new CustomEvent('openappengine:open-post', { detail: { slug: postSlug } }))
+                    }
+                  }
+                }}
+                className="mt-3 px-5 py-2 rounded bg-[#333333] hover:bg-black text-white text-xs font-semibold transition shadow"
+              >
+                {(site.settings as any).popup.button_text}
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Post Reader Modal */}
