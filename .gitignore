@@ -5,6 +5,7 @@ Thumbs.db
 
 # Docker Data
 docker/mysql/data
+data/
 
 # Backend / Laravel
 backend/.env

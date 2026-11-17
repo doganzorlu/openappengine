@@ -1,3 +1,5 @@
+name: openappengine
+
 services:
   app:
     build:
@@ -9,7 +11,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - backend_vendor:/var/www/html/vendor
-      - backend_storage:/var/www/html/storage
+      - ./data/storage:/var/www/html/storage
       - backend_bootstrap_cache:/var/www/html/bootstrap/cache
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
     environment:
@@ -32,7 +34,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - backend_vendor:/var/www/html/vendor:ro
-      - backend_storage:/var/www/html/storage:ro
+      - ./data/storage:/var/www/html/storage:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
@@ -51,7 +53,7 @@ services:
       MYSQL_USER: openappengine
       MYSQL_PASSWORD: openappenginesecure
     volumes:
-      - openappengine_db_data:/var/lib/mysql
+      - ./data/mariadb:/var/lib/mysql
     networks:
       - openappengine-net
 
@@ -70,11 +72,7 @@ services:
       - openappengine-net
 
 volumes:
-  openappengine_db_data:
-    driver: local
   backend_vendor:
-    driver: local
-  backend_storage:
     driver: local
   backend_bootstrap_cache:
     driver: local
