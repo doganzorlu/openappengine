@@ -53,25 +53,23 @@ export const IconList: React.FC<IconListProps> = ({
   const effectiveIconColor = iconColor || (isLightText ? '#FFFFFF' : '#0077B6')
 
   return (
-    <ul className="space-y-2.5 my-3 flex flex-col items-center">
+    <ul className="space-y-3 my-2 flex flex-col items-center">
       {items.map((item, idx) => {
         const content = (
           <li
             key={item.id || idx}
-            className={`flex items-center gap-2.5 text-xs sm:text-sm font-medium transition ${
-              isLightText ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            className={`flex items-center gap-2.5 text-xs sm:text-[13px] font-medium transition duration-200 ${
+              isLightText ? 'text-[#F8F9FA] hover:text-[#00A8E8]' : 'text-gray-700 hover:text-blue-600'
             }`}
             style={textColor ? { color: textColor } : {}}
           >
             <span
-              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
-                isLightText ? 'bg-white/10 text-white' : 'bg-blue-50 text-[#0077B6]'
-              }`}
+              className="w-4 h-4 flex items-center justify-center flex-shrink-0"
               style={{ color: effectiveIconColor }}
             >
               {renderIcon(item.icon)}
             </span>
-            <span className="break-all">{item.text}</span>
+            <span className="break-all tracking-normal">{item.text}</span>
           </li>
         )
 
@@ -83,7 +81,7 @@ export const IconList: React.FC<IconListProps> = ({
               href={finalUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-block hover:opacity-85 transition"
+              className="inline-block hover:opacity-90 hover:scale-[1.02] transition-all"
             >
               {content}
             </a>

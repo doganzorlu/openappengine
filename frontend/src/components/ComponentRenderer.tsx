@@ -84,13 +84,20 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
             )
             const marginClass = isCenteredCol ? 'mx-auto' : ''
 
-            const isFooterCol = node.id === 'e69091a' || node.id === '161f785' || node.id === '42904ea'
-            const footerColBorder = node.id === '161f785' ? 'md:border-x md:border-white/20' : ''
+            const isFooterCol =
+              node.id === 'e69091a' ||
+              node.id === '161f785' ||
+              node.id === '42904ea' ||
+              (node.children && node.children.some((c: any) => c.type === 'IconList' || c.type === 'SocialIcons'))
+            const isCenterFooterCol =
+              node.id === '161f785' ||
+              (node.children && node.children.some((c: any) => c.type === 'IconList'))
+            const footerColBorder = isCenterFooterCol ? 'md:border-x md:border-white/20' : ''
 
             const colWidthClass = inGrid
               ? 'w-full h-full'
               : isFooterCol
-              ? `w-full md:w-1/3 px-4 text-center ${footerColBorder}`
+              ? `w-full md:w-1/3 px-4 sm:px-6 text-center ${footerColBorder}`
               : node.type === 'Column'
               ? (widthVal <= 26 ? 'w-full md:w-1/4'
                 : widthVal <= 34 ? 'w-full md:w-1/3'
@@ -98,7 +105,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                 : widthVal <= 68 ? 'w-full md:w-2/3'
                 : widthVal <= 76 ? 'w-full md:w-3/4'
                 : 'w-full')
-              : 'w-full md:w-auto'
+              : 'w-full'
 
             return (
               <div className={`relative group/section ${colWidthClass} ${marginClass} ${responsiveClass}`}>
@@ -583,6 +590,29 @@ const NodeItem: React.FC<{
       }
 
       case 'Column': {
+        const isFooterCol =
+          node.id === 'e69091a' ||
+          node.id === '161f785' ||
+          node.id === '42904ea' ||
+          (children.some((c) => c.type === 'IconList' || c.type === 'SocialIcons') &&
+            (styles.borderColor || props.align === 'center'))
+
+        if (isFooterCol) {
+          return (
+            <div className="w-full flex flex-col items-center text-center space-y-3 py-1">
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                site={site}
+                menus={menus}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+              />
+            </div>
+          )
+        }
+
         const isHeroColumn =
           styles.animation === 'zoomIn' ||
           styles.backgroundColor === '#FFB92C1C' ||
@@ -727,7 +757,10 @@ const NodeItem: React.FC<{
         }
 
         // If card column with dark/card background (like cards in "KURULUŞ AMAÇLARI")
-        const hasCardBg = Boolean(styles.backgroundColor || props.bgColor)
+        const hasCardBg = Boolean(
+          (styles.backgroundColor && styles.backgroundColor !== 'transparent') ||
+          (props.bgColor && props.bgColor !== 'transparent')
+        )
         if (hasCardBg) {
           return (
             <div
@@ -801,6 +834,29 @@ const NodeItem: React.FC<{
           )
         }
 
+        const isFooterHeading =
+          node.id === '1b38d7d' ||
+          node.id === '67a458b' ||
+          node.id === 'a795e33' ||
+          props.color === '#F8F9FA' ||
+          styles.color === '#F8F9FA'
+
+        if (isFooterHeading) {
+          return (
+            <h2
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 600,
+                color: '#F8F9FA',
+                textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              }}
+              className="text-lg sm:text-xl font-semibold text-[#F8F9FA] tracking-wide text-center w-full mb-3"
+            >
+              {props.text}
+            </h2>
+          )
+        }
+
         const isHeroHeading =
           node.id === '26a5a60' ||
           (props.align === 'center' && (styles.fontSize === '2.6rem' || styles.fontSize === '2.8rem' || styles.fontSize === '3.4em'))
@@ -817,6 +873,8 @@ const NodeItem: React.FC<{
             className={`font-extrabold tracking-tight whitespace-pre-line w-full ${
               isHeroHeading
                 ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-3 leading-snug text-white text-center'
+                : color.color
+                ? ''
                 : 'text-xl sm:text-2xl text-gray-800'
             } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass}`}
           >
@@ -830,6 +888,21 @@ const NodeItem: React.FC<{
         const alignClass =
           align === 'center' ? 'text-center' :
           align === 'right' ? 'text-right' : 'text-left'
+
+        const isFooterAddress =
+          node.id === '26b12d1' ||
+          ((styles.color === '#E0E0E0' || props.color === '#E0E0E0') &&
+            (styles.textAlign === 'center' || props.align === 'center'))
+
+        if (isFooterAddress) {
+          return (
+            <div
+              style={{ color: '#E0E0E0', fontFamily: 'Poppins, sans-serif' }}
+              className="text-xs sm:text-[13px] leading-relaxed text-[#E0E0E0] text-center w-full px-2 [&>p]:text-[#E0E0E0] [&>p]:leading-relaxed font-normal"
+              dangerouslySetInnerHTML={{ __html: props.html }}
+            />
+          )
+        }
 
         const customStyle: React.CSSProperties = {}
         if (styles.color || props.color) customStyle.color = styles.color || props.color
@@ -855,7 +928,7 @@ const NodeItem: React.FC<{
         return (
           <div
             style={customStyle}
-            className={`leading-relaxed space-y-3 ${isWhiteText ? 'text-white' : 'text-gray-700'} ${alignClass}`}
+            className={`leading-relaxed space-y-3 ${isWhiteText ? 'text-white' : customStyle.color ? '' : 'text-gray-700'} ${alignClass}`}
             dangerouslySetInnerHTML={{ __html: props.html }}
           />
         )
@@ -1121,21 +1194,27 @@ const NodeItem: React.FC<{
               const isInstagram = (s.icon || '').includes('instagram') || (s.url || '').includes('instagram')
               const isFacebook = (s.icon || '').includes('facebook') || (s.url || '').includes('facebook')
 
+              const btnColorClass = isFacebook
+                ? 'bg-[#1877F2] hover:bg-[#1567d3]'
+                : isInstagram
+                ? 'bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-90'
+                : 'bg-white/20 hover:bg-white/30 text-white'
+
               return (
                 <a
                   key={s.id || idx}
                   href={s.url || '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white text-white hover:text-[#023E8A] flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow"
+                  className={`w-11 h-11 rounded-xl ${btnColorClass} text-white flex items-center justify-center transition-all duration-200 shadow-md hover:scale-110 active:scale-95`}
                   title={isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : 'Sosyal Medya'}
                 >
                   {isInstagram ? (
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                       <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                     </svg>
                   ) : isFacebook ? (
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                       <path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.356 5 15.545 5H18V0h-3.808C10.597 0 9 1.583 9 4.615V8z" />
                     </svg>
                   ) : (
