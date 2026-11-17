@@ -350,7 +350,7 @@ const NodeItem: React.FC<{
     switch (type) {
       case 'Section': {
         const bgStyle: React.CSSProperties = {}
-        const bgImageUrl = normalizeMediaUrl(props.bgImage)
+        const bgImageUrl = normalizeMediaUrl(props.bgImage, siteSlug)
         if (bgImageUrl) {
           bgStyle.backgroundImage = `url('${bgImageUrl}')`
           bgStyle.backgroundSize = 'cover'
@@ -730,7 +730,7 @@ const NodeItem: React.FC<{
         return (
           <div className={`flex w-full ${alignClass} my-3`}>
             <a
-              href={normalizeMediaUrl(props.url) || '#'}
+              href={normalizeMediaUrl(props.url, siteSlug) || '#'}
               target={props.target || '_self'}
               rel="noopener noreferrer"
               style={btnStyle}
@@ -769,6 +769,7 @@ const NodeItem: React.FC<{
             images={props.images}
             slidesToShow={props.slidesToShow}
             autoplay={props.autoplay}
+            siteSlug={siteSlug}
           />
         )
       }
@@ -780,6 +781,7 @@ const NodeItem: React.FC<{
             description={props.description}
             imageUrl={props.imageUrl}
             url={props.url}
+            siteSlug={siteSlug}
           />
         )
       }
@@ -1004,7 +1006,7 @@ const NodeItem: React.FC<{
         return (
           <div className={`flex justify-${props.align || 'center'} my-3 w-full`}>
             <img
-              src={normalizeMediaUrl(props.url)}
+              src={normalizeMediaUrl(props.url, siteSlug)}
               alt={props.alt || ''}
               style={imgStyle}
               className="rounded-xl shadow-lg max-w-full h-auto object-cover max-h-[400px]"
@@ -1046,7 +1048,7 @@ const NodeItem: React.FC<{
       }
 
       case 'ImageAccordion': {
-        return <ImageAccordion items={props.items} height={props.height} />
+        return <ImageAccordion items={props.items} height={props.height} siteSlug={siteSlug} />
       }
 
       case 'ContactForm': {

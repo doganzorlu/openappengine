@@ -15,6 +15,7 @@ interface ImageBoxProps {
   description?: string
   imageUrl?: string
   url?: string
+  siteSlug?: string
   styles?: React.CSSProperties
 }
 
@@ -23,9 +24,10 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
   description = '',
   imageUrl,
   url,
+  siteSlug = 'otizmkonfederasyonu',
   styles = {},
 }) => {
-  const normImageUrl = normalizeMediaUrl(imageUrl)
+  const normImageUrl = normalizeMediaUrl(imageUrl, siteSlug)
   const isMinimal = !title && Boolean(description)
 
   const content = (

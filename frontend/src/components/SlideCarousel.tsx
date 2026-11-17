@@ -20,10 +20,18 @@ export const SlideCarousel: React.FC<SlideCarouselProps> = ({
   onSelectNode,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
+
+  React.useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   if (!slides || slides.length === 0) return null
 
-  const maxIndex = Math.max(0, slides.length - slidesToShow)
+  const effectiveSlides = isMobile ? 1 : slidesToShow
+  const maxIndex = Math.max(0, slides.length - effectiveSlides)
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1))
@@ -39,14 +47,14 @@ export const SlideCarousel: React.FC<SlideCarouselProps> = ({
         <div
           className="flex transition-transform duration-500 ease-out gap-6"
           style={{
-            transform: `translateX(-${currentIndex * (100 / slidesToShow)}%)`,
+            transform: `translateX(-${currentIndex * (100 / effectiveSlides)}%)`,
           }}
         >
           {slides.map((slide) => (
             <div
               key={slide.id}
               className="flex-shrink-0"
-              style={{ width: `calc(${100 / slidesToShow}% - 1rem)` }}
+              style={{ width: `calc(${100 / effectiveSlides}% - 1rem)` }}
             >
               <ComponentRenderer
                 nodes={[slide]}
@@ -60,7 +68,7 @@ export const SlideCarousel: React.FC<SlideCarouselProps> = ({
         </div>
       </div>
 
-      {slides.length > slidesToShow && (
+      {slides.length > effectiveSlides && (
         <>
           <button
             onClick={handlePrev}

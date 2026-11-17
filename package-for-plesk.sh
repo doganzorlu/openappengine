@@ -37,8 +37,9 @@ if ($zip->open("/var/www/html/openappengine-plesk-deploy.zip", ZipArchive::CREAT
         $filePath = $file->getPathname();
         $relativePath = substr($filePath, strlen($base) + 1);
 
-        if (!file_exists($filePath)) continue;
-        if (is_link($filePath) && !file_exists(readlink($filePath))) continue;
+        if ($file->isLink() || !is_readable($filePath) || !file_exists($filePath)) continue;
+        if (str_starts_with(basename($filePath), "._")) continue;
+        if (str_starts_with($relativePath, "public/storage")) continue;
 
         if (str_starts_with($relativePath, "storage/logs/") && !str_ends_with($relativePath, ".gitignore")) continue;
         if (str_starts_with($relativePath, ".git")) continue;

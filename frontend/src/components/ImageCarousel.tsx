@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { normalizeMediaUrl } from './ImageBox'
 
 interface CarouselImage {
   id?: string | number
@@ -9,18 +10,28 @@ interface ImageCarouselProps {
   images: CarouselImage[]
   slidesToShow?: number
   autoplay?: boolean
+  siteSlug?: string
 }
 
 export const ImageCarousel: React.FC<ImageCarouselProps> = ({
   images = [],
   slidesToShow = 4,
   autoplay = true,
+  siteSlug = 'otizmkonfederasyonu',
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   if (!images || images.length === 0) return null
 
-  const maxIndex = Math.max(0, images.length - slidesToShow)
+  const effectiveSlides = isMobile ? Math.min(2, slidesToShow) : slidesToShow
+  const maxIndex = Math.max(0, images.length - effectiveSlides)
 
   useEffect(() => {
     if (!autoplay || maxIndex === 0) return
@@ -45,17 +56,17 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
         <div
           className="flex transition-transform duration-500 ease-out gap-4"
           style={{
-            transform: `translateX(-${currentIndex * (100 / slidesToShow)}%)`,
+            transform: `translateX(-${currentIndex * (100 / effectiveSlides)}%)`,
           }}
         >
           {images.map((img, idx) => (
             <div
               key={img.id || idx}
               className="flex-shrink-0 flex items-center justify-center p-2 rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden"
-              style={{ width: `calc(${100 / slidesToShow}% - 1rem)` }}
+              style={{ width: `calc(${100 / effectiveSlides}% - 1rem)` }}
             >
               <img
-                src={img.url}
+                src={normalizeMediaUrl(img.url, siteSlug)}
                 alt={`Carousel ${idx + 1}`}
                 className="max-h-28 object-contain hover:scale-105 transition-transform duration-300"
                 loading="lazy"
@@ -66,7 +77,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
       </div>
 
       {/* Navigation Buttons */}
-      {images.length > slidesToShow && (
+      {images.length > effectiveSlides && (
         <>
           <button
             onClick={handlePrev}

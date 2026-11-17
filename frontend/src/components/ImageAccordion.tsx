@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { normalizeMediaUrl } from './ImageBox'
 
 interface AccordionItem {
   id: string
@@ -10,9 +11,14 @@ interface AccordionItem {
 interface ImageAccordionProps {
   items: AccordionItem[]
   height?: number
+  siteSlug?: string
 }
 
-export const ImageAccordion: React.FC<ImageAccordionProps> = ({ items, height = 380 }) => {
+export const ImageAccordion: React.FC<ImageAccordionProps> = ({
+  items,
+  height = 380,
+  siteSlug = 'otizmkonfederasyonu',
+}) => {
   const [activeIndex, setActiveIndex] = useState<number>(0)
 
   if (!items || items.length === 0) return null
@@ -32,7 +38,7 @@ export const ImageAccordion: React.FC<ImageAccordionProps> = ({ items, height = 
               isActive ? 'md:flex-[3] flex-[2]' : 'md:flex-1 flex-1 opacity-75 hover:opacity-100'
             }`}
             style={{
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%), url('${item.bgImage}')`,
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%), url('${normalizeMediaUrl(item.bgImage, siteSlug)}')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
