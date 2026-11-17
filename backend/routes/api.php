@@ -13,6 +13,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/sites/{slug}', [SiteController::class, 'show']);
     Route::get('/sites/{slug}/pages', [SiteController::class, 'pages']);
     Route::get('/sites/{slug}/page/{pageSlug?}', [SiteController::class, 'page']);
+    Route::get('/sites/{slug}/posts', [SiteController::class, 'posts']);
+    Route::get('/sites/{slug}/posts/{postSlug}', [SiteController::class, 'post']);
     Route::put('/sites/{slug}/pages/{pageId}/layout', [SiteController::class, 'updateLayout']);
     Route::post('/sites/{slug}/forms/{formSlug}/submit', [SiteController::class, 'submitForm']);
     Route::get('/sitemap.xml', [SiteController::class, 'sitemap']);
@@ -64,6 +66,17 @@ Route::prefix('v1')->group(function () {
             // Media / Gallery
             Route::get('/media', [AdminController::class, 'listMedia']);
             Route::post('/media', [AdminController::class, 'uploadMedia']);
+            Route::put('/media/{mediaId}', [AdminController::class, 'updateMedia']);
+            Route::delete('/media/{mediaId}', [AdminController::class, 'deleteMedia']);
+
+            // Menus / Navigation Builder
+            Route::get('/menus', [AdminController::class, 'listMenus']);
+            Route::post('/menus', [AdminController::class, 'createMenu']);
+            Route::delete('/menus/{menuId}', [AdminController::class, 'deleteMenu']);
+            Route::post('/menus/{menuId}/items', [AdminController::class, 'addMenuItem']);
+            Route::put('/menus/{menuId}/items/{itemId}', [AdminController::class, 'updateMenuItem']);
+            Route::delete('/menus/{menuId}/items/{itemId}', [AdminController::class, 'deleteMenuItem']);
+            Route::put('/menus/{menuId}/reorder', [AdminController::class, 'reorderMenuItems']);
 
             // Email / SMTP
             Route::get('/email-settings', [AdminController::class, 'getEmailSettings']);

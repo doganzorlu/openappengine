@@ -4,6 +4,7 @@ import { PagesTab } from './PagesTab'
 import { PostsTab } from './PostsTab'
 import { FormsTab } from './FormsTab'
 import { MediaTab } from './MediaTab'
+import { MenusTab } from './MenusTab'
 import { ImporterTab } from './ImporterTab'
 import { SettingsTab } from './SettingsTab'
 import { TenantsTab } from './TenantsTab'
@@ -79,6 +80,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     ...(user?.is_super_admin ? [{ id: 'tenants', label: 'Tenantlar & Siteler', icon: '🏢' }] : []),
     { id: 'dashboard', label: 'Başlangıç', icon: '📊' },
     { id: 'pages', label: 'Sayfalar', icon: '📄' },
+    { id: 'menus', label: 'Menüler & Navigasyon', icon: '🧭' },
     { id: 'posts', label: 'Yazılar & Blog', icon: '✍️' },
     { id: 'forms', label: 'Gelen İletiler', icon: '📬' },
     { id: 'media', label: 'Medya & Galeri', icon: '🖼️' },
@@ -304,6 +306,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               userRole={currentRole}
               onOpenVisualEditor={onOpenVisualEditor}
             />
+          )}
+
+          {activeTab === 'menus' && (
+            <MenusTab siteSlug={currentSlug} token={token} userRole={currentRole} />
           )}
 
           {activeTab === 'posts' && (

@@ -46,6 +46,8 @@ export function App() {
   const [site, setSite] = useState<Site | null>(null)
   const [menus, setMenus] = useState<Menu[]>([])
   const [page, setPage] = useState<PageData | null>(null)
+  const [posts, setPosts] = useState<any[]>([])
+  const [activePost, setActivePost] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -102,14 +104,24 @@ export function App() {
           setCurrentSlug(activeSlug)
         }
 
-        // 2. Fetch Active Page (Homepage or Requested Page)
+        // 2. Fetch Active Page & Published Posts
         const pageEndpoint = currentPageSlug
           ? `/api/v1/sites/${activeSlug}/page/${currentPageSlug}`
           : `/api/v1/sites/${activeSlug}/page`
-        const pageRes = await fetch(pageEndpoint)
+        const [pageRes, postsRes] = await Promise.all([
+          fetch(pageEndpoint),
+          fetch(`/api/v1/sites/${activeSlug}/posts`),
+        ])
         if (!pageRes.ok) throw new Error('Sayfa verisi yüklenemedi.')
         const pageData = await pageRes.json()
         setPage(pageData.page)
+
+        if (postsRes.ok) {
+          const postsData = await postsRes.json()
+          setPosts(postsData.posts || [])
+        } else {
+          setPosts([])
+        }
 
         // Set document title and dynamic SEO meta tags
         const seoTitle = pageData.page?.seo?.title || pageData.page?.title || siteData.site?.name || 'OpenAppEngine'
@@ -535,6 +547,55 @@ export function App() {
               setIsBlockLibraryOpen(true)
             }}
           />
+
+          {/* Published Blog Posts / Articles Section (Shown when site has multiple posts) */}
+          {posts.length > 1 && (
+            <section className="py-16 bg-slate-50 border-t border-gray-100">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                <div className="text-center max-w-2xl mx-auto">
+                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900">Yazılar & Duyurular</h2>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    {site.name} güncel haber, duyuru ve makaleleri
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {posts.slice(0, 9).map((post) => (
+                    <article
+                      key={post.id}
+                      onClick={() => setActivePost(post)}
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between cursor-pointer group"
+                    >
+                      <div className="space-y-3">
+                        {post.published_at && (
+                          <div className="text-[11px] font-semibold text-purple-600">
+                            {new Date(post.published_at).toLocaleDateString('tr-TR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </div>
+                        )}
+                        <h3 className="font-bold text-gray-900 text-base group-hover:text-purple-700 transition line-clamp-2">
+                          {post.title}
+                        </h3>
+                        {post.excerpt && (
+                          <div
+                            className="text-xs text-gray-600 line-clamp-3"
+                            dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                          />
+                        )}
+                      </div>
+                      <div className="pt-4 mt-4 border-t border-gray-50 text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <span>Devamını Oku</span>
+                        <span>&rarr;</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </main>
 
         {/* Right Inspector Panel in Editor Mode */}
@@ -563,6 +624,43 @@ export function App() {
         </footer>
       ) : (
         <Footer site={site} />
+      )}
+
+      {/* Post Reader Modal */}
+      {activePost && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setActivePost(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl p-6 sm:p-10 relative space-y-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActivePost(null)}
+              className="sticky top-2 float-right w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm"
+            >
+              ✕
+            </button>
+            <div className="space-y-2 pr-10">
+              {activePost.published_at && (
+                <div className="text-xs font-bold text-purple-600">
+                  {new Date(activePost.published_at).toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </div>
+              )}
+              <h1 className="text-xl sm:text-3xl font-black text-gray-900">{activePost.title}</h1>
+            </div>
+            <div
+              className="prose prose-sm sm:prose max-w-none text-gray-700 leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{ __html: activePost.content || activePost.excerpt || '' }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Block Library Modal */}

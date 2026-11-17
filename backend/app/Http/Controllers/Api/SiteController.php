@@ -314,6 +314,34 @@ class SiteController extends Controller
     }
 
     /**
+     * List published blog posts / articles of a site
+     */
+    public function posts(string $siteSlug): JsonResponse
+    {
+        $site = Site::where('slug', $siteSlug)->firstOrFail();
+        $posts = Post::where('site_id', $site->id)
+            ->where('status', 'published')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->get(['id', 'title', 'slug', 'excerpt', 'content', 'published_at', 'created_at']);
+
+        return response()->json(['posts' => $posts]);
+    }
+
+    /**
+     * Get single published post by slug
+     */
+    public function post(string $siteSlug, string $postSlug): JsonResponse
+    {
+        $site = Site::where('slug', $siteSlug)->firstOrFail();
+        $post = Post::where('site_id', $site->id)
+            ->where('slug', $postSlug)
+            ->firstOrFail();
+
+        return response()->json(['post' => $post]);
+    }
+
+    /**
      * Update page layout from the visual editor
      */
     public function updateLayout(Request $request, string $siteSlug, int $pageId): JsonResponse

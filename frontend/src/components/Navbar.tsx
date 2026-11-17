@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { Menu, Site } from '../types'
+import { normalizeMediaUrl } from './ImageBox'
 
 interface NavbarProps {
   site: Site
@@ -9,22 +10,34 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const headerMenu = menus.find((m) => m.location === 'header') || menus[0]
+  const rawLogoUrl = site.settings?.logo_url || site.theme_config?.logo_url
+  const logoUrl = rawLogoUrl ? normalizeMediaUrl(rawLogoUrl, site.slug) : ''
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand */}
-        <a href="/" className="flex items-center space-x-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-pink-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md group-hover:scale-105 transition-transform">
-            {site.name.charAt(0)}
-          </div>
+        <a href={`/?site=${site.slug}`} className="flex items-center space-x-3 group">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={site.name}
+              className="h-12 sm:h-14 w-auto max-w-[160px] object-contain group-hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-pink-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md group-hover:scale-105 transition-transform">
+              {site.name.charAt(0)}
+            </div>
+          )}
           <div>
-            <span className="font-extrabold text-xl text-gray-900 tracking-tight block group-hover:text-purple-700 transition-colors">
+            <span className="font-extrabold text-base sm:text-xl text-gray-900 tracking-tight block group-hover:text-purple-700 transition-colors">
               {site.name}
             </span>
-            <span className="text-xs text-gray-500 font-medium block">
-              {site.description}
-            </span>
+            {site.description && (
+              <span className="text-[11px] sm:text-xs text-gray-500 font-medium block line-clamp-1">
+                {site.description}
+              </span>
+            )}
           </div>
         </a>
 

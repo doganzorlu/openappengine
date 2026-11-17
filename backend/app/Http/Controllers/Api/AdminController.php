@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\Media;
+use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Site;
@@ -15,6 +17,7 @@ use App\Services\WordPress\WordPressMigrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -269,6 +272,161 @@ class AdminController extends Controller
                 'meta' => $media->meta,
             ],
         ]);
+    }
+
+    public function updateMedia(Request $request, string $siteSlug, int $mediaId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $media = Media::where('site_id', $site->id)->where('id', $mediaId)->firstOrFail();
+
+        $request->validate([
+            'alt_text' => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255',
+        ]);
+
+        if ($request->has('alt_text')) {
+            $media->alt_text = $request->input('alt_text');
+        }
+        if ($request->filled('name')) {
+            $media->name = $request->input('name');
+        }
+        $media->save();
+
+        return response()->json(['success' => true, 'media' => $media, 'message' => 'Medya bilgisi güncellendi.']);
+    }
+
+    public function deleteMedia(Request $request, string $siteSlug, int $mediaId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $media = Media::where('site_id', $site->id)->where('id', $mediaId)->firstOrFail();
+
+        // Remove physical file & WebP optimization if present
+        if ($media->file_path) {
+            $fullPath = storage_path('app/public/' . ltrim($media->file_path, '/'));
+            if (File::exists($fullPath)) {
+                @File::delete($fullPath);
+            }
+        }
+        if (!empty($media->meta['webp_url'])) {
+            $webpRel = preg_replace('#^/storage/#', '', $media->meta['webp_url']);
+            $fullWebp = storage_path('app/public/' . ltrim($webpRel, '/'));
+            if (File::exists($fullWebp)) {
+                @File::delete($fullWebp);
+            }
+        }
+
+        $media->delete();
+        return response()->json(['success' => true, 'message' => 'Medya dosyası silindi.']);
+    }
+
+    // ==========================================
+    // 4B. MENUS & NAVIGATION BUILDER
+    // ==========================================
+    public function listMenus(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $menus = Menu::where('site_id', $site->id)
+            ->with(['items' => function ($q) {
+                $q->orderBy('sort_order')->orderBy('id');
+            }])
+            ->get();
+
+        return response()->json(['success' => true, 'menus' => $menus]);
+    }
+
+    public function createMenu(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+
+        $request->validate([
+            'name' => 'required|string|max:120',
+            'location' => 'nullable|string|max:60',
+        ]);
+
+        $menu = Menu::create([
+            'site_id' => $site->id,
+            'name' => $request->input('name'),
+            'location' => $request->input('location', 'header'),
+        ]);
+
+        return response()->json(['success' => true, 'menu' => $menu->load('items')]);
+    }
+
+    public function deleteMenu(Request $request, string $siteSlug, int $menuId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'admin');
+        $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
+        $menu->items()->delete();
+        $menu->delete();
+
+        return response()->json(['success' => true, 'message' => 'Menü silindi.']);
+    }
+
+    public function addMenuItem(Request $request, string $siteSlug, int $menuId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
+
+        $request->validate([
+            'title' => 'required|string|max:150',
+            'url' => 'required|string|max:500',
+            'target' => 'nullable|string|in:_self,_blank',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $maxOrder = (int) $menu->items()->max('sort_order');
+        $item = MenuItem::create([
+            'menu_id' => $menu->id,
+            'title' => $request->input('title'),
+            'url' => $request->input('url'),
+            'target' => $request->input('target', '_self'),
+            'sort_order' => $request->input('sort_order', $maxOrder + 1),
+        ]);
+
+        return response()->json(['success' => true, 'item' => $item]);
+    }
+
+    public function updateMenuItem(Request $request, string $siteSlug, int $menuId, int $itemId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
+        $item = MenuItem::where('menu_id', $menu->id)->where('id', $itemId)->firstOrFail();
+
+        $request->validate([
+            'title' => 'sometimes|required|string|max:150',
+            'url' => 'sometimes|required|string|max:500',
+            'target' => 'nullable|string|in:_self,_blank',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $item->update($request->only(['title', 'url', 'target', 'sort_order']));
+
+        return response()->json(['success' => true, 'item' => $item]);
+    }
+
+    public function deleteMenuItem(Request $request, string $siteSlug, int $menuId, int $itemId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
+        $item = MenuItem::where('menu_id', $menu->id)->where('id', $itemId)->firstOrFail();
+        $item->delete();
+
+        return response()->json(['success' => true, 'message' => 'Menü öğesi silindi.']);
+    }
+
+    public function reorderMenuItems(Request $request, string $siteSlug, int $menuId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
+
+        $ids = $request->input('item_ids', []);
+        if (is_array($ids)) {
+            foreach ($ids as $index => $id) {
+                MenuItem::where('menu_id', $menu->id)->where('id', (int)$id)->update(['sort_order' => $index + 1]);
+            }
+        }
+
+        return response()->json(['success' => true, 'items' => $menu->items()->orderBy('sort_order')->get()]);
     }
 
     // ==========================================

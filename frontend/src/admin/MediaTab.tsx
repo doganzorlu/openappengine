@@ -10,6 +10,9 @@ export const MediaTab: React.FC<MediaTabProps> = ({ siteSlug, token }) => {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [editingMedia, setEditingMedia] = useState<any | null>(null)
+  const [editAltText, setEditAltText] = useState('')
 
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url)
@@ -65,40 +68,145 @@ export const MediaTab: React.FC<MediaTabProps> = ({ siteSlug, token }) => {
     }
   }
 
+  const handleDeleteMedia = async (mediaId: number) => {
+    if (!confirm('Bu medya dosyasını kalıcı olarak silmek istediğinize emin misiniz?')) return
+    try {
+      const res = await fetch(`/api/v1/admin/sites/${siteSlug}/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMediaList((prev) => prev.filter((item) => item.id !== mediaId))
+        if (editingMedia?.id === mediaId) setEditingMedia(null)
+      }
+    } catch (e) {
+      alert('Silme işlemi başarısız.')
+    }
+  }
+
+  const handleSaveAltText = async () => {
+    if (!editingMedia) return
+    try {
+      const res = await fetch(`/api/v1/admin/sites/${siteSlug}/media/${editingMedia.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ alt_text: editAltText }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMediaList((prev) =>
+          prev.map((m) => (m.id === editingMedia.id ? { ...m, alt_text: editAltText } : m))
+        )
+        setEditingMedia(null)
+      }
+    } catch (e) {
+      alert('Güncellenemedi.')
+    }
+  }
+
+  const filteredMedia = mediaList.filter((m) => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      (m.name || '').toLowerCase().includes(q) ||
+      (m.alt_text || '').toLowerCase().includes(q) ||
+      (m.file_url || '').toLowerCase().includes(q)
+    )
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900">Medya & Galeri</h2>
           <p className="text-xs sm:text-sm text-gray-500">
-            Sitenizde kullanacağınız fotoğrafları, logoları ve afişleri yükleyin ve yönetin.
+            Tenant izole dosya sisteminizdeki (`/storage/sites/{siteSlug}/media/`) görselleri yönetin.
           </p>
         </div>
 
-        <label className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow flex items-center gap-2 cursor-pointer self-start sm:self-auto transition">
-          <span>{uploading ? '⏳' : '⬆️'}</span>
-          <span>{uploading ? 'Yükleniyor...' : 'Yeni Görsel Yükle'}</span>
+        <div className="flex items-center gap-3">
           <input
-            type="file"
-            accept="image/*"
-            disabled={uploading}
-            onChange={handleFileUpload}
-            className="hidden"
+            type="text"
+            placeholder="Görsel ara..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs focus:ring-2 focus:ring-purple-500 outline-none"
           />
-        </label>
+          <label className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow flex items-center gap-2 cursor-pointer shrink-0 transition">
+            <span>{uploading ? '⏳' : '⬆️'}</span>
+            <span>{uploading ? 'Yükleniyor...' : 'Yeni Görsel Yükle'}</span>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={uploading}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingMedia && (
+        <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1 w-full">
+            <img
+              src={editingMedia.file_url || editingMedia.path}
+              alt=""
+              className="w-12 h-12 rounded-lg object-cover bg-white border border-gray-200 shrink-0"
+            />
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="text-xs font-bold text-purple-900 truncate">{editingMedia.name}</div>
+              <input
+                type="text"
+                value={editAltText}
+                onChange={(e) => setEditAltText(e.target.value)}
+                placeholder="Alternatif Metin (SEO Alt Text)"
+                className="w-full px-3 py-1.5 rounded-lg border border-purple-300 bg-white text-xs outline-none"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleSaveAltText}
+              className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold"
+            >
+              Kaydet
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteMedia(editingMedia.id)}
+              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+            >
+              🗑️ Sil
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingMedia(null)}
+              className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 text-xs"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
         {loading ? (
           <div className="py-12 text-center text-xs text-gray-400">Görseller yükleniyor...</div>
-        ) : mediaList.length === 0 ? (
+        ) : filteredMedia.length === 0 ? (
           <div className="py-12 text-center text-gray-400 text-sm">
             <div className="text-3xl mb-2">🖼️</div>
-            Henüz yüklenmiş medya dosyası bulunmuyor. Yukarıdaki butondan görsel yükleyebilirsiniz.
+            Görsel bulunamadı. Yukarıdaki butondan yeni görsel yükleyebilirsiniz.
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {mediaList.map((m) => {
+            {filteredMedia.map((m) => {
               const displayUrl = m.meta?.webp_url || m.file_url || m.path
               const isCopied = copiedUrl === displayUrl
               return (
@@ -113,6 +221,20 @@ export const MediaTab: React.FC<MediaTabProps> = ({ siteSlug, token }) => {
                       <span>WebP (-{m.meta.savings_percentage}%)</span>
                     </div>
                   )}
+
+                  {/* Quick Edit / Delete Trigger */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingMedia(m)
+                      setEditAltText(m.alt_text || m.name || '')
+                    }}
+                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-white/90 hover:bg-white text-gray-700 shadow flex items-center justify-center text-[11px] opacity-0 group-hover:opacity-100 transition"
+                    title="Düzenle veya Sil"
+                  >
+                    ⚙️
+                  </button>
 
                   <div
                     onClick={() => copyToClipboard(displayUrl)}

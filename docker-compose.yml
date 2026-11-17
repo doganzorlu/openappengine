@@ -45,6 +45,7 @@ services:
     image: mariadb:10.11
     container_name: openappengine-db
     restart: unless-stopped
+    command: --lower-case-table-names=2
     ports:
       - "11002:3306"
     environment:
