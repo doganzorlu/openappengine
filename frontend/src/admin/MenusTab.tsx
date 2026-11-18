@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { MediaPickerModal, type MediaItem } from '../components/MediaPickerModal'
 
 interface MenusTabProps {
   siteSlug: string
@@ -10,6 +11,7 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
   const [menus, setMenus] = useState<any[]>([])
   const [pages, setPages] = useState<any[]>([])
   const [posts, setPosts] = useState<any[]>([])
+  const [mediaFiles, setMediaFiles] = useState<any[]>([])
   const [selectedMenuId, setSelectedMenuId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -30,14 +32,16 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
   const [editTarget, setEditTarget] = useState('_self')
   const [editParentId, setEditParentId] = useState<number | null>(null)
 
-  // Selected pages/posts for bulk add
+  // Selected pages/posts/media for bulk add
   const [selectedPages, setSelectedPages] = useState<string[]>([])
   const [selectedPosts, setSelectedPosts] = useState<string[]>([])
+  const [selectedMedia, setSelectedMedia] = useState<string[]>([])
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
 
   const fetchMenusAndData = async () => {
     try {
       setLoading(true)
-      const [menusRes, pagesRes, postsRes] = await Promise.all([
+      const [menusRes, pagesRes, postsRes, mediaRes] = await Promise.all([
         fetch(`/api/v1/admin/sites/${siteSlug}/menus`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -47,10 +51,14 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
         fetch(`/api/v1/admin/sites/${siteSlug}/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`/api/v1/admin/sites/${siteSlug}/media`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ])
       const menusData = await menusRes.json()
       const pagesData = await pagesRes.json()
       const postsData = await postsRes.json()
+      const mediaData = await mediaRes.json()
 
       if (menusData.success) {
         const list = menusData.menus || []
@@ -64,6 +72,9 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
       }
       if (postsData.success) {
         setPosts(postsData.posts || [])
+      }
+      if (mediaData.success) {
+        setMediaFiles(mediaData.media || [])
       }
     } catch (e) {
       console.error(e)
@@ -170,6 +181,17 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
       }
     }
     setSelectedPosts([])
+  }
+
+  const handleAddMultipleMedia = async () => {
+    if (selectedMedia.length === 0 || !selectedMenu) return
+    for (const fileUrl of selectedMedia) {
+      const m = mediaFiles.find((file) => (file.file_url || file.path) === fileUrl)
+      if (m) {
+        await handleAddItem(m.alt_text || m.name, m.file_url || m.path, '_blank')
+      }
+    }
+    setSelectedMedia([])
   }
 
   const handleUpdateItem = async (itemId: number) => {
@@ -475,11 +497,64 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
               </div>
             )}
 
-            {/* Quick Add 4: Özel Bağlantı (Custom Link) */}
+            {/* Quick Add 4: Dokümanlar & Dosyalar (PDF & Belgeler) */}
+            {mediaFiles.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📁</span> Belgeler & Medya ({mediaFiles.length})
+                  </h4>
+                  {selectedMedia.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleAddMultipleMedia}
+                      className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs"
+                    >
+                      Seçilenleri Ekle ({selectedMedia.length})
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-36 overflow-y-auto space-y-1.5 border border-gray-100 rounded-xl p-2 bg-gray-50">
+                  {mediaFiles.map((m) => {
+                    const isChecked = selectedMedia.includes(m.file_url || m.path)
+                    const isPdf = (m.mime_type || '').includes('pdf') || (m.name || '').endsWith('.pdf')
+                    return (
+                      <label key={m.id} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer p-1 rounded hover:bg-white">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            const url = m.file_url || m.path
+                            if (isChecked) setSelectedMedia(selectedMedia.filter((s) => s !== url))
+                            else setSelectedMedia([...selectedMedia, url])
+                          }}
+                          className="rounded text-purple-600 focus:ring-purple-500"
+                        />
+                        <span className="text-sm">{isPdf ? '📄' : '📎'}</span>
+                        <span className="truncate flex-1">{m.alt_text || m.name}</span>
+                        {isPdf && <span className="text-[9px] text-red-600 font-bold bg-red-50 px-1 rounded">PDF</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Add 5: Özel Bağlantı (Custom Link) */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
-              <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <span>🔗</span> Özel Bağlantı Ekle
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🔗</span> Özel Bağlantı Ekle
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsMediaModalOpen(true)}
+                  className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                >
+                  <span>📁</span> Medya / PDF Seç
+                </button>
+              </div>
               <div className="space-y-2">
                 <input
                   type="text"
@@ -777,6 +852,22 @@ export const MenusTab: React.FC<MenusTabProps> = ({ siteSlug, token }) => {
           </div>
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelect={(media: MediaItem) => {
+          setItemTitle(media.alt_text || media.name)
+          setItemUrl(media.file_url || (media as any).path)
+          setItemTarget('_blank')
+          setIsMediaModalOpen(false)
+        }}
+        siteSlug={siteSlug}
+        token={token}
+        allowedTypes="all"
+        title="Menü Bağlantısı İçin Doküman veya Medya Seç"
+      />
     </div>
   )
 }
