@@ -8,6 +8,9 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Form;
 use App\Models\FormSubmission;
+use App\Models\Menu;
+use App\Models\MenuItem;
+use App\Services\ComponentCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -39,12 +42,19 @@ class McpController extends Controller
 
         try {
             $result = match ($tool) {
+                'get_component_catalog' => $this->toolGetComponentCatalog($args),
+                'get_site_structure' => $this->toolGetSiteStructure($args),
                 'list_sites' => $this->toolListSites($args),
                 'get_site_details' => $this->toolGetSiteDetails($args),
                 'update_site_theme' => $this->toolUpdateSiteTheme($args),
                 'list_pages' => $this->toolListPages($args),
+                'create_page' => $this->toolCreatePage($args),
+                'delete_page' => $this->toolDeletePage($args),
                 'get_page_layout' => $this->toolGetPageLayout($args),
                 'update_page_layout' => $this->toolUpdatePageLayout($args),
+                'add_page_section' => $this->toolAddPageSection($args),
+                'list_menus' => $this->toolListMenus($args),
+                'update_menu' => $this->toolUpdateMenu($args),
                 'list_posts' => $this->toolListPosts($args),
                 'create_post' => $this->toolCreatePost($args),
                 'list_submissions' => $this->toolListSubmissions($args),
@@ -64,6 +74,37 @@ class McpController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function toolGetComponentCatalog(array $args): array
+    {
+        return ComponentCatalog::getCatalog();
+    }
+
+    private function toolGetSiteStructure(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+
+        $pages = Page::where('site_id', $site->id)->get(['id', 'title', 'slug', 'is_home'])->toArray();
+        $menus = Menu::where('site_id', $site->id)->with('items')->get()->toArray();
+        $forms = Form::where('site_id', $site->id)->get(['id', 'name', 'slug'])->toArray();
+        $recentPosts = Post::where('site_id', $site->id)->latest()->limit(5)->get(['id', 'title', 'slug'])->toArray();
+
+        return [
+            'site' => [
+                'id' => $site->id,
+                'name' => $site->name,
+                'slug' => $site->slug,
+                'domain' => $site->domain,
+                'theme' => $site->theme_config,
+                'global_colors' => $site->settings['global_colors'] ?? [],
+            ],
+            'pages' => $pages,
+            'menus' => $menus,
+            'forms' => $forms,
+            'recent_posts' => $recentPosts,
+        ];
     }
 
     private function toolListSites(array $args): array
@@ -128,6 +169,86 @@ class McpController extends Controller
             ->toArray();
     }
 
+    private function toolCreatePage(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+
+        $title = $args['title'] ?? 'Yeni Sayfa';
+        $pageSlug = Str::slug($args['slug'] ?? $title);
+        $isHome = !empty($args['is_home']);
+
+        if ($isHome) {
+            Page::where('site_id', $site->id)->update(['is_home' => false]);
+        }
+
+        $layout = $args['layout'] ?? [
+            [
+                'id' => 'sec_' . Str::random(6),
+                'type' => 'Section',
+                'props' => ['layout' => 'boxed', 'minHeight' => '300px', 'alignItems' => 'center', 'justifyContent' => 'center'],
+                'styles' => ['padding' => '60px 20px'],
+                'children' => [
+                    [
+                        'id' => 'col_' . Str::random(6),
+                        'type' => 'Column',
+                        'props' => ['width' => 100, 'align' => 'center'],
+                        'children' => [
+                            ['id' => 'h_' . Str::random(6), 'type' => 'Heading', 'props' => ['text' => $title, 'level' => 'h1', 'align' => 'center']],
+                            ['id' => 'p_' . Str::random(6), 'type' => 'RichText', 'props' => ['html' => '<p>Sayfa içeriğini buradan düzenleyebilirsiniz.</p>', 'align' => 'center']],
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => $title,
+            'slug' => $pageSlug,
+            'is_home' => $isHome,
+            'layout' => $layout,
+            'seo' => [
+                'title' => $args['seo_title'] ?? $title,
+                'description' => $args['seo_description'] ?? "{$site->name} - {$title}",
+            ],
+            'status' => 'published',
+        ]);
+
+        return [
+            'message' => "Page '{$page->title}' created successfully",
+            'id' => $page->id,
+            'slug' => $page->slug,
+        ];
+    }
+
+    private function toolDeletePage(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+        $pageId = $args['page_id'] ?? null;
+        $pageSlug = $args['page_slug'] ?? null;
+
+        $query = Page::where('site_id', $site->id);
+        if ($pageId) {
+            $query->where('id', $pageId);
+        } elseif ($pageSlug) {
+            $query->where('slug', $pageSlug);
+        } else {
+            throw new \Exception("page_id or page_slug is required");
+        }
+
+        $page = $query->firstOrFail();
+        if ($page->is_home) {
+            throw new \Exception("Cannot delete the homepage");
+        }
+
+        $title = $page->title;
+        $page->delete();
+
+        return ['message' => "Page '{$title}' deleted successfully"];
+    }
+
     private function toolGetPageLayout(array $args): array
     {
         $slug = $args['site_slug'] ?? 'otizmuzikokulu';
@@ -175,6 +296,79 @@ class McpController extends Controller
         return [
             'message' => "Page '{$page->title}' layout updated successfully by AI Agent",
             'component_count' => count($newLayout),
+        ];
+    }
+
+    private function toolAddPageSection(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $pageSlug = $args['page_slug'] ?? '';
+        $section = $args['section'] ?? null;
+        $position = $args['position'] ?? 'bottom'; // top or bottom
+
+        if (!$section) {
+            throw new \Exception("section parameter is required");
+        }
+
+        $site = Site::where('slug', $slug)->firstOrFail();
+        $query = Page::where('site_id', $site->id);
+        if ($pageSlug) {
+            $query->where('slug', $pageSlug);
+        } else {
+            $query->where('is_home', true);
+        }
+        $page = $query->firstOrFail();
+
+        $layout = $page->layout ?? [];
+        if ($position === 'top') {
+            array_unshift($layout, $section);
+        } else {
+            $layout[] = $section;
+        }
+
+        $page->layout = $layout;
+        $page->save();
+
+        return [
+            'message' => "Section added successfully to page '{$page->title}'",
+            'new_total_sections' => count($layout),
+        ];
+    }
+
+    private function toolListMenus(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+        return Menu::where('site_id', $site->id)->with('items')->get()->toArray();
+    }
+
+    private function toolUpdateMenu(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+        $menuSlug = $args['menu_location'] ?? 'anamenu';
+        $items = $args['items'] ?? [];
+
+        $menu = Menu::firstOrCreate(
+            ['site_id' => $site->id, 'location' => $menuSlug],
+            ['name' => 'Ana Menü']
+        );
+
+        // Replace menu items
+        $menu->items()->delete();
+        foreach ($items as $idx => $it) {
+            MenuItem::create([
+                'menu_id' => $menu->id,
+                'title' => $it['title'] ?? 'Menü',
+                'url' => $it['url'] ?? '#',
+                'target' => $it['target'] ?? '_self',
+                'sort_order' => $idx + 1,
+            ]);
+        }
+
+        return [
+            'message' => "Menu '{$menuSlug}' updated with " . count($items) . " items",
+            'items' => $menu->items()->get()->toArray(),
         ];
     }
 
@@ -274,6 +468,20 @@ class McpController extends Controller
     {
         return [
             [
+                'name' => 'get_component_catalog',
+                'description' => 'Get the complete OpenAppEngine design system blueprint, including all 40+ components with their properties, CSS styles, and ready section templates.',
+                'inputSchema' => ['type' => 'object', 'properties' => []],
+            ],
+            [
+                'name' => 'get_site_structure',
+                'description' => 'Get a comprehensive architectural overview of a site: settings, color palette, navigation menus, pages list, recent posts, and forms.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => ['site_slug' => ['type' => 'string']],
+                    'required' => ['site_slug'],
+                ],
+            ],
+            [
                 'name' => 'list_sites',
                 'description' => 'List all websites and tenants managed in OpenAppEngine',
                 'inputSchema' => ['type' => 'object', 'properties' => []],
@@ -283,7 +491,7 @@ class McpController extends Controller
                 'description' => 'Get full details, domain, and global color theme of a specific site',
                 'inputSchema' => [
                     'type' => 'object',
-                    'properties' => ['site_slug' => ['type' => 'string', 'description' => 'Slug of the site (e.g. otizmuzikokulu)']],
+                    'properties' => ['site_slug' => ['type' => 'string']],
                     'required' => ['site_slug'],
                 ],
             ],
@@ -296,6 +504,7 @@ class McpController extends Controller
                         'site_slug' => ['type' => 'string'],
                         'primary_color' => ['type' => 'string', 'description' => 'Hex color code (e.g. #0077b6)'],
                         'secondary_color' => ['type' => 'string', 'description' => 'Hex color code'],
+                        'accent_color' => ['type' => 'string', 'description' => 'Hex color code'],
                         'font_family' => ['type' => 'string', 'description' => 'CSS font family name'],
                     ],
                     'required' => ['site_slug'],
@@ -307,6 +516,36 @@ class McpController extends Controller
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => ['site_slug' => ['type' => 'string']],
+                    'required' => ['site_slug'],
+                ],
+            ],
+            [
+                'name' => 'create_page',
+                'description' => 'Create a brand new page with slug, title, SEO tags and initial layout',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                        'title' => ['type' => 'string'],
+                        'slug' => ['type' => 'string'],
+                        'is_home' => ['type' => 'boolean'],
+                        'seo_title' => ['type' => 'string'],
+                        'seo_description' => ['type' => 'string'],
+                        'layout' => ['type' => 'array', 'description' => 'Optional custom initial ComponentNode array'],
+                    ],
+                    'required' => ['site_slug', 'title'],
+                ],
+            ],
+            [
+                'name' => 'delete_page',
+                'description' => 'Delete an existing page (homepage cannot be deleted)',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                        'page_id' => ['type' => 'integer'],
+                        'page_slug' => ['type' => 'string'],
+                    ],
                     'required' => ['site_slug'],
                 ],
             ],
@@ -333,6 +572,53 @@ class McpController extends Controller
                         'layout' => ['type' => 'array', 'description' => 'The complete updated ComponentNode array'],
                     ],
                     'required' => ['site_slug', 'layout'],
+                ],
+            ],
+            [
+                'name' => 'add_page_section',
+                'description' => 'Append or prepend a new section component node to an existing page',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                        'page_slug' => ['type' => 'string'],
+                        'section' => ['type' => 'object', 'description' => 'The Section ComponentNode object'],
+                        'position' => ['type' => 'string', 'enum' => ['top', 'bottom'], 'default' => 'bottom'],
+                    ],
+                    'required' => ['site_slug', 'section'],
+                ],
+            ],
+            [
+                'name' => 'list_menus',
+                'description' => 'List all navigation menus and menu items of a site',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => ['site_slug' => ['type' => 'string']],
+                    'required' => ['site_slug'],
+                ],
+            ],
+            [
+                'name' => 'update_menu',
+                'description' => 'Update or replace the navigation links in a menu (e.g. anamenu)',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                        'menu_location' => ['type' => 'string', 'default' => 'anamenu'],
+                        'items' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'title' => ['type' => 'string'],
+                                    'url' => ['type' => 'string'],
+                                    'target' => ['type' => 'string', 'default' => '_self'],
+                                ],
+                                'required' => ['title', 'url'],
+                            ],
+                        ],
+                    ],
+                    'required' => ['site_slug', 'items'],
                 ],
             ],
             [

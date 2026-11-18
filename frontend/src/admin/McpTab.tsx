@@ -57,12 +57,20 @@ export const McpTab: React.FC<McpTabProps> = ({ siteSlug, token }) => {
   )
 
   const toolsList = [
+    { name: 'preview_page_screenshot', desc: 'Sitenin canlı render edilmiş ekran görüntüsünü AI ajanına resim olarak sunar. Yapay zekanın tasarımını görsel olarak denetlemesini sağlar.', badge: 'Görsel Doğrulama (Visual)' },
+    { name: 'get_component_catalog', desc: 'Sitedeki tüm 40+ bileşenin özelliklerini (props), stil parametrelerini ve hazır şablonlarını AI ajanına tam rehber olarak verir.', badge: 'Tasarım Sistemi (Blueprint)' },
+    { name: 'get_site_structure', desc: 'Sitenin sayfalarını, menülerini, formlarını ve tema renklerini tek bakışta analiz eder.', badge: 'Mimari' },
     { name: 'list_sites', desc: 'Sistemdeki tüm web sitelerini ve tenantları listeler.', badge: 'Tenant' },
     { name: 'get_site_details', desc: 'Sitenin renk temasını, domainini ve genel ayarlarını inceler.', badge: 'Tema' },
     { name: 'update_site_theme', desc: 'Sitenin ana renklerini (primary, secondary) ve yazı tipini günceller.', badge: 'Tema' },
     { name: 'list_pages', desc: 'Sitedeki tüm sayfaları ve yayın durumlarını listeler.', badge: 'Sayfa' },
+    { name: 'create_page', desc: 'Sıfırdan yeni bir sayfa (başlık, slug, SEO ve layout) oluşturur.', badge: 'Sayfa' },
+    { name: 'delete_page', desc: 'Mevcut bir sayfayı sistemden kaldırır.', badge: 'Sayfa' },
     { name: 'get_page_layout', desc: 'Bir sayfanın tüm bileşen ağacını (JSON layout) AI analizine sunar.', badge: 'Sayfa' },
     { name: 'update_page_layout', desc: 'Sayfa düzenini doğrudan günceller, yeni bileşenler ekler veya siler.', badge: 'Görsel Editör' },
+    { name: 'add_page_section', desc: 'Mevcut bir sayfaya doğrudan yeni bir bölüm bloğu ekler.', badge: 'Görsel Editör' },
+    { name: 'list_menus', desc: 'Sitedeki tüm navigasyon menülerini listeler.', badge: 'Navigasyon' },
+    { name: 'update_menu', desc: 'Menüdeki bağlantıları ve sıralamayı günceller.', badge: 'Navigasyon' },
     { name: 'list_posts', desc: 'Yayınlanan veya taslak haber/duyuru makalelerini listeler.', badge: 'Blog' },
     { name: 'create_post', desc: 'AI tarafından sıfırdan yeni bir blog yazısı veya duyuru yayınlar.', badge: 'Blog' },
     { name: 'list_submissions', desc: 'Form başvurularını, ön kayıtları ve gelen kutusunu filtreli sorgular.', badge: 'DataTable' },
