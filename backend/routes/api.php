@@ -26,6 +26,10 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(ApiTokenAuth::class)->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
+            // MCP (Model Context Protocol) AI Agent Endpoint
+            Route::get('/mcp/tools', [\App\Http\Controllers\Api\McpController::class, 'tools']);
+            Route::post('/mcp', [\App\Http\Controllers\Api\McpController::class, 'handle']);
+
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
         // Tenants (Sites) Management (Super Admin & Scoped)

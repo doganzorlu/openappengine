@@ -8,6 +8,7 @@ import { PopupTab } from './PopupTab'
 import { MenusTab } from './MenusTab'
 import { ImporterTab } from './ImporterTab'
 import { SettingsTab } from './SettingsTab'
+import { McpTab } from './McpTab'
 import { TenantsTab } from './TenantsTab'
 
 interface AdminLayoutProps {
@@ -86,6 +87,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'menus', label: 'Menüler & Navigasyon', icon: '🧭' },
     { id: 'posts', label: 'Yazılar & Blog', icon: '✍️' },
     { id: 'forms', label: 'Gelen İletiler', icon: '📬' },
+    { id: 'mcp', label: 'AI & MCP Ajanı', icon: '🤖' },
     { id: 'media', label: 'Medya & Doküman', icon: '📁' },
     { id: 'popup', label: 'Popup & Duyuru', icon: '🪟' },
     { id: 'settings', label: 'Site Yönetimi & Ekip', icon: '⚙️', adminOnly: true },
@@ -322,6 +324,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {activeTab === 'forms' && (
             <FormsTab siteSlug={currentSlug} token={token} />
+          )}
+
+          {activeTab === 'mcp' && (
+            <McpTab siteSlug={currentSlug} token={token} />
           )}
 
           {activeTab === 'media' && (
