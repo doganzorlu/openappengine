@@ -17,6 +17,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/sites/{slug}/posts/{postSlug}', [SiteController::class, 'post']);
     Route::put('/sites/{slug}/pages/{pageId}/layout', [SiteController::class, 'updateLayout']);
     Route::post('/sites/{slug}/forms/{formSlug}/submit', [SiteController::class, 'submitForm']);
+    Route::get('/sites/{slug}/track/{token}', [SiteController::class, 'trackSubmission']);
     Route::get('/sitemap.xml', [SiteController::class, 'sitemap']);
     Route::get('/robots.txt', [SiteController::class, 'robots']);
 
@@ -66,6 +67,8 @@ Route::prefix('v1')->group(function () {
             Route::put('/forms/{formId}', [AdminController::class, 'updateForm']);
             Route::delete('/forms/{formId}', [AdminController::class, 'deleteForm']);
             Route::get('/submissions', [AdminController::class, 'listSubmissions']);
+            Route::put('/submissions/{submissionId}/status', [AdminController::class, 'updateSubmissionStatus']);
+            Route::get('/submissions/export', [AdminController::class, 'exportSubmissionsCsv']);
             Route::delete('/submissions/{submissionId}', [AdminController::class, 'deleteSubmission']);
 
             // Media / Gallery

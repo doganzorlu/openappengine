@@ -378,4 +378,47 @@ class SiteController extends Controller
             ],
         ]);
     }
+
+    public function trackSubmission(Request $request, string $slug, string $token): JsonResponse
+    {
+        $site = Site::where('slug', $slug)->firstOrFail();
+        $submission = FormSubmission::where('site_id', $site->id)
+            ->where('tracking_token', $token)
+            ->with('form:id,name,slug')
+            ->first();
+
+        if (!$submission) {
+            return response()->json(['success' => false, 'message' => 'Kayıt bulunamadı.'], 404);
+        }
+
+        if (!$submission->is_public) {
+            return response()->json(['success' => false, 'message' => 'Bu kayıt için genel takip kapalıdır.'], 403);
+        }
+
+        $statusLabels = [
+            'new' => 'Yeni Alındı',
+            'in_review' => 'İnceleniyor',
+            'approved' => 'Onaylandı',
+            'rejected' => 'Reddedildi',
+            'completed' => 'Tamamlandı',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'submission' => [
+                'tracking_token' => $submission->tracking_token,
+                'form_name' => $submission->form->name ?? 'Başvuru',
+                'status' => $submission->status,
+                'status_label' => $statusLabels[$submission->status] ?? $submission->status,
+                'created_at' => $submission->created_at,
+                'history' => $submission->history ?? [],
+                'data' => $submission->data,
+            ],
+            'site' => [
+                'name' => $site->name,
+                'slug' => $site->slug,
+                'domain' => $site->domain,
+            ]
+        ]);
+    }
 }

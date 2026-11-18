@@ -1386,4 +1386,130 @@ class AdminController extends Controller
             'message' => 'Kullanıcının site erişimi kaldırıldı.',
         ]);
     }
+
+    public function updateSubmissionStatus(Request $request, string $siteSlug, int $submissionId): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $submission = FormSubmission::where('site_id', $site->id)
+            ->where('id', $submissionId)
+            ->firstOrFail();
+
+        $request->validate([
+            'status' => 'required|string|in:new,in_review,approved,rejected,completed',
+            'note' => 'nullable|string|max:1000',
+            'is_public' => 'nullable|boolean',
+        ]);
+
+        $newStatus = $request->input('status');
+        $note = $request->input('note', '');
+        $user = $request->user();
+
+        $statusLabels = [
+            'new' => 'Yeni Alındı',
+            'in_review' => 'İnceleniyor',
+            'approved' => 'Onaylandı',
+            'rejected' => 'Reddedildi',
+            'completed' => 'Tamamlandı',
+        ];
+
+        $history = $submission->history ?? [];
+        $history[] = [
+            'status' => $newStatus,
+            'label' => $statusLabels[$newStatus] ?? $newStatus,
+            'note' => $note ?: ($statusLabels[$newStatus] . ' olarak güncellendi.'),
+            'changed_at' => now()->toISOString(),
+            'changed_by' => $user->name ?? 'Yönetici',
+        ];
+
+        $submission->status = $newStatus;
+        if ($request->has('note') && $note) {
+            $submission->admin_notes = ($submission->admin_notes ? $submission->admin_notes . "\n---\n" : '') . $note;
+        }
+        if ($request->has('is_public')) {
+            $submission->is_public = (bool) $request->input('is_public');
+        }
+        $submission->history = $history;
+        $submission->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Durum başarıyla güncellendi.',
+            'submission' => $submission->load('form'),
+        ]);
+    }
+
+    public function exportSubmissionsCsv(Request $request, string $siteSlug)
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $formId = $request->query('form_id');
+
+        $query = FormSubmission::where('site_id', $site->id)->with('form')->latest();
+        if ($formId) {
+            $query->where('form_id', $formId);
+        }
+        $submissions = $query->get();
+
+        $statusLabels = [
+            'new' => 'Yeni Alındı',
+            'in_review' => 'İnceleniyor',
+            'approved' => 'Onaylandı',
+            'rejected' => 'Reddedildi',
+            'completed' => 'Tamamlandı',
+        ];
+
+        $filename = "basvurular_{$siteSlug}_" . date('Y-m-d_His') . ".csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($submissions, $statusLabels) {
+            $output = fopen('php://output', 'w');
+            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($output, [
+                'ID',
+                'Tarih',
+                'Form Adı',
+                'Durum',
+                'Takip Kodu',
+                'Ad Soyad / İsim',
+                'E-Posta',
+                'Telefon',
+                'Tüm Alanlar (JSON)',
+                'Yönetici Notları',
+                'IP Adresi',
+            ], ';');
+
+            foreach ($submissions as $sub) {
+                $data = $sub->data ?? [];
+                $name = $data['name'] ?? $data['ad_soyad'] ?? $data['fullname'] ?? '';
+                $email = $data['email'] ?? $data['eposta'] ?? '';
+                $phone = $data['phone'] ?? $data['tel'] ?? $data['telefon'] ?? '';
+                $details = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+                fputcsv($output, [
+                    $sub->id,
+                    $sub->created_at ? $sub->created_at->format('d.m.Y H:i') : '',
+                    $sub->form->name ?? 'Form',
+                    $statusLabels[$sub->status] ?? $sub->status,
+                    $sub->tracking_token,
+                    $name,
+                    $email,
+                    $phone,
+                    $details,
+                    $sub->admin_notes ?? '',
+                    $sub->ip_address ?? '',
+                ], ';');
+            }
+
+            fclose($output);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

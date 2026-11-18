@@ -59,6 +59,7 @@ export function App() {
   const [page, setPage] = useState<PageData | null>(null)
   const [posts, setPosts] = useState<any[]>([])
   const [activePost, setActivePost] = useState<any | null>(null)
+  const [activeTracking, setActiveTracking] = useState<any | null>(null)
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -277,6 +278,23 @@ export function App() {
     window.addEventListener('openappengine:open-post', handleOpenPost as EventListener)
     return () => window.removeEventListener('openappengine:open-post', handleOpenPost as EventListener)
   }, [posts, currentSlug, site])
+
+  // Check for public tracking token in URL (?track=sub_...)
+  useEffect(() => {
+    const trackToken = new URLSearchParams(window.location.search).get('track')
+    if (trackToken && (currentSlug || site?.slug)) {
+      const activeS = currentSlug || site?.slug || 'otizmuzikokulu'
+      fetch(`/api/v1/sites/${activeS}/track/${trackToken}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.submission) {
+            setActiveTracking(data.submission)
+          }
+        })
+        .catch(console.error)
+    }
+  }, [currentSlug, site])
+
 
   // Site switch handler
   const handleSiteChange = (newSlug: string) => {
@@ -1067,6 +1085,126 @@ export function App() {
               className="prose prose-sm sm:prose max-w-none text-gray-700 leading-relaxed space-y-4"
               dangerouslySetInnerHTML={{ __html: activePost.content || activePost.excerpt || '' }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Public Submission Tracking Modal */}
+      {activeTracking && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+          onClick={() => setActiveTracking(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative space-y-6 border border-gray-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider font-mono">
+                  {activeTracking.tracking_token}
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-0.5">
+                  {activeTracking.form_name || 'Başvuru & Kayıt Durumu'}
+                </h2>
+                <div className="text-xs text-gray-400 mt-0.5 font-mono">
+                  Tarih: {new Date(activeTracking.created_at).toLocaleString('tr-TR')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTracking(null)}
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Current Status Box */}
+            <div
+              className={`p-4 rounded-2xl border flex items-center justify-between ${
+                activeTracking.status === 'approved'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : activeTracking.status === 'rejected'
+                  ? 'bg-rose-50 border-rose-200 text-rose-900'
+                  : activeTracking.status === 'in_review'
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : activeTracking.status === 'completed'
+                  ? 'bg-purple-50 border-purple-200 text-purple-900'
+                  : 'bg-blue-50 border-blue-200 text-blue-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">
+                  {activeTracking.status === 'approved'
+                    ? '✅'
+                    : activeTracking.status === 'rejected'
+                    ? '❌'
+                    : activeTracking.status === 'in_review'
+                    ? '🔍'
+                    : activeTracking.status === 'completed'
+                    ? '📁'
+                    : '🆕'}
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold opacity-75 uppercase tracking-wide">
+                    Güncel Başvuru Durumu
+                  </div>
+                  <div className="text-lg sm:text-xl font-black">{activeTracking.status_label}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Submitted Data Summary */}
+            <div className="space-y-2">
+              <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Kayıt Bilgileri</h4>
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2 text-xs">
+                {Object.entries(activeTracking.data || {}).map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200/50 pb-1.5 last:border-none last:pb-0"
+                  >
+                    <span className="font-bold text-gray-500 uppercase text-[10px]">{k}</span>
+                    <span className="text-gray-900 font-medium break-words">{String(v || '-')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Workflow Timeline */}
+            <div className="space-y-2">
+              <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Durum Akış Tarihçesi</h4>
+              <div className="space-y-2">
+                {(activeTracking.history || []).map((h: any, i: number) => (
+                  <div
+                    key={i}
+                    className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs flex items-start gap-2.5"
+                  >
+                    <span className="text-base">📌</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-gray-900">{h.label || h.status}</strong>
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          {h.changed_at ? new Date(h.changed_at).toLocaleString('tr-TR') : ''}
+                        </span>
+                      </div>
+                      {h.note && <p className="text-gray-600 text-[11px] mt-0.5">{h.note}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveTracking(null)}
+                className="px-5 py-2.5 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition cursor-pointer"
+              >
+                Kapat
+              </button>
+            </div>
           </div>
         </div>
       )}
