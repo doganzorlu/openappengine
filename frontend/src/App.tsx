@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import type { Site, Menu, PageData, ComponentNode } from './types'
 import { Navbar } from './components/Navbar'
 import { ComponentRenderer } from './components/ComponentRenderer'
@@ -98,6 +98,23 @@ export function App() {
   })
   const [blockInsertIndex, setBlockInsertIndex] = useState<number | null>(null)
 
+  // Responsive Viewport Mode: 'desktop' | 'tablet' | 'mobile'
+  const [viewportMode, setViewportMode] = useState<'desktop' | 'tablet' | 'mobile'>(() => {
+    const p = new URLSearchParams(window.location.search).get('viewport')
+    if (p === 'tablet' || p === 'mobile') return p
+    return 'desktop'
+  })
+
+  // Undo / Redo History Stack
+  const [history, setHistory] = useState<ComponentNode[][]>([])
+  const [historyIndex, setHistoryIndex] = useState<number>(-1)
+  const historyIndexRef = useRef<number>(-1)
+  const debounceTimerRef = useRef<any>(null)
+
+  useEffect(() => {
+    historyIndexRef.current = historyIndex
+  }, [historyIndex])
+
   // 1. Fetch available sites list once & listen to popstate
   useEffect(() => {
     async function fetchSites() {
@@ -172,6 +189,10 @@ export function App() {
         if (!pageRes.ok) throw new Error('Sayfa verisi yüklenemedi.')
         const pageData = await pageRes.json()
         setPage(pageData.page)
+        if (pageData.page?.layout) {
+          setHistory([pageData.page.layout])
+          setHistoryIndex(0)
+        }
 
         if (postsRes.ok) {
           const postsData = await postsRes.json()
@@ -304,18 +325,107 @@ export function App() {
     []
   )
 
+  // Layout History Management (Undo / Redo)
+  const applyLayoutChange = (newLayout: ComponentNode[], isImmediate = false) => {
+    if (!page) return
+    setPage((prev) => (prev ? { ...prev, layout: newLayout } : null))
+
+    if (isImmediate) {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      setHistory((prev) => {
+        const currIdx = historyIndexRef.current
+        const sliced = prev.slice(0, currIdx + 1)
+        const updated = [...sliced, newLayout]
+        if (updated.length > 50) return updated.slice(updated.length - 50)
+        return updated
+      })
+      setHistoryIndex((prev) => Math.min(prev + 1, 49))
+    } else {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = setTimeout(() => {
+        setHistory((prev) => {
+          const currIdx = historyIndexRef.current
+          const sliced = prev.slice(0, currIdx + 1)
+          const updated = [...sliced, newLayout]
+          if (updated.length > 50) return updated.slice(updated.length - 50)
+          return updated
+        })
+        setHistoryIndex((prev) => Math.min(prev + 1, 49))
+      }, 400)
+    }
+  }
+
+  const canUndo = historyIndex > 0
+  const canRedo = historyIndex >= 0 && historyIndex < history.length - 1
+
+  const handleUndo = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    if (historyIndex > 0 && history[historyIndex - 1]) {
+      const targetLayout = history[historyIndex - 1]
+      setHistoryIndex(historyIndex - 1)
+      setPage((prev) => (prev ? { ...prev, layout: targetLayout } : null))
+      setSelectedNode(null)
+      showToast('↩️ Geri alındı (Undo)')
+    }
+  }, [history, historyIndex])
+
+  const handleRedo = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    if (historyIndex < history.length - 1 && history[historyIndex + 1]) {
+      const targetLayout = history[historyIndex + 1]
+      setHistoryIndex(historyIndex + 1)
+      setPage((prev) => (prev ? { ...prev, layout: targetLayout } : null))
+      setSelectedNode(null)
+      showToast('↪️ İleri alındı (Redo)')
+    }
+  }, [history, historyIndex])
+
+  // Keyboard shortcut listener for Undo (Cmd/Ctrl + Z) and Redo (Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y)
+  useEffect(() => {
+    if (!isEditorMode) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement as HTMLElement
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.isContentEditable)
+      ) {
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && !e.altKey) {
+        if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault()
+          if (e.shiftKey) {
+            handleRedo()
+          } else {
+            handleUndo()
+          }
+        } else if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault()
+          handleRedo()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isEditorMode, handleUndo, handleRedo])
+
   const handleUpdateNode = (updatedNode: ComponentNode) => {
     if (!page) return
     setSelectedNode(updatedNode)
     const newLayout = updateNodeInTree(page.layout, updatedNode)
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, false)
   }
 
   const handleDeleteNode = (nodeId: string) => {
     if (!page) return
     setSelectedNode(null)
     const newLayout = deleteNodeInTree(page.layout, nodeId)
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, true)
     showToast('Bileşen silindi.')
   }
 
@@ -330,7 +440,7 @@ export function App() {
     const newLayout = [...page.layout]
     const [moved] = newLayout.splice(idx, 1)
     newLayout.splice(targetIdx, 0, moved)
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, true)
     showToast(direction === 'up' ? '⬆️ Bölüm yukarı taşındı.' : '⬇️ Bölüm aşağı taşındı.')
   }
 
@@ -352,7 +462,7 @@ export function App() {
     const cloned = cloneNodeWithNewIds(page.layout[idx])
     const newLayout = [...page.layout]
     newLayout.splice(idx + 1, 0, cloned)
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, true)
     setSelectedNode(cloned)
     showToast('📋 Bölüm başarıyla çoğaltıldı!')
   }
@@ -365,7 +475,7 @@ export function App() {
     }
     if (!window.confirm('Bu bölümü silmek istediğinize emin misiniz?')) return
     const newLayout = page.layout.filter((n) => n.id !== sectionId)
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, true)
     if (selectedNode?.id === sectionId) {
       setSelectedNode(null)
     }
@@ -380,7 +490,7 @@ export function App() {
     } else {
       newLayout.push(newBlock)
     }
-    setPage({ ...page, layout: newLayout })
+    applyLayoutChange(newLayout, true)
     setSelectedNode(newBlock)
     setIsBlockLibraryOpen(false)
     setBlockInsertIndex(null)
@@ -528,6 +638,74 @@ export function App() {
               </div>
             </div>
 
+            {/* Center: Device Viewport Switcher & Undo / Redo */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Undo / Redo Controls */}
+              {isEditorMode && (
+                <div className="flex items-center bg-gray-800 rounded-lg p-0.5 border border-gray-700 shadow-xs">
+                  <button
+                    onClick={handleUndo}
+                    disabled={!canUndo}
+                    className="px-2 py-1 text-xs rounded hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 hover:text-white transition flex items-center gap-1 font-medium cursor-pointer disabled:cursor-not-allowed"
+                    title="Geri Al (Cmd/Ctrl + Z)"
+                  >
+                    <span>↩️</span>
+                    <span className="hidden xl:inline text-[11px]">Geri</span>
+                  </button>
+                  <div className="w-[1px] h-3.5 bg-gray-700 my-auto" />
+                  <button
+                    onClick={handleRedo}
+                    disabled={!canRedo}
+                    className="px-2 py-1 text-xs rounded hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 hover:text-white transition flex items-center gap-1 font-medium cursor-pointer disabled:cursor-not-allowed"
+                    title="İleri Al (Cmd/Ctrl + Shift + Z veya Cmd/Ctrl + Y)"
+                  >
+                    <span>↪️</span>
+                    <span className="hidden xl:inline text-[11px]">İleri</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Viewport Device Switcher */}
+              <div className="flex items-center bg-gray-800 rounded-lg p-0.5 border border-gray-700 shadow-xs">
+                <button
+                  onClick={() => setViewportMode('desktop')}
+                  className={`px-2 py-1 text-xs rounded transition flex items-center gap-1 font-medium cursor-pointer ${
+                    viewportMode === 'desktop'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/60'
+                  }`}
+                  title="Masaüstü Görünümü (100% Tam Genişlik)"
+                >
+                  <span>🖥️</span>
+                  <span className="hidden md:inline text-[11px]">Masaüstü</span>
+                </button>
+                <button
+                  onClick={() => setViewportMode('tablet')}
+                  className={`px-2 py-1 text-xs rounded transition flex items-center gap-1 font-medium cursor-pointer ${
+                    viewportMode === 'tablet'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/60'
+                  }`}
+                  title="Tablet Görünümü (768px iPad)"
+                >
+                  <span>📟</span>
+                  <span className="hidden md:inline text-[11px]">Tablet</span>
+                </button>
+                <button
+                  onClick={() => setViewportMode('mobile')}
+                  className={`px-2 py-1 text-xs rounded transition flex items-center gap-1 font-medium cursor-pointer ${
+                    viewportMode === 'mobile'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/60'
+                  }`}
+                  title="Mobil Görünümü (375px iPhone)"
+                >
+                  <span>📱</span>
+                  <span className="hidden md:inline text-[11px]">Mobil</span>
+                </button>
+              </div>
+            </div>
+
             {/* Right: Admin Panel button, Visual Editor & Save */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               {isEditorMode && (
@@ -603,7 +781,35 @@ export function App() {
       )}
 
       {/* Site Canvas Container (Leaves room on the right for fixed Inspector in Editor Mode) */}
-      <div className={`flex-1 flex flex-col w-full transition-all duration-200 ${isEditorMode ? 'pr-80 sm:pr-96' : ''}`}>
+      <div
+        className={`flex-1 flex flex-col items-center justify-start transition-all duration-300 w-full ${
+          isEditorMode ? 'pr-80 sm:pr-96' : ''
+        } ${viewportMode !== 'desktop' ? 'bg-slate-900/10 py-6 px-4 min-h-[calc(100vh-3.5rem)]' : ''}`}
+      >
+        {/* Device Frame Wrapper (Applies device borders, shadows & responsive constraints in Tablet/Mobile) */}
+        <div
+          className={`transition-all duration-300 flex flex-col bg-white ${
+            viewportMode === 'tablet'
+              ? 'w-[768px] max-w-full rounded-[32px] shadow-2xl border-[10px] border-slate-800 ring-1 ring-black/10 overflow-hidden my-auto'
+              : viewportMode === 'mobile'
+              ? 'w-[375px] max-w-full rounded-[40px] shadow-2xl border-[12px] border-slate-900 ring-1 ring-black/10 overflow-hidden my-auto'
+              : 'w-full flex-1 flex flex-col'
+          }`}
+        >
+          {/* Device Top Bezel / Status Bar for Mobile & Tablet */}
+          {viewportMode === 'mobile' && (
+            <div className="w-full bg-slate-900 h-6 flex items-center justify-between px-6 shrink-0 select-none text-white text-[10px] font-semibold">
+              <span>9:41</span>
+              <div className="w-20 h-3 bg-black rounded-full shadow-inner" />
+              <span className="flex items-center gap-1">5G 🔋</span>
+            </div>
+          )}
+          {viewportMode === 'tablet' && (
+            <div className="w-full bg-slate-800 h-5 flex items-center justify-center shrink-0 select-none">
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
+            </div>
+          )}
+
         {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
         {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
           <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
@@ -722,6 +928,7 @@ export function App() {
         ) : (
           <Footer site={site} />
         )}
+        </div>
       </div>
 
       {/* Right Inspector Panel in Editor Mode (Always fixed to viewport with its own scroll container) */}
