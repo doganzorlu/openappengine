@@ -603,6 +603,7 @@ export function App() {
               isEditing={isEditorMode}
               selectedNodeId={selectedNode?.id || null}
               onSelectNode={(node) => setSelectedNode(node)}
+              onUpdateNode={handleUpdateNode}
               isTopLevel={true}
               onMoveNode={handleMoveSection}
               onDuplicateNode={handleDuplicateSection}

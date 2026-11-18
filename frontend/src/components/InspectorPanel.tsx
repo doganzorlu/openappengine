@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import type { ComponentNode } from '../types'
 import { MediaPickerModal, type MediaItem } from './MediaPickerModal'
+import { ColorPickerInput } from './ColorPickerInput'
 
 interface InspectorPanelProps {
   selectedNode: ComponentNode | null
@@ -150,6 +151,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <option value="h4">H4 - Küçük Başlık</option>
                   </select>
                 </div>
+                <ColorPickerInput
+                  label="Metin Rengi"
+                  value={props.color || styles.color}
+                  onChange={(c) => {
+                    handlePropChange('color', c)
+                    handleStyleChange('color', c)
+                  }}
+                />
               </>
             )}
 
@@ -215,6 +224,22 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <option value="_blank">Yeni Pencere (_blank)</option>
                   </select>
                 </div>
+                <ColorPickerInput
+                  label="Buton Arka Plan Rengi"
+                  value={props.bgColor || styles.backgroundColor}
+                  onChange={(c) => {
+                    handlePropChange('bgColor', c)
+                    handleStyleChange('backgroundColor', c)
+                  }}
+                />
+                <ColorPickerInput
+                  label="Buton Yazı Rengi"
+                  value={props.textColor || styles.color}
+                  onChange={(c) => {
+                    handlePropChange('textColor', c)
+                    handleStyleChange('color', c)
+                  }}
+                />
               </>
             )}
 
@@ -421,23 +446,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Arka Plan Rengi</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={props.bgColor || '#ffffff'}
-                      onChange={(e) => handlePropChange('bgColor', e.target.value)}
-                      className="w-10 h-9 p-0 border rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={props.bgColor || ''}
-                      onChange={(e) => handlePropChange('bgColor', e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-lg outline-none"
-                    />
-                  </div>
-                </div>
+                <ColorPickerInput
+                  label="Arka Plan Rengi"
+                  value={props.bgColor || styles.backgroundColor}
+                  onChange={(c) => {
+                    handlePropChange('bgColor', c)
+                    handleStyleChange('backgroundColor', c)
+                  }}
+                />
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">Minimum Yükseklik</label>
                   <input
@@ -563,43 +579,17 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-[11px]">
                 Görünüm & Renkler
               </h4>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-gray-600 mb-0.5">Arka Plan Rengi</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={styles.backgroundColor || '#ffffff'}
-                      onChange={(e) => handleStyleChange('backgroundColor', e.target.value)}
-                      className="w-8 h-8 p-0 border rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      placeholder="örn: #f3f4f6"
-                      value={styles.backgroundColor || ''}
-                      onChange={(e) => handleStyleChange('backgroundColor', e.target.value)}
-                      className="flex-1 px-2.5 py-1 border rounded bg-white outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-gray-600 mb-0.5">Metin Rengi</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={styles.color || '#111827'}
-                      onChange={(e) => handleStyleChange('color', e.target.value)}
-                      className="w-8 h-8 p-0 border rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      placeholder="örn: #111827"
-                      value={styles.color || ''}
-                      onChange={(e) => handleStyleChange('color', e.target.value)}
-                      className="flex-1 px-2.5 py-1 border rounded bg-white outline-none"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-3">
+                <ColorPickerInput
+                  label="Arka Plan Rengi"
+                  value={styles.backgroundColor}
+                  onChange={(c) => handleStyleChange('backgroundColor', c)}
+                />
+                <ColorPickerInput
+                  label="Metin Rengi"
+                  value={styles.color}
+                  onChange={(c) => handleStyleChange('color', c)}
+                />
                 <div>
                   <label className="block text-gray-600 mb-0.5">Kenarlık Yarıçapı (Border Radius)</label>
                   <input

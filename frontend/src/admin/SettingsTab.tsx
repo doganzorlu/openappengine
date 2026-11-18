@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { MediaPickerModal, type MediaItem } from '../components/MediaPickerModal'
+import { ColorPickerInput } from '../components/ColorPickerInput'
 
 interface SettingsTabProps {
   siteSlug: string
@@ -391,21 +392,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Marka / Tema Rengi</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={general.primary_color}
-                      onChange={(e) => setGeneral({ ...general, primary_color: e.target.value })}
-                      className="w-10 h-10 rounded-xl cursor-pointer border-0 p-1"
-                    />
-                    <input
-                      type="text"
-                      value={general.primary_color}
-                      onChange={(e) => setGeneral({ ...general, primary_color: e.target.value })}
-                      className="w-32 px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
-                    />
-                  </div>
+                  <ColorPickerInput
+                    label="Marka / Tema Rengi"
+                    value={general.primary_color}
+                    onChange={(c) => setGeneral({ ...general, primary_color: c })}
+                    allowTransparent={false}
+                  />
                 </div>
               </div>
 

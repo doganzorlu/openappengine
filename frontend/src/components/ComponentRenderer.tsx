@@ -12,6 +12,7 @@ import { DownloadsList } from './DownloadsList'
 import { Tabs } from './Tabs'
 import { SlideCarousel } from './SlideCarousel'
 import { OrgChart } from './OrgChart'
+import { ResizeHandles } from './ResizeHandles'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -21,6 +22,7 @@ interface RendererProps {
   isEditing?: boolean
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
+  onUpdateNode?: (updatedNode: ComponentNode) => void
   isTopLevel?: boolean
   inGrid?: boolean
   onMoveNode?: (nodeId: string, direction: 'up' | 'down') => void
@@ -37,6 +39,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   isEditing = false,
   selectedNodeId = null,
   onSelectNode,
+  onUpdateNode,
   isTopLevel = false,
   inGrid = false,
   onMoveNode,
@@ -189,6 +192,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
+                  onUpdateNode={onUpdateNode}
                 />
               </div>
             )
@@ -466,7 +470,17 @@ const NodeItem: React.FC<{
   isEditing?: boolean
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
-}> = ({ node, siteSlug, site = null, menus = [], isEditing = false, selectedNodeId = null, onSelectNode }) => {
+  onUpdateNode?: (updatedNode: ComponentNode) => void
+}> = ({
+  node,
+  siteSlug,
+  site = null,
+  menus = [],
+  isEditing = false,
+  selectedNodeId = null,
+  onSelectNode,
+  onUpdateNode,
+}) => {
   const { type, props = {}, styles = {}, children = [] } = node
   const isSelected = isEditing && selectedNodeId === node.id
 
@@ -589,6 +603,7 @@ const NodeItem: React.FC<{
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
+                  onUpdateNode={onUpdateNode}
                 />
               </div>
 
@@ -703,6 +718,7 @@ const NodeItem: React.FC<{
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
+                  onUpdateNode={onUpdateNode}
                 />
               </div>
             </div>
@@ -726,6 +742,7 @@ const NodeItem: React.FC<{
                   isEditing={isEditing}
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
+                  onUpdateNode={onUpdateNode}
                 />
               </div>
             )
@@ -747,6 +764,7 @@ const NodeItem: React.FC<{
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
+                onUpdateNode={onUpdateNode}
               />
             </div>
           )
@@ -775,6 +793,7 @@ const NodeItem: React.FC<{
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
+                onUpdateNode={onUpdateNode}
                 inGrid={true}
               />
             </div>
@@ -800,6 +819,7 @@ const NodeItem: React.FC<{
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
+                onUpdateNode={onUpdateNode}
               />
             </div>
           )
@@ -818,6 +838,7 @@ const NodeItem: React.FC<{
               isEditing={isEditing}
               selectedNodeId={selectedNodeId}
               onSelectNode={onSelectNode}
+              onUpdateNode={onUpdateNode}
             />
           </div>
         )
@@ -1361,25 +1382,27 @@ const NodeItem: React.FC<{
 
   if (isEditing) {
     return (
-      <div
-        onClick={handleSelect}
-        className={`relative group cursor-pointer transition-all ${
-          isSelected
-            ? 'ring-2 ring-purple-600 ring-offset-2 rounded-lg'
-            : 'hover:outline-dashed hover:outline-1 hover:outline-blue-400'
-        }`}
-      >
-        <span
-          className={`absolute -top-3 left-2 z-20 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider shadow-sm transition-opacity ${
+      <ResizeHandles node={node} isSelected={isSelected} onUpdateNode={onUpdateNode}>
+        <div
+          onClick={handleSelect}
+          className={`relative group cursor-pointer transition-all ${
             isSelected
-              ? 'bg-purple-600 text-white opacity-100 font-bold'
-              : 'bg-blue-600 text-white opacity-0 group-hover:opacity-100'
+              ? 'ring-2 ring-purple-600 ring-offset-2 rounded-lg'
+              : 'hover:outline-dashed hover:outline-1 hover:outline-blue-400'
           }`}
         >
-          {type}
-        </span>
-        {renderContent()}
-      </div>
+          <span
+            className={`absolute -top-3 left-2 z-20 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider shadow-sm transition-opacity ${
+              isSelected
+                ? 'bg-purple-600 text-white opacity-100 font-bold'
+                : 'bg-blue-600 text-white opacity-0 group-hover:opacity-100'
+            }`}
+          >
+            {type}
+          </span>
+          {renderContent()}
+        </div>
+      </ResizeHandles>
     )
   }
 
