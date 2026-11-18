@@ -1194,6 +1194,329 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </>
             )}
 
+            {/* CallToAction Props */}
+            {type === 'CallToAction' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Üst Küçük Başlık (Subtitle)</label>
+                  <input
+                    type="text"
+                    value={props.subtitle || ''}
+                    placeholder="Örn: KATILIM VE KAYIT"
+                    onChange={(e) => handlePropChange('subtitle', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Ana Başlık</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Geleceğe Birlikte Nota Bırakalım!"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Açıklama Metni</label>
+                  <textarea
+                    rows={3}
+                    value={props.description || ''}
+                    placeholder="Eylem çağrısı detay metni..."
+                    onChange={(e) => handlePropChange('description', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Dizilim Düzeni</label>
+                  <select
+                    value={props.layout || 'centered'}
+                    onChange={(e) => handlePropChange('layout', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  >
+                    <option value="centered">Ortalanmış (Centered)</option>
+                    <option value="left-aligned">Yan Yana (Left-aligned & Buton Sağda)</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">1. Buton Metni</label>
+                    <input
+                      type="text"
+                      value={props.buttonText || ''}
+                      placeholder="Hemen Başvurun"
+                      onChange={(e) => handlePropChange('buttonText', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">1. Buton Linki</label>
+                    <input
+                      type="text"
+                      value={props.buttonUrl || ''}
+                      placeholder="https://... veya #"
+                      onChange={(e) => handlePropChange('buttonUrl', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">2. Buton Metni (Opsiyonel)</label>
+                    <input
+                      type="text"
+                      value={props.secondaryButtonText || ''}
+                      placeholder="Detaylı Bilgi Al"
+                      onChange={(e) => handlePropChange('secondaryButtonText', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">2. Buton Linki</label>
+                    <input
+                      type="text"
+                      value={props.secondaryButtonUrl || ''}
+                      placeholder="/hakkimizda"
+                      onChange={(e) => handlePropChange('secondaryButtonUrl', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorPickerInput
+                    label="Vurgu Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                  <ColorPickerInput
+                    label="Arka Plan Rengi"
+                    value={props.bgColor || '#0F172A'}
+                    onChange={(c) => handlePropChange('bgColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* AlertBox Props */}
+            {type === 'AlertBox' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Duyuru / Uyarı Türü</label>
+                  <select
+                    value={props.alertType || props.type || 'info'}
+                    onChange={(e) => handlePropChange('alertType', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  >
+                    <option value="info">Bilgilendirme (Mavi)</option>
+                    <option value="success">Başarı / Onay (Yeşil)</option>
+                    <option value="warning">Uyarı / Dikkat (Sarı)</option>
+                    <option value="urgent">Acil / Önemli Duyuru (Kırmızı)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Başlık (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Önemli Duyuru"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Mesaj Metni</label>
+                  <textarea
+                    rows={3}
+                    value={props.message || props.text || ''}
+                    placeholder="Duyuru veya bildirim metni..."
+                    onChange={(e) => handlePropChange('message', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Aksiyon Buton Metni</label>
+                    <input
+                      type="text"
+                      value={props.actionText || ''}
+                      placeholder="Başvuru Formu"
+                      onChange={(e) => handlePropChange('actionText', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Aksiyon Linki</label>
+                    <input
+                      type="text"
+                      value={props.actionUrl || ''}
+                      placeholder="/basvuru"
+                      onChange={(e) => handlePropChange('actionUrl', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={props.dismissible !== false}
+                      onChange={(e) => handlePropChange('dismissible', e.target.checked)}
+                      className="rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700 font-semibold text-xs">Kullanıcı Tarafından Kapatılabilir (✕)</span>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {/* FlipBox Props */}
+            {type === 'FlipBox' && (
+              <>
+                <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100 space-y-2">
+                  <h4 className="font-bold text-purple-900 text-xs uppercase tracking-wider">Ön Yüz (Front)</h4>
+                  <div>
+                    <label className="block text-gray-600 text-xs mb-1">İkon / Emoji</label>
+                    <input
+                      type="text"
+                      value={props.frontIcon || ''}
+                      placeholder="🎹, 🥁, 🎨, ⭐"
+                      onChange={(e) => handlePropChange('frontIcon', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded bg-white text-xs outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-xs mb-1">Ön Başlık</label>
+                    <input
+                      type="text"
+                      value={props.frontTitle || ''}
+                      placeholder="Örn: Piyano & Ritim"
+                      onChange={(e) => handlePropChange('frontTitle', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded bg-white text-xs outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-xs mb-1">Ön Alt Başlık</label>
+                    <input
+                      type="text"
+                      value={props.frontSubtitle || ''}
+                      placeholder="Birebir Müzik Terapisi"
+                      onChange={(e) => handlePropChange('frontSubtitle', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded bg-white text-xs outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 space-y-2">
+                  <h4 className="font-bold text-blue-900 text-xs uppercase tracking-wider">Arka Yüz (Back)</h4>
+                  <div>
+                    <label className="block text-gray-600 text-xs mb-1">Arka Başlık (Opsiyonel)</label>
+                    <input
+                      type="text"
+                      value={props.backTitle || ''}
+                      placeholder="Atölye Detayı"
+                      onChange={(e) => handlePropChange('backTitle', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded bg-white text-xs outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-xs mb-1">Arka Açıklama</label>
+                    <textarea
+                      rows={3}
+                      value={props.backDescription || ''}
+                      placeholder="Atölye hedefleri, kazanımlar..."
+                      onChange={(e) => handlePropChange('backDescription', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded bg-white text-xs outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-gray-600 text-xs mb-1">Buton Metni</label>
+                      <input
+                        type="text"
+                        value={props.buttonText || ''}
+                        placeholder="İncele"
+                        onChange={(e) => handlePropChange('buttonText', e.target.value)}
+                        className="w-full px-2 py-1 border rounded bg-white text-xs outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-600 text-xs mb-1">Buton Linki</label>
+                      <input
+                        type="text"
+                        value={props.buttonUrl || ''}
+                        placeholder="#"
+                        onChange={(e) => handlePropChange('buttonUrl', e.target.value)}
+                        className="w-full px-2 py-1 border rounded bg-white text-xs outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorPickerInput
+                    label="Vurgu Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                  <ColorPickerInput
+                    label="Arka Yüz Rengi"
+                    value={props.backBg || '#023E8A'}
+                    onChange={(c) => handlePropChange('backBg', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* GoogleMap Props */}
+            {type === 'GoogleMap' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Adres veya Konum Adı</label>
+                  <input
+                    type="text"
+                    value={props.address || ''}
+                    placeholder="Örn: ÇOMÜ Müzik ve Sahne Sanatları Fakültesi, Çanakkale"
+                    onChange={(e) => handlePropChange('address', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Harita Başlığı (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Etkinlik ve Eğitim Kampüsü"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yükseklik (px)</label>
+                    <input
+                      type="number"
+                      min="200"
+                      max="800"
+                      value={props.height || 380}
+                      onChange={(e) => handlePropChange('height', parseInt(e.target.value, 10) || 380)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yakınlaştırma (Zoom)</label>
+                    <input
+                      type="number"
+                      min="8"
+                      max="20"
+                      value={props.zoom || 14}
+                      onChange={(e) => handlePropChange('zoom', parseInt(e.target.value, 10) || 14)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Align setting for all */}
             <div>
               <label className="block font-semibold text-gray-700 mb-1">Hizalama</label>

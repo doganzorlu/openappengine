@@ -20,6 +20,10 @@ import { LogoTicker } from './LogoTicker'
 import { PricingTable } from './PricingTable'
 import { Testimonial } from './Testimonial'
 import { ProgressBar } from './ProgressBar'
+import { CallToAction } from './CallToAction'
+import { AlertBox } from './AlertBox'
+import { FlipBox } from './FlipBox'
+import { GoogleMap } from './GoogleMap'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -1594,6 +1598,69 @@ const NodeItem: React.FC<{
             height={props.height || 16}
             showStripes={props.showStripes !== false}
             textColor={styles.color || props.textColor}
+          />
+        )
+      }
+
+      case 'CallToAction': {
+        return (
+          <CallToAction
+            title={props.title || 'Harekete Geçin!'}
+            subtitle={props.subtitle}
+            description={props.description}
+            buttonText={props.buttonText || 'Hemen Başvurun'}
+            buttonUrl={props.buttonUrl || '#'}
+            secondaryButtonText={props.secondaryButtonText}
+            secondaryButtonUrl={props.secondaryButtonUrl}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            bgColor={styles.backgroundColor || props.bgColor || '#0F172A'}
+            textColor={styles.color || props.textColor || '#FFFFFF'}
+            layout={props.layout || 'centered'}
+          />
+        )
+      }
+
+      case 'AlertBox': {
+        return (
+          <AlertBox
+            type={props.alertType || props.type || 'info'}
+            title={props.title}
+            message={props.message || props.text || 'Önemli duyuru veya bilgilendirme metni.'}
+            dismissible={props.dismissible !== false}
+            actionText={props.actionText}
+            actionUrl={props.actionUrl}
+          />
+        )
+      }
+
+      case 'FlipBox': {
+        return (
+          <FlipBox
+            frontIcon={props.frontIcon || '🎹'}
+            frontTitle={props.frontTitle || 'Atölye Başlığı'}
+            frontSubtitle={props.frontSubtitle}
+            frontBg={props.frontBg || '#FFFFFF'}
+            frontTextColor={props.frontTextColor || '#1F2937'}
+            backTitle={props.backTitle}
+            backDescription={props.backDescription || 'Atölye detayları ve kazanımları...'}
+            buttonText={props.buttonText || 'İncele'}
+            buttonUrl={props.buttonUrl || '#'}
+            backBg={styles.backgroundColor || props.backBg || '#023E8A'}
+            backTextColor={styles.color || props.backTextColor || '#FFFFFF'}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            minHeight={props.minHeight || 320}
+          />
+        )
+      }
+
+      case 'GoogleMap': {
+        return (
+          <GoogleMap
+            address={props.address || 'Çanakkale Onsekiz Mart Üniversitesi MSSF'}
+            height={props.height || 380}
+            zoom={props.zoom || 14}
+            title={props.title}
+            borderRadius={props.borderRadius || 24}
           />
         )
       }
