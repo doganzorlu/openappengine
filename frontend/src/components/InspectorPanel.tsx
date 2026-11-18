@@ -482,6 +482,245 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </div>
             )}
 
+            {/* Countdown Props */}
+            {type === 'Countdown' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Başlık</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Etkinliğe Kalan Süre"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Hedef Tarih & Saat</label>
+                  <input
+                    type="datetime-local"
+                    value={props.targetDate ? props.targetDate.slice(0, 16) : ''}
+                    onChange={(e) => handlePropChange('targetDate', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Örn: 2026-07-06 09:00</p>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Süre Bitince Mesajı</label>
+                  <input
+                    type="text"
+                    value={props.completedText || ''}
+                    placeholder="Örn: Etkinlik Başladı!"
+                    onChange={(e) => handlePropChange('completedText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <ColorPickerInput
+                  label="Vurgu Rengi"
+                  value={props.accentColor || '#4F46E5'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+                <ColorPickerInput
+                  label="Kutu Arka Planı"
+                  value={props.boxBg || '#1E293B'}
+                  onChange={(c) => handlePropChange('boxBg', c)}
+                />
+              </>
+            )}
+
+            {/* PostGrid Props */}
+            {type === 'PostGrid' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yazı Sayısı</label>
+                    <select
+                      value={props.count || 3}
+                      onChange={(e) => handlePropChange('count', Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value={3}>3 Yazı</option>
+                      <option value={6}>6 Yazı</option>
+                      <option value={9}>9 Yazı</option>
+                      <option value={12}>12 Yazı</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Sütun Sayısı</label>
+                    <select
+                      value={props.columns || 3}
+                      onChange={(e) => handlePropChange('columns', Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value={1}>1 Sütun</option>
+                      <option value={2}>2 Sütun</option>
+                      <option value={3}>3 Sütun</option>
+                      <option value={4}>4 Sütun</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Görünürlük Ayarları</label>
+                  <div className="space-y-1.5 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={props.showImage !== false}
+                        onChange={(e) => handlePropChange('showImage', e.target.checked)}
+                        className="rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-gray-700 font-medium">Öne Çıkan Görseli Göster</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={props.showDate !== false}
+                        onChange={(e) => handlePropChange('showDate', e.target.checked)}
+                        className="rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-gray-700 font-medium">Tarih Bilgisini Göster</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={props.showExcerpt !== false}
+                        onChange={(e) => handlePropChange('showExcerpt', e.target.checked)}
+                        className="rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-gray-700 font-medium">Özet Metni Göster</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Buton Metni</label>
+                  <input
+                    type="text"
+                    value={props.readMoreText || 'Devamını Oku →'}
+                    onChange={(e) => handlePropChange('readMoreText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* TeamMember Props */}
+            {type === 'TeamMember' && (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Fotoğraf / Avatar</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'imageUrl',
+                          allowedTypes: 'image',
+                          title: 'Ekip Üyesi Fotoğrafı Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      🖼️ Medyadan Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.imageUrl || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('imageUrl', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Ad Soyad</label>
+                  <input
+                    type="text"
+                    value={props.name || ''}
+                    placeholder="Örn: Prof. Dr. Uğur TÜRKMEN"
+                    onChange={(e) => handlePropChange('name', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Unvan / Görev</label>
+                  <input
+                    type="text"
+                    value={props.role || ''}
+                    placeholder="Örn: Düzenleme Kurulu Başkanı"
+                    onChange={(e) => handlePropChange('role', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Kısa Biyografi / Açıklama</label>
+                  <textarea
+                    rows={3}
+                    value={props.bio || ''}
+                    placeholder="Uzmanlık alanı veya kısa tanıtım..."
+                    onChange={(e) => handlePropChange('bio', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <ColorPickerInput
+                  label="Rozet & Vurgu Rengi"
+                  value={props.accentColor || '#4F46E5'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+              </>
+            )}
+
+            {/* LogoTicker Props */}
+            {type === 'LogoTicker' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Kayma Hızı</label>
+                  <select
+                    value={props.speed || 'normal'}
+                    onChange={(e) => handlePropChange('speed', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  >
+                    <option value="slow">Yavaş (45s)</option>
+                    <option value="normal">Normal (28s)</option>
+                    <option value="fast">Hızlı (15s)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Akış Yönü</label>
+                  <select
+                    value={props.direction || 'left'}
+                    onChange={(e) => handlePropChange('direction', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  >
+                    <option value="left">Sola Doğru ⬅️</option>
+                    <option value="right">Sağa Doğru ➡️</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={props.grayscale !== false}
+                      onChange={(e) => handlePropChange('grayscale', e.target.checked)}
+                      className="rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700 font-medium">Siyah-Beyaz Başla (Hover'da Renkli)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={props.pauseOnHover !== false}
+                      onChange={(e) => handlePropChange('pauseOnHover', e.target.checked)}
+                      className="rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700 font-medium">Fare Üzerindeyken Duraklat</span>
+                  </label>
+                </div>
+              </>
+            )}
+
             {/* Align setting for all */}
             <div>
               <label className="block font-semibold text-gray-700 mb-1">Hizalama</label>

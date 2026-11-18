@@ -93,7 +93,9 @@ export function App() {
   }, [page])
   const [isSaving, setIsSaving] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false)
+  const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(() => {
+    return new URLSearchParams(window.location.search).get('blocks') === '1'
+  })
   const [blockInsertIndex, setBlockInsertIndex] = useState<number | null>(null)
 
   // 1. Fetch available sites list once & listen to popstate

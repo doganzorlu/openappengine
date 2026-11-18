@@ -13,6 +13,10 @@ import { Tabs } from './Tabs'
 import { SlideCarousel } from './SlideCarousel'
 import { OrgChart } from './OrgChart'
 import { ResizeHandles } from './ResizeHandles'
+import { Countdown } from './Countdown'
+import { PostGrid } from './PostGrid'
+import { TeamMember } from './TeamMember'
+import { LogoTicker } from './LogoTicker'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -112,8 +116,8 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
               ? `w-full md:w-1/3 px-4 sm:px-6 text-center ${footerColBorder}`
               : node.type === 'Column'
               ? (widthVal <= 26 ? 'w-full md:w-1/4'
-                : widthVal <= 34 ? 'w-full md:w-1/3'
-                : widthVal <= 52 ? 'w-full md:w-1/2'
+                : widthVal <= 34 ? 'w-full md:flex-1 md:min-w-[260px] md:max-w-[380px]'
+                : widthVal <= 52 ? 'w-full md:flex-1 md:min-w-[320px]'
                 : widthVal <= 68 ? 'w-full md:w-2/3'
                 : widthVal <= 76 ? 'w-full md:w-3/4'
                 : 'w-full')
@@ -548,9 +552,12 @@ const NodeItem: React.FC<{
         )
 
         const isFooter = node.id === 'd94ff7a' || props.bgColor === '#023E8A' || styles.backgroundColor === '#023E8A'
+        const hasMultipleColumns = children.filter((c) => c.type === 'Column').length > 1
 
         const childWrapperClass = isFooter
           ? 'flex flex-col md:flex-row items-stretch md:items-start justify-center gap-8 md:gap-0 max-w-5xl mx-auto w-full text-white'
+          : hasMultipleColumns
+          ? 'flex flex-col md:flex-row flex-wrap items-stretch justify-center gap-6 w-full max-w-full'
           : isRow
           ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
           : hasLeftAlignedHeading
@@ -826,7 +833,7 @@ const NodeItem: React.FC<{
           return (
             <div
               style={boxStyle}
-              className={`${widthClass} ${animationClass} rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center justify-between gap-4 text-white`}
+              className={`w-full ${animationClass} rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center justify-between gap-4 text-white`}
             >
               <ComponentRenderer
                 nodes={children}
@@ -847,7 +854,7 @@ const NodeItem: React.FC<{
         return (
           <div
             style={boxStyle}
-            className={`${widthClass} ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
+            className={`w-full ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
           >
             <ComponentRenderer
               nodes={children}
@@ -1470,6 +1477,64 @@ const NodeItem: React.FC<{
           <div className="p-4 my-2 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-500">
             [Widget: {props.widgetType || 'Bileşen'}]
           </div>
+        )
+      }
+
+      case 'Countdown': {
+        return (
+          <Countdown
+            targetDate={props.targetDate}
+            title={props.title}
+            completedText={props.completedText}
+            accentColor={styles.color || props.accentColor || site?.theme_config?.primary_color}
+            boxBg={styles.backgroundColor || props.boxBg}
+            textColor={styles.color || props.textColor}
+          />
+        )
+      }
+
+      case 'PostGrid': {
+        return (
+          <PostGrid
+            siteSlug={siteSlug}
+            count={props.count ? Number(props.count) : 3}
+            columns={props.columns ? Number(props.columns) : 3}
+            showImage={props.showImage !== false}
+            showDate={props.showDate !== false}
+            showExcerpt={props.showExcerpt !== false}
+            readMoreText={props.readMoreText || 'Devamını Oku →'}
+            accentColor={styles.color || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+          />
+        )
+      }
+
+      case 'TeamMember': {
+        return (
+          <TeamMember
+            name={props.name || 'Ad Soyad'}
+            role={props.role}
+            bio={props.bio}
+            imageUrl={normalizeMediaUrl(props.imageUrl, siteSlug)}
+            socials={props.socials || []}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            cardBg={styles.backgroundColor || props.cardBg}
+          />
+        )
+      }
+
+      case 'LogoTicker': {
+        const normalizedLogos = (props.logos || []).map((l: any) => ({
+          ...l,
+          imageUrl: normalizeMediaUrl(l.imageUrl, siteSlug),
+        }))
+        return (
+          <LogoTicker
+            logos={normalizedLogos}
+            speed={props.speed || 'normal'}
+            grayscale={props.grayscale !== false}
+            pauseOnHover={props.pauseOnHover !== false}
+            direction={props.direction || 'left'}
+          />
         )
       }
 
