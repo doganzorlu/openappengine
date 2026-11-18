@@ -1285,6 +1285,352 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
         ],
       }),
     },
+    {
+      id: 'audio-track-showcase',
+      category: 'media',
+      title: 'Müzik & Beste Ses Çalar Bloğu',
+      description: 'Piyano kayıtları, konser sesleri ve besteler için şık gömülü müzik çalar.',
+      previewIcon: '🎵',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '60px 20px', backgroundColor: '#0F172A' },
+        children: [
+          {
+            id: 'col_aud_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_aud_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'ÖNE ÇIKAN BESTE VE PİYANO KAYITLARI',
+                  level: 'h2',
+                  align: 'center',
+                  color: '#FFFFFF',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 25px 0' },
+              },
+              {
+                id: 'aud_comp_' + uniqid(),
+                type: 'AudioPlayer',
+                props: {
+                  title: 'Umut Valsi - Canlı Konser Kaydı',
+                  artist: 'Beril ZORLU (Piyano)',
+                  audioUrl: '',
+                  coverUrl: '/storage/sites/berilzorlu/media/2016/05/beril-afis-4-150x150.jpg',
+                  accentColor: col || '#FFB92C',
+                  bgColor: '#1E293B',
+                  textColor: '#FFFFFF',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'before-after-slider',
+      category: 'media',
+      title: 'Öncesi - Sonrası Görsel Karşılaştırma',
+      description: 'Eğitim, atölye veya restorasyon öncesi ve sonrasını sürükleyerek karşılaştırın.',
+      previewIcon: '↔️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'col_ba_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_ba_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'ATÖLYE DÖNÜŞÜMÜ VE KAZANIMLARI',
+                  level: 'h2',
+                  align: 'center',
+                  color: col || '#023E8A',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 30px 0' },
+              },
+              {
+                id: 'ba_comp_' + uniqid(),
+                type: 'BeforeAfter',
+                props: {
+                  beforeImage: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.10-1-1024x684.jpg',
+                  afterImage: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.11-1-1024x683.jpg',
+                  beforeLabel: 'Atölye Öncesi',
+                  afterLabel: 'Konser Sonrası',
+                  defaultPosition: 50,
+                  accentColor: col || '#FFB92C',
+                  height: 440,
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'video-lightbox-banner',
+      category: 'media',
+      title: 'Sinematik Video Modal Oynatıcı',
+      description: 'Parıldayan oynat butonlu kapak görseli; tıklandığında videoyu tam ekran modalda açar.',
+      previewIcon: '▶️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#0F172A' },
+        children: [
+          {
+            id: 'col_vid_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'vid_comp_' + uniqid(),
+                type: 'VideoModal',
+                props: {
+                  videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                  coverImage: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.12-2-1024x683.jpg',
+                  title: 'Müziğin Şifalı Yolculuğu: Yaz Okulu Belgeseli',
+                  subtitle: 'VI. OTİZM VE MÜZİK YAZ OKULU',
+                  playButtonText: 'Belgeseli İzle',
+                  accentColor: col || '#FFB92C',
+                  height: 440,
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'filterable-photo-gallery',
+      category: 'media',
+      title: 'Kategorili Fotoğraf Galerisi',
+      description: 'Konserler, atölyeler ve mezuniyet fotoğraflarını filtreli şık ızgarada sunun.',
+      previewIcon: '🖼️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_gal_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_gal_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'ETKİNLİK VE ATÖLYE ANILARI',
+                  level: 'h2',
+                  align: 'center',
+                  color: col || '#1E293B',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 30px 0' },
+              },
+              {
+                id: 'gal_comp_' + uniqid(),
+                type: 'FilterableGallery',
+                props: {
+                  columns: 3,
+                  accentColor: col || '#4F46E5',
+                  items: [
+                    { id: '1', title: 'Piyano Terapisi', category: 'Birebir Eğitim', imageUrl: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.10-1-1024x684.jpg', caption: 'Bireysel piyano seansı' },
+                    { id: '2', title: 'Ritim Atölyesi', category: 'Grup Çalışması', imageUrl: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.11-1-1024x683.jpg', caption: 'Orff çalgıları ile ritim çemberi' },
+                    { id: '3', title: 'Büyük Gala Konseri', category: 'Konserler', imageUrl: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.12-2-1024x683.jpg', caption: 'Yıl sonu sertifika ve konser töreni' },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'newsletter-subscribe-section',
+      category: 'form',
+      title: 'E-Bülten & Duyuru Abonelik Kutusu',
+      description: 'Etkinlik ve yaz okulu duyurularından haberdar olmak için e-posta abonelik kutusu.',
+      previewIcon: '📬',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '50px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'col_news_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'news_comp_' + uniqid(),
+                type: 'NewsletterBox',
+                props: {
+                  title: 'Gelişmelerden İlk Siz Haberdar Olun',
+                  description: 'Yaz okulu kayıt takvimi, burs duyuruları ve konser biletleri için e-posta bültenimize katılın.',
+                  placeholder: 'E-posta adresinizi giriniz...',
+                  buttonText: 'Abone Ol',
+                  accentColor: col || '#4F46E5',
+                  bgColor: '#FFFFFF',
+                  textColor: '#1E293B',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'social-follow-strip',
+      category: 'features',
+      title: 'Sosyal Medya İkon & Takip Çubuğu',
+      description: 'Sosyal medya hesaplarınıza yönlendiren şık renkli ikon butonları.',
+      previewIcon: '🌐',
+      generateNode: () => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '35px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_soc_' + uniqid(),
+            type: 'Column',
+            props: { width: 100, align: 'center' },
+            styles: {},
+            children: [
+              {
+                id: 'h_soc_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'BİZİ SOSYAL MEDYADA TAKİP EDİN',
+                  level: 'h3',
+                  align: 'center',
+                  color: '#64748B',
+                },
+                styles: { textAlign: 'center', margin: '0 0 10px 0', fontSize: '13px', letterSpacing: '0.12em' },
+              },
+              {
+                id: 'soc_comp_' + uniqid(),
+                type: 'SocialIcons',
+                props: {
+                  styleType: 'colored',
+                  size: 'medium',
+                  align: 'center',
+                  items: [
+                    { platform: 'instagram', url: 'https://instagram.com' },
+                    { platform: 'youtube', url: 'https://youtube.com' },
+                    { platform: 'facebook', url: 'https://facebook.com' },
+                    { platform: 'spotify', url: 'https://spotify.com' },
+                    { platform: 'whatsapp', url: 'https://whatsapp.com' },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'animated-hero-headline',
+      category: 'hero',
+      title: 'Dinamik Daktilo Efektli Başlık',
+      description: 'Son kelimesi daktilo gibi yazılarak sürekli değişen etkileyici ana başlık.',
+      previewIcon: '✍️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '60px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_anim_' + uniqid(),
+            type: 'Column',
+            props: { width: 100, align: 'center' },
+            styles: {},
+            children: [
+              {
+                id: 'anim_comp_' + uniqid(),
+                type: 'AnimatedHeadline',
+                props: {
+                  prefixText: 'Müziğin Şifasıyla ',
+                  words: ['Gelişiyoruz', 'Umut Oluyoruz', 'Büyüyoruz', 'Birleşiyoruz'],
+                  suffixText: '',
+                  accentColor: col || '#4F46E5',
+                  align: 'center',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'transparency-donut-chart',
+      category: 'counters',
+      title: 'Bağış & Bütçe Şeffaflık Grafiği',
+      description: 'Vakıf ve derneklerde bağışların nereye harcandığını gösteren şeffaflık halka grafiği.',
+      previewIcon: '📊',
+      generateNode: () => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'col_dnt_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'dnt_comp_' + uniqid(),
+                type: 'DonutChart',
+                props: {
+                  title: '2025 - 2026 Bağış ve Kaynak Kullanım Dağılımı',
+                  subtitle: 'Tüm bağışlarınız şeffaflık ilkemiz gereği doğrudan öğrencilerimizin eğitimine ve atölye çalgılarına aktarılmaktadır.',
+                  centerLabel: '%100',
+                  centerSubtitle: 'Şeffaflık',
+                  slices: [
+                    { label: 'Birebir Müzik Terapisi & Eğitim Bursu', value: 60, color: '#4F46E5' },
+                    { label: 'Çalgı, Nota & Atölye Materyalleri', value: 25, color: '#06B6D4' },
+                    { label: 'Konser & Organizasyon Masrafları', value: 15, color: '#F59E0B' },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
   ]
 
   const categories = [

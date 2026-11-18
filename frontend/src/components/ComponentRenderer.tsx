@@ -24,6 +24,15 @@ import { CallToAction } from './CallToAction'
 import { AlertBox } from './AlertBox'
 import { FlipBox } from './FlipBox'
 import { GoogleMap } from './GoogleMap'
+import { AudioPlayer } from './AudioPlayer'
+import { BeforeAfter } from './BeforeAfter'
+import { VideoModal } from './VideoModal'
+import { FilterableGallery } from './FilterableGallery'
+import { FloatingContact } from './FloatingContact'
+import { NewsletterBox } from './NewsletterBox'
+import { SocialIcons } from './SocialIcons'
+import { AnimatedHeadline } from './AnimatedHeadline'
+import { DonutChart } from './DonutChart'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -1661,6 +1670,127 @@ const NodeItem: React.FC<{
             zoom={props.zoom || 14}
             title={props.title}
             borderRadius={props.borderRadius || 24}
+          />
+        )
+      }
+
+      case 'AudioPlayer': {
+        return (
+          <AudioPlayer
+            title={props.title || 'Piyano & Müzik Kaydı'}
+            artist={props.artist || 'Beril Zorlu'}
+            audioUrl={normalizeMediaUrl(props.audioUrl, siteSlug)}
+            coverUrl={normalizeMediaUrl(props.coverUrl, siteSlug)}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            bgColor={styles.backgroundColor || props.bgColor || '#0F172A'}
+            textColor={styles.color || props.textColor || '#FFFFFF'}
+          />
+        )
+      }
+
+      case 'BeforeAfter': {
+        return (
+          <BeforeAfter
+            beforeImage={normalizeMediaUrl(props.beforeImage, siteSlug)}
+            afterImage={normalizeMediaUrl(props.afterImage, siteSlug)}
+            beforeLabel={props.beforeLabel || 'Öncesi'}
+            afterLabel={props.afterLabel || 'Sonrası'}
+            defaultPosition={props.defaultPosition ?? 50}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            height={props.height || 420}
+          />
+        )
+      }
+
+      case 'VideoModal': {
+        return (
+          <VideoModal
+            videoUrl={props.videoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}
+            coverImage={normalizeMediaUrl(props.coverImage, siteSlug)}
+            title={props.title}
+            subtitle={props.subtitle}
+            playButtonText={props.playButtonText || 'Videoyu İzle'}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            height={props.height || 420}
+          />
+        )
+      }
+
+      case 'FilterableGallery': {
+        const normItems = (props.items || []).map((itm: any) => ({
+          ...itm,
+          imageUrl: normalizeMediaUrl(itm.imageUrl, siteSlug),
+        }))
+        return (
+          <FilterableGallery
+            items={normItems}
+            columns={props.columns || 3}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+          />
+        )
+      }
+
+      case 'FloatingContact': {
+        return (
+          <FloatingContact
+            phone={props.phone}
+            whatsapp={props.whatsapp || '905551234567'}
+            message={props.message || 'Merhaba, bilgi almak istiyorum.'}
+            label={props.label || 'Bize Ulaşın'}
+            position={props.position || 'bottom-right'}
+            bgColor={styles.backgroundColor || props.bgColor || '#25D366'}
+            pulsing={props.pulsing !== false}
+          />
+        )
+      }
+
+      case 'NewsletterBox': {
+        return (
+          <NewsletterBox
+            title={props.title}
+            description={props.description}
+            placeholder={props.placeholder}
+            buttonText={props.buttonText || 'Abone Ol'}
+            successMessage={props.successMessage}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            bgColor={styles.backgroundColor || props.bgColor || '#FFFFFF'}
+            textColor={styles.color || props.textColor || '#1F2937'}
+          />
+        )
+      }
+
+      case 'SocialIcons': {
+        return (
+          <SocialIcons
+            items={props.items || []}
+            styleType={props.styleType || 'colored'}
+            size={props.size || 'medium'}
+            align={props.align || 'center'}
+          />
+        )
+      }
+
+      case 'AnimatedHeadline': {
+        return (
+          <AnimatedHeadline
+            prefixText={props.prefixText}
+            words={props.words || ['Gelişiyoruz', 'Umut Oluyoruz', 'Büyüyoruz']}
+            suffixText={props.suffixText}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            align={props.align || 'center'}
+          />
+        )
+      }
+
+      case 'DonutChart': {
+        return (
+          <DonutChart
+            title={props.title}
+            subtitle={props.subtitle}
+            slices={props.slices || []}
+            centerLabel={props.centerLabel || '%100'}
+            centerSubtitle={props.centerSubtitle || 'Şeffaflık'}
+            size={props.size || 220}
           />
         )
       }

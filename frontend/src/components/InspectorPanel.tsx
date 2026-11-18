@@ -1517,6 +1517,684 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </>
             )}
 
+            {/* AudioPlayer Props */}
+            {type === 'AudioPlayer' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Parça / Eser Adı</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Piyano Sonatı No. 1"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Sanatçı / Besteci</label>
+                  <input
+                    type="text"
+                    value={props.artist || ''}
+                    placeholder="Örn: Beril Zorlu"
+                    onChange={(e) => handlePropChange('artist', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Ses Dosyası (MP3/WAV)</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'audioUrl',
+                          allowedTypes: 'all',
+                          title: 'Ses Dosyası Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      📁 Medyadan Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.audioUrl || ''}
+                    placeholder="https://... veya /storage/..."
+                    onChange={(e) => handlePropChange('audioUrl', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Kapak Fotoğrafı</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'coverUrl',
+                          allowedTypes: 'image',
+                          title: 'Albüm Kapağı Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      🖼️ Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.coverUrl || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('coverUrl', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorPickerInput
+                    label="Vurgu Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                  <ColorPickerInput
+                    label="Kutu Arka Planı"
+                    value={props.bgColor || '#0F172A'}
+                    onChange={(c) => handlePropChange('bgColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* BeforeAfter Props */}
+            {type === 'BeforeAfter' && (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Öncesi (Before) Görseli</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'beforeImage',
+                          allowedTypes: 'image',
+                          title: 'Öncesi Görseli Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      🖼️ Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.beforeImage || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('beforeImage', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Sonrası (After) Görseli</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'afterImage',
+                          allowedTypes: 'image',
+                          title: 'Sonrası Görseli Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      🖼️ Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.afterImage || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('afterImage', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Öncesi Etiketi</label>
+                    <input
+                      type="text"
+                      value={props.beforeLabel || ''}
+                      placeholder="Öncesi"
+                      onChange={(e) => handlePropChange('beforeLabel', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Sonrası Etiketi</label>
+                    <input
+                      type="text"
+                      value={props.afterLabel || ''}
+                      placeholder="Sonrası"
+                      onChange={(e) => handlePropChange('afterLabel', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yükseklik (px)</label>
+                    <input
+                      type="number"
+                      min="250"
+                      max="700"
+                      value={props.height || 420}
+                      onChange={(e) => handlePropChange('height', parseInt(e.target.value, 10) || 420)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <ColorPickerInput
+                    label="Tutaç Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* VideoModal Props */}
+            {type === 'VideoModal' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Video Linki (YouTube / Vimeo)</label>
+                  <input
+                    type="text"
+                    value={props.videoUrl || ''}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    onChange={(e) => handlePropChange('videoUrl', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Kapak Fotoğrafı</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'coverImage',
+                          allowedTypes: 'image',
+                          title: 'Video Kapağı Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      🖼️ Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.coverImage || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('coverImage', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Video Başlığı</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: 2026 Belgeseli"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Alt Başlık</label>
+                  <input
+                    type="text"
+                    value={props.subtitle || ''}
+                    placeholder="Örn: Konser ve Müzik Terapisi"
+                    onChange={(e) => handlePropChange('subtitle', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yükseklik (px)</label>
+                    <input
+                      type="number"
+                      min="250"
+                      max="700"
+                      value={props.height || 420}
+                      onChange={(e) => handlePropChange('height', parseInt(e.target.value, 10) || 420)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <ColorPickerInput
+                    label="Oynat Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* FilterableGallery Props */}
+            {type === 'FilterableGallery' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Sütun Sayısı</label>
+                    <select
+                      value={props.columns || 3}
+                      onChange={(e) => handlePropChange('columns', parseInt(e.target.value, 10))}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value={2}>2 Sütun</option>
+                      <option value={3}>3 Sütun</option>
+                      <option value={4}>4 Sütun</option>
+                    </select>
+                  </div>
+                  <ColorPickerInput
+                    label="Aktif Buton Rengi"
+                    value={props.accentColor || '#4F46E5'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Galeri Fotoğrafları</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = props.items || []
+                        handlePropChange('items', [
+                          ...cur,
+                          { id: 'img_' + Date.now(), title: 'Yeni Fotoğraf', category: 'Genel', imageUrl: '', caption: '' },
+                        ])
+                      }}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      + Fotoğraf Ekle
+                    </button>
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    {(props.items || []).map((itm: any, itmIdx: number) => (
+                      <div key={itmIdx} className="p-2.5 bg-gray-50 rounded-xl border border-gray-200 space-y-1.5">
+                        <div className="flex items-center justify-between gap-1">
+                          <input
+                            type="text"
+                            value={itm.title || ''}
+                            placeholder="Başlık"
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[itmIdx] = { ...cur[itmIdx], title: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="flex-1 px-2 py-1 text-xs font-bold border rounded bg-white"
+                          />
+                          <input
+                            type="text"
+                            value={itm.category || ''}
+                            placeholder="Kategori"
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[itmIdx] = { ...cur[itmIdx], category: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="w-24 px-2 py-1 text-xs border rounded bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cur = (props.items || []).filter((_: any, i: number) => i !== itmIdx)
+                              handlePropChange('items', cur)
+                            }}
+                            className="text-gray-400 hover:text-red-500 px-1 text-sm shrink-0"
+                            title="Sil"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={itm.imageUrl || ''}
+                          placeholder="Fotoğraf Linki (/storage/...)"
+                          onChange={(e) => {
+                            const cur = [...(props.items || [])]
+                            cur[itmIdx] = { ...cur[itmIdx], imageUrl: e.target.value }
+                            handlePropChange('items', cur)
+                          }}
+                          className="w-full px-2 py-1 text-xs border rounded bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* FloatingContact Props */}
+            {type === 'FloatingContact' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">WhatsApp Numarası (Ülke koduyla)</label>
+                  <input
+                    type="text"
+                    value={props.whatsapp || ''}
+                    placeholder="Örn: 905551234567"
+                    onChange={(e) => handlePropChange('whatsapp', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Arama Telefon Numarası (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    value={props.phone || ''}
+                    placeholder="Örn: +90 286 123 4567"
+                    onChange={(e) => handlePropChange('phone', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Varsayılan WhatsApp Mesajı</label>
+                  <input
+                    type="text"
+                    value={props.message || ''}
+                    placeholder="Merhaba, bilgi almak istiyorum."
+                    onChange={(e) => handlePropChange('message', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Buton Etiketi</label>
+                  <input
+                    type="text"
+                    value={props.label || ''}
+                    placeholder="Bize Ulaşın"
+                    onChange={(e) => handlePropChange('label', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Ekrandaki Konum</label>
+                    <select
+                      value={props.position || 'bottom-right'}
+                      onChange={(e) => handlePropChange('position', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="bottom-right">Sağ Alt</option>
+                      <option value="bottom-left">Sol Alt</option>
+                    </select>
+                  </div>
+                  <ColorPickerInput
+                    label="Buton Rengi"
+                    value={props.bgColor || '#25D366'}
+                    onChange={(c) => handlePropChange('bgColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* NewsletterBox Props */}
+            {type === 'NewsletterBox' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Başlık</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Bültenimize Abone Olun"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Açıklama</label>
+                  <textarea
+                    rows={2}
+                    value={props.description || ''}
+                    placeholder="Gelişmelerden ilk siz haberdar olun..."
+                    onChange={(e) => handlePropChange('description', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Buton Metni</label>
+                    <input
+                      type="text"
+                      value={props.buttonText || ''}
+                      placeholder="Abone Ol"
+                      onChange={(e) => handlePropChange('buttonText', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <ColorPickerInput
+                    label="Buton Rengi"
+                    value={props.accentColor || '#4F46E5'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* SocialIcons Props */}
+            {type === 'SocialIcons' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">İkon Stili</label>
+                    <select
+                      value={props.styleType || 'colored'}
+                      onChange={(e) => handlePropChange('styleType', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="colored">Renkli Marka Logoları</option>
+                      <option value="monochrome">Koyu Siyah / Gri</option>
+                      <option value="outline">İnce Kenarlıklı (Outline)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Boyut</label>
+                    <select
+                      value={props.size || 'medium'}
+                      onChange={(e) => handlePropChange('size', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="small">Küçük</option>
+                      <option value="medium">Orta</option>
+                      <option value="large">Büyük</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Sosyal Hesaplar</label>
+                  <div className="space-y-2">
+                    {['instagram', 'youtube', 'facebook', 'twitter', 'spotify', 'whatsapp'].map((plat) => {
+                      const curItems = props.items || []
+                      const match = curItems.find((i: any) => i.platform === plat)
+                      return (
+                        <div key={plat} className="flex items-center gap-2">
+                          <span className="w-20 font-bold text-xs capitalize text-gray-600">{plat}:</span>
+                          <input
+                            type="text"
+                            value={match?.url || ''}
+                            placeholder={`https://${plat}.com/...`}
+                            onChange={(e) => {
+                              const filtered = curItems.filter((i: any) => i.platform !== plat)
+                              if (e.target.value) {
+                                handlePropChange('items', [...filtered, { platform: plat, url: e.target.value }])
+                              } else {
+                                handlePropChange('items', filtered)
+                              }
+                            }}
+                            className="flex-1 px-2.5 py-1 text-xs border rounded bg-white outline-none"
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* AnimatedHeadline Props */}
+            {type === 'AnimatedHeadline' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Sabit Ön Metin</label>
+                  <input
+                    type="text"
+                    value={props.prefixText || ''}
+                    placeholder="Örn: Müzikle "
+                    onChange={(e) => handlePropChange('prefixText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Dönen Kelimeler (Virgülle ayırın)</label>
+                  <input
+                    type="text"
+                    value={(props.words || ['Gelişiyoruz', 'Umut Oluyoruz', 'Büyüyoruz']).join(', ')}
+                    placeholder="Gelişiyoruz, Umut Oluyoruz, Büyüyoruz"
+                    onChange={(e) => {
+                      const list = e.target.value.split(',').map((w) => w.trim()).filter(Boolean)
+                      handlePropChange('words', list)
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Sabit Son Metin (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    value={props.suffixText || ''}
+                    placeholder="Örn: Geleceğe Yürüyoruz"
+                    onChange={(e) => handlePropChange('suffixText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <ColorPickerInput
+                  label="Vurgulu Kelime Rengi"
+                  value={props.accentColor || '#4F46E5'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+              </>
+            )}
+
+            {/* DonutChart Props */}
+            {type === 'DonutChart' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Grafik Başlığı</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Bağış ve Kaynak Kullanımı"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Merkez Yazısı</label>
+                    <input
+                      type="text"
+                      value={props.centerLabel || ''}
+                      placeholder="%100"
+                      onChange={(e) => handlePropChange('centerLabel', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Merkez Alt Yazı</label>
+                    <input
+                      type="text"
+                      value={props.centerSubtitle || ''}
+                      placeholder="Şeffaflık"
+                      onChange={(e) => handlePropChange('centerSubtitle', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Dilimler (Veriler)</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = props.slices || []
+                        handlePropChange('slices', [
+                          ...cur,
+                          { label: 'Yeni Kalem', value: 20, color: '#10B981' },
+                        ])
+                      }}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      + Dilim Ekle
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {(props.slices || []).map((slc: any, sIdx: number) => (
+                      <div key={sIdx} className="flex items-center gap-1.5 p-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <input
+                          type="color"
+                          value={slc.color || '#4F46E5'}
+                          onChange={(e) => {
+                            const cur = [...(props.slices || [])]
+                            cur[sIdx] = { ...cur[sIdx], color: e.target.value }
+                            handlePropChange('slices', cur)
+                          }}
+                          className="w-7 h-7 rounded border-0 cursor-pointer p-0 bg-transparent shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={slc.label || ''}
+                          placeholder="Etiket"
+                          onChange={(e) => {
+                            const cur = [...(props.slices || [])]
+                            cur[sIdx] = { ...cur[sIdx], label: e.target.value }
+                            handlePropChange('slices', cur)
+                          }}
+                          className="flex-1 px-2 py-1 text-xs border rounded bg-white"
+                        />
+                        <input
+                          type="number"
+                          value={slc.value || 0}
+                          placeholder="Değer"
+                          onChange={(e) => {
+                            const cur = [...(props.slices || [])]
+                            cur[sIdx] = { ...cur[sIdx], value: parseInt(e.target.value, 10) || 0 }
+                            handlePropChange('slices', cur)
+                          }}
+                          className="w-14 px-2 py-1 text-xs border rounded bg-white text-center font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur = (props.slices || []).filter((_: any, i: number) => i !== sIdx)
+                            handlePropChange('slices', cur)
+                          }}
+                          className="text-gray-400 hover:text-red-500 px-1 text-sm shrink-0"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Align setting for all */}
             <div>
               <label className="block font-semibold text-gray-700 mb-1">Hizalama</label>
