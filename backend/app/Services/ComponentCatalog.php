@@ -12,6 +12,14 @@ class ComponentCatalog
                 'color_tokens' => ['primary', 'secondary', 'accent', 'text', 'heading'],
                 'standard_fonts' => ['Poppins, sans-serif', 'Roboto, sans-serif', 'Inter, sans-serif'],
                 'layout_system' => 'Flexbox & CSS Grid with Tailwind utilities, boxed (max-w-6xl/max-w-7xl) or full-width',
+                'url_rules' => [
+                    'rule' => 'ALWAYS use clean relative paths for internal navigation (/about, /contact, #section). NEVER hardcode legacy domains (https://oldsite.com/...) or staging/localhost URLs.',
+                    'home_url' => '/',
+                    'page_url' => '/{page-slug} (e.g. /hakkimizda, /etkinlikler)',
+                    'anchor_url' => '#{section-id} (e.g. #iletisim, #hizmetler)',
+                    'external_url' => 'Use absolute URLs ONLY for external services (Instagram, YouTube, Google Maps, WhatsApp)',
+                    'reason' => 'OpenAppEngine dynamic link resolver automatically adapts links during preview/staging and seamlessly works when production DNS is pointed without breaking.',
+                ],
             ],
             'components' => [
                 'Section' => [

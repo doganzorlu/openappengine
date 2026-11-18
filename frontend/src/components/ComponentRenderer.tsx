@@ -6,7 +6,7 @@ import { ContactForm } from './ContactForm'
 import { Counter } from './Counter'
 import { ImageCarousel } from './ImageCarousel'
 import { Accordion } from './Accordion'
-import { ImageBox, normalizeMediaUrl } from './ImageBox'
+import { ImageBox, normalizeMediaUrl, resolveSiteUrl, handleInternalLinkClick } from './ImageBox'
 import { IconList } from './IconList'
 import { DownloadsList } from './DownloadsList'
 import { Tabs } from './Tabs'
@@ -408,7 +408,9 @@ const ResponsiveNavMenu: React.FC<{
   menuItems: any[]
   showDivider?: boolean
   styles?: React.CSSProperties
-}> = ({ menuItems, showDivider = false, styles }) => {
+  siteSlug?: string
+  siteDomain?: string
+}> = ({ menuItems, showDivider = false, styles, siteSlug = 'otizmkonfederasyonu', siteDomain }) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [openDropdownId, setOpenDropdownId] = React.useState<number | string | null>(null)
 
@@ -422,7 +424,12 @@ const ResponsiveNavMenu: React.FC<{
       }
       setIsOpen(false)
       setOpenDropdownId(null)
+      return
     }
+    const resolved = resolveSiteUrl(url, siteSlug, siteDomain)
+    handleInternalLinkClick(e, resolved)
+    setIsOpen(false)
+    setOpenDropdownId(null)
   }
 
   return (
@@ -470,23 +477,26 @@ const ResponsiveNavMenu: React.FC<{
                     }`}
                   >
                     <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-2 flex flex-col min-w-[200px]">
-                      {item.children.map((child: any) => (
-                        <a
-                          key={child.id}
-                          href={child.url || '#'}
-                          target={child.target || '_self'}
-                          onClick={(e) => handleLinkClick(e, child.url)}
-                          className="px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0077B6] transition text-left"
-                        >
-                          {child.title}
-                        </a>
-                      ))}
+                      {item.children.map((child: any) => {
+                        const childUrl = resolveSiteUrl(child.url, siteSlug, siteDomain)
+                        return (
+                          <a
+                            key={child.id}
+                            href={childUrl}
+                            target={child.target || '_self'}
+                            onClick={(e) => handleLinkClick(e, child.url)}
+                            className="px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0077B6] transition text-left"
+                          >
+                            {child.title}
+                          </a>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
               ) : (
                 <a
-                  href={item.url}
+                  href={resolveSiteUrl(item.url, siteSlug, siteDomain)}
                   target={item.target || '_self'}
                   onClick={(e) => handleLinkClick(e, item.url)}
                   className="text-xs sm:text-[13px] font-semibold text-[#333333] hover:text-[#0077B6] transition-colors duration-200 py-1.5 px-1.5"
@@ -502,19 +512,21 @@ const ResponsiveNavMenu: React.FC<{
       {/* Mobile Dropdown Menu */}
       {isOpen && (
         <div className="sm:hidden flex flex-col bg-white border border-gray-100 rounded-xl shadow-xl p-3 mt-2 gap-1.5 w-full z-40 text-center">
-          {menuItems.map((item: any) => (
-            <React.Fragment key={item.id}>
-              <a
-                href={item.url}
-                onClick={(e) => {
-                  handleLinkClick(e, item.url)
-                  setIsOpen(false)
-                }}
-                target={item.target || '_self'}
-                className="text-xs font-semibold text-gray-700 hover:text-[#0077B6] hover:bg-gray-50 rounded-lg py-2 transition"
-              >
-                {item.title}
-              </a>
+          {menuItems.map((item: any) => {
+            const mUrl = resolveSiteUrl(item.url, siteSlug, siteDomain)
+            return (
+              <React.Fragment key={item.id}>
+                <a
+                  href={mUrl}
+                  onClick={(e) => {
+                    handleLinkClick(e, item.url)
+                    setIsOpen(false)
+                  }}
+                  target={item.target || '_self'}
+                  className="text-xs font-semibold text-gray-700 hover:text-[#0077B6] hover:bg-gray-50 rounded-lg py-2 transition"
+                >
+                  {item.title}
+                </a>
               {Array.isArray(item.children) &&
                 item.children.map((child: any) => (
                   <a
@@ -530,7 +542,8 @@ const ResponsiveNavMenu: React.FC<{
                   </a>
                 ))}
             </React.Fragment>
-          ))}
+          )
+        })}
         </div>
       )}
     </div>
@@ -1242,15 +1255,20 @@ const NodeItem: React.FC<{
 
         const isRedBtn = (styles.backgroundColor || props.bgColor) === '#FD0101' || node.id === 'c1edc74'
         const hasCustomBg = Boolean(btnStyle.backgroundColor)
+        const resolvedBtnUrl = resolveSiteUrl(props.url, siteSlug, site?.domain)
 
         return (
           <div className={`flex w-full ${alignClass} my-3`}>
             <a
-              href={normalizeMediaUrl(props.url, siteSlug) || '#'}
+              href={resolvedBtnUrl}
               target={props.target || '_self'}
               rel="noopener noreferrer"
               onClick={(e) => {
-                if (isEditing) e.preventDefault()
+                if (isEditing) {
+                  e.preventDefault()
+                  return
+                }
+                handleInternalLinkClick(e, resolvedBtnUrl)
               }}
               style={btnStyle}
               className={`inline-flex items-center justify-center text-center gap-2 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-base leading-snug shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-[320px] sm:max-w-xl mx-auto whitespace-normal break-words ${
@@ -1417,6 +1435,8 @@ const NodeItem: React.FC<{
             menuItems={menuItems}
             showDivider={Boolean(props.showDivider || siteSlug === 'otizmuzikokulu')}
             styles={styles}
+            siteSlug={siteSlug}
+            siteDomain={site?.domain}
           />
         )
       }

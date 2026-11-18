@@ -10,6 +10,104 @@ export function normalizeMediaUrl(url?: string | null, siteSlug: string = 'otizm
   return clean
 }
 
+export function resolveSiteUrl(
+  url?: string | null,
+  siteSlug: string = 'otizmkonfederasyonu',
+  siteDomain?: string
+): string {
+  if (!url) return '#'
+  const trimmed = url.trim()
+
+  // 1. Anchors (#iletisim), tel, mailto, javascript
+  if (
+    trimmed.startsWith('#') ||
+    trimmed.startsWith('tel:') ||
+    trimmed.startsWith('mailto:') ||
+    trimmed.startsWith('javascript:')
+  ) {
+    return trimmed
+  }
+
+  // 2. If it's an absolute URL, check if it belongs to the site itself
+  let path = trimmed
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const parsed = new URL(trimmed)
+      const isInternalDomain =
+        (siteDomain && (parsed.hostname === siteDomain || parsed.hostname.endsWith('.' + siteDomain))) ||
+        (siteSlug && parsed.hostname.includes(siteSlug)) ||
+        parsed.hostname === 'localhost' ||
+        parsed.hostname === '127.0.0.1'
+
+      if (isInternalDomain) {
+        path = parsed.pathname + parsed.search + parsed.hash
+      } else {
+        // External link (Instagram, YouTube, Google, etc.) -> keep as is!
+        return trimmed
+      }
+    } catch {
+      return trimmed
+    }
+  }
+
+  // 3. Clean up path
+  const cleanPath = path.replace(/^\/+/, '')
+
+  // Detect whether we are running under Custom Production Domain (DNS directed)
+  const isCustomDomain =
+    typeof window !== 'undefined' &&
+    !window.location.hostname.includes('localhost') &&
+    !window.location.hostname.includes('127.0.0.1') &&
+    !window.location.pathname.startsWith('/sites/')
+
+  // Root / Home
+  if (!cleanPath || cleanPath === '/') {
+    return isCustomDomain ? '/' : `/?site=${siteSlug}`
+  }
+
+  // If it already has query parameters (e.g. ?page=...)
+  if (cleanPath.startsWith('?')) {
+    if (!cleanPath.includes('site=')) {
+      return `/?site=${siteSlug}&${cleanPath.substring(1)}`
+    }
+    return `/${cleanPath}`
+  }
+
+  // Normal subpage slug (e.g. "hakkinda" or "hakkinda/")
+  const pageSlug = cleanPath.split('/')[0].split('?')[0].split('#')[0]
+
+  if (isCustomDomain) {
+    return `/${cleanPath}`
+  }
+
+  // Staging / Localhost / Subpath access mode:
+  return `/?site=${siteSlug}&page=${pageSlug}`
+}
+
+export function handleInternalLinkClick(
+  e: React.MouseEvent<HTMLAnchorElement>,
+  resolvedUrl: string
+) {
+  if (
+    !resolvedUrl ||
+    resolvedUrl === '#' ||
+    resolvedUrl.startsWith('http://') ||
+    resolvedUrl.startsWith('https://') ||
+    resolvedUrl.startsWith('#') ||
+    resolvedUrl.startsWith('mailto:') ||
+    resolvedUrl.startsWith('tel:')
+  ) {
+    return
+  }
+
+  // If internal page navigation in SPA mode:
+  if (typeof window !== 'undefined' && (resolvedUrl.includes('page=') || resolvedUrl.startsWith('/'))) {
+    e.preventDefault()
+    window.history.pushState({}, '', resolvedUrl)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+}
+
 interface ImageBoxProps {
   title: string
   description?: string
@@ -99,21 +197,24 @@ export const ImageBox: React.FC<ImageBoxProps> = ({
   )
 
   if (url) {
-    const isExternal = url.startsWith('http://') || url.startsWith('https://')
+    const resolvedUrl = resolveSiteUrl(url, siteSlug)
+    const isExternal = resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://')
     return (
       <a
-        href={url}
+        href={resolvedUrl}
         target={isExternal ? '_blank' : '_self'}
         rel={isExternal ? 'noopener noreferrer' : undefined}
         onClick={(e) => {
-          if (url.includes('post=')) {
+          if (resolvedUrl.includes('post=')) {
             e.preventDefault()
-            const params = new URLSearchParams(url.split('?')[1] || '')
+            const params = new URLSearchParams(resolvedUrl.split('?')[1] || '')
             const postSlug = params.get('post')
             if (postSlug) {
               window.dispatchEvent(new CustomEvent('openappengine:open-post', { detail: { slug: postSlug } }))
             }
+            return
           }
+          handleInternalLinkClick(e, resolvedUrl)
         }}
         className="block h-full"
       >

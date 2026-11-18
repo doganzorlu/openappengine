@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { Menu, Site } from '../types'
-import { normalizeMediaUrl } from './ImageBox'
+import { normalizeMediaUrl, resolveSiteUrl, handleInternalLinkClick } from './ImageBox'
 
 interface NavbarProps {
   site: Site
@@ -17,7 +17,11 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand */}
-        <a href={`/?site=${site.slug}`} className="flex items-center space-x-3 group">
+        <a
+          href={resolveSiteUrl('/', site.slug, site.domain)}
+          onClick={(e) => handleInternalLinkClick(e, resolveSiteUrl('/', site.slug, site.domain))}
+          className="flex items-center space-x-3 group"
+        >
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -44,16 +48,20 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
         {/* Desktop Menu */}
         {headerMenu && (
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-3">
-            {headerMenu.items.map((item) => (
-              <a
-                key={item.id}
-                href={item.url || '/'}
-                target={item.target || '_self'}
-                className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all"
-              >
-                {item.title}
-              </a>
-            ))}
+            {headerMenu.items.map((item) => {
+              const itemUrl = resolveSiteUrl(item.url, site.slug, site.domain)
+              return (
+                <a
+                  key={item.id}
+                  href={itemUrl}
+                  target={item.target || '_self'}
+                  onClick={(e) => handleInternalLinkClick(e, itemUrl)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all"
+                >
+                  {item.title}
+                </a>
+              )
+            })}
           </nav>
         )}
 
@@ -75,16 +83,22 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && headerMenu && (
         <div className="md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 space-y-1">
-          {headerMenu.items.map((item) => (
-            <a
-              key={item.id}
-              href={item.url || '/'}
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-3 rounded-lg text-base font-semibold text-gray-800 hover:bg-purple-50 hover:text-purple-700"
-            >
-              {item.title}
-            </a>
-          ))}
+          {headerMenu.items.map((item) => {
+            const itemUrl = resolveSiteUrl(item.url, site.slug, site.domain)
+            return (
+              <a
+                key={item.id}
+                href={itemUrl}
+                onClick={(e) => {
+                  handleInternalLinkClick(e, itemUrl)
+                  setMobileMenuOpen(false)
+                }}
+                className="block px-4 py-3 rounded-lg text-base font-semibold text-gray-800 hover:bg-purple-50 hover:text-purple-700"
+              >
+                {item.title}
+              </a>
+            )
+          })}
         </div>
       )}
     </header>
