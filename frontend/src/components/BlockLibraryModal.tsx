@@ -693,6 +693,366 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
         ],
       }),
     },
+    {
+      id: 'pricing-donation-3col',
+      category: 'features',
+      title: 'Bağış & Katılım Paketleri (3 Sütun)',
+      description: 'Vakıf ve dernekler için burs, eğitim ve sponsorluk paketleri fiyatlandırma tablosu.',
+      previewIcon: '💎',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'h_price_' + uniqid(),
+            type: 'Heading',
+            props: {
+              text: 'DESTEK & BAĞIŞ PAKETLERİ',
+              level: 'h2',
+              align: 'center',
+              color: col || '#023E8A',
+              withDivider: true,
+            },
+            styles: { textAlign: 'center', margin: '0 0 35px 0' },
+          },
+          {
+            id: 'col_p1_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'pt_1_' + uniqid(),
+                type: 'PricingTable',
+                props: {
+                  title: 'Öğrenci Müzik Desteği',
+                  price: '500 ₺',
+                  period: '/ aylık',
+                  description: 'Bir öğrencimizin müzik terapisi ders materyallerine katkı sağlayın.',
+                  isFeatured: false,
+                  features: [
+                    { text: 'Eğitim materyali temini', included: true },
+                    { text: 'Aylık gelişim raporu', included: true },
+                    { text: 'Dijital teşekkür sertifikası', included: true },
+                    { text: 'Konser özel davetiyesi', included: false },
+                  ],
+                  buttonText: 'Düzenli Destek Ol',
+                  buttonUrl: '#',
+                  accentColor: col || '#023E8A',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_p2_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'pt_2_' + uniqid(),
+                type: 'PricingTable',
+                props: {
+                  title: 'Tam Eğitim Bursu',
+                  price: '1.500 ₺',
+                  period: '/ aylık',
+                  description: 'Bir otizmli gencimizin tüm yaz okulu müzik eğitimini üstlenin.',
+                  badge: 'En Çok Tercih Edilen',
+                  isFeatured: true,
+                  features: [
+                    { text: 'Birebir çalgı & ritim eğitimi', included: true },
+                    { text: 'Psikososyal destek seansları', included: true },
+                    { text: 'Yıl sonu konserinde sahne', included: true },
+                    { text: 'Bursiyer ile tanışma etkinliği', included: true },
+                  ],
+                  buttonText: 'Burs Verin →',
+                  buttonUrl: '#',
+                  accentColor: col || '#4F46E5',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_p3_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'pt_3_' + uniqid(),
+                type: 'PricingTable',
+                props: {
+                  title: 'Atölye Sponsorluğu',
+                  price: '5.000 ₺',
+                  period: '/ tek seferlik',
+                  description: 'Orff çalgıları ve ritim terapi atölyemizin çalgı setini donatın.',
+                  isFeatured: false,
+                  features: [
+                    { text: 'Tüm çalgı setine isim plaketi', included: true },
+                    { text: 'Web sitesi ana sayfa sponsor logosu', included: true },
+                    { text: 'Basın bülteninde teşekkür', included: true },
+                    { text: 'Özel plaket takdimi', included: true },
+                  ],
+                  buttonText: 'Sponsor Olun',
+                  buttonUrl: '#',
+                  accentColor: col || '#023E8A',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'testimonials-2col',
+      category: 'features',
+      title: 'Veli & Katılımcı Görüşleri (Referanslar)',
+      description: 'Yıldız puanlı, fotoğraflı ve alıntılı gerçek deneyim ve güven kartları.',
+      previewIcon: '💬',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'h_test_' + uniqid(),
+            type: 'Heading',
+            props: {
+              text: 'AİLELERİMİZ VE EĞİTMENLERİMİZ NE DİYOR?',
+              level: 'h2',
+              align: 'center',
+              color: col || '#1E293B',
+              withDivider: true,
+            },
+            styles: { textAlign: 'center', margin: '0 0 35px 0' },
+          },
+          {
+            id: 'col_tm1_' + uniqid(),
+            type: 'Column',
+            props: { width: 50 },
+            styles: {},
+            children: [
+              {
+                id: 'tcard_1_' + uniqid(),
+                type: 'Testimonial',
+                props: {
+                  name: 'Zeynep Kaya',
+                  role: 'Öğrenci Velisi, Çanakkale',
+                  quote: 'Oğlumuz piyano ve ritim derslerine başladıktan sonra odaklanma süresi belirgin şekilde arttı. Eğitmenlerin şefkati ve ilgisi paha biçilemez.',
+                  rating: 5,
+                  imageUrl: '',
+                  accentColor: '#F59E0B',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_tm2_' + uniqid(),
+            type: 'Column',
+            props: { width: 50 },
+            styles: {},
+            children: [
+              {
+                id: 'tcard_2_' + uniqid(),
+                type: 'Testimonial',
+                props: {
+                  name: 'Dr. Ahmet Yılmaz',
+                  role: 'Özel Eğitim Danışmanı',
+                  quote: 'Otizm ve Müzik Yaz Okulu modeli, Türkiye genelinde farklı öğrenen bireylerin sosyal uyumunda örnek gösterilecek bilimsel bir başarı hikayesidir.',
+                  rating: 5,
+                  imageUrl: '',
+                  accentColor: '#F59E0B',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'campaign-progress-banner',
+      category: 'counters',
+      title: 'Kampanya & Hedef İlerleme Çubuğu',
+      description: 'Bağış hedefi veya kontenjan doluluk oranını gösteren şık ilerleme çubuğu.',
+      previewIcon: '📈',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '50px 20px', backgroundColor: '#F0FDF4' },
+        children: [
+          {
+            id: 'col_prg_' + uniqid(),
+            type: 'Column',
+            props: { width: 100, align: 'center' },
+            styles: {},
+            children: [
+              {
+                id: 'h_prg_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: '2026 Yaz Okulu Öğrenci Burs Fonu',
+                  level: 'h3',
+                  align: 'center',
+                  color: col || '#166534',
+                },
+                styles: { textAlign: 'center', margin: '0 0 10px 0' },
+              },
+              {
+                id: 'prg_' + uniqid(),
+                type: 'ProgressBar',
+                props: {
+                  label: 'Toplanan Burs Fonu (Hedef: 250.000 ₺)',
+                  percentage: 78,
+                  valueText: '195.000 ₺ (%78 Tamamlandı)',
+                  barColor: col || '#10B981',
+                  trackBg: '#DCFCE7',
+                  height: 20,
+                  showStripes: true,
+                  textColor: '#14532D',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'faq-accordion-section',
+      category: 'faq',
+      title: 'Sıkça Sorulan Sorular (Modern Akordeon)',
+      description: 'Açılır-kapanır panellerle katılım şartları, ücretler ve sıkça sorulan sorular.',
+      previewIcon: '❓',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_faq_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_faq_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'SIKÇA SORULAN SORULAR',
+                  level: 'h2',
+                  align: 'center',
+                  color: col || '#1E293B',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 30px 0' },
+              },
+              {
+                id: 'faq_' + uniqid(),
+                type: 'Accordion',
+                props: {
+                  allowMultiple: false,
+                  accentColor: col || '#4F46E5',
+                  items: [
+                    {
+                      id: 'f1',
+                      title: 'Yaz Okuluna kimler başvurabilir?',
+                      content: '<p>Otizm spektrum bozukluğu tanısı almış, müzik ve ritim çalışmalarına ilgi duyan tüm yaş gruplarından çocuklar ve gençler velileriyle birlikte başvurabilir.</p>',
+                    },
+                    {
+                      id: 'f2',
+                      title: 'Eğitimler nerede ve ne zaman gerçekleştiriliyor?',
+                      content: '<p>Eğitimler Çanakkale Onsekiz Mart Üniversitesi Müzik ve Sahne Sanatları Fakültesi bünyesinde, her yıl Temmuz ayında 5 gün boyunca tam gün olarak yapılmaktadır.</p>',
+                    },
+                    {
+                      id: 'f3',
+                      title: 'Burs ve indirim imkanı var mı?',
+                      content: '<p>Evet. Destekçi kurumlarımız ve bağışçılarımız sayesinde maddi imkanı kısıtlı ailelerimize tam ve kısmi eğitim bursları sağlanmaktadır.</p>',
+                    },
+                    {
+                      id: 'f4',
+                      title: 'Program sonunda katılım belgesi veriliyor mu?',
+                      content: '<p>Evet, programı başarıyla tamamlayan tüm katılımcılara üniversite ve dernek onaylı resmi katılım sertifikası takdim edilir.</p>',
+                    },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'program-schedule-tabs',
+      category: 'features',
+      title: 'Etkinlik & Günlük Program (Sekmeli Panel)',
+      description: 'Günlük etkinlik ve atölye takvimini sekmelerle şık bir şekilde sunar.',
+      previewIcon: '📑',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'col_tabs_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_tabs_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'GÜNLÜK ATÖLYE & ETKİNLİK PROGRAMI',
+                  level: 'h2',
+                  align: 'center',
+                  color: col || '#023E8A',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 30px 0' },
+              },
+              {
+                id: 'tabs_comp_' + uniqid(),
+                type: 'Tabs',
+                props: {
+                  tabStyle: 'pills',
+                  accentColor: col || '#023E8A',
+                  tabs: [
+                    {
+                      id: 't1',
+                      title: '1. Gün: Açılış & Oryantasyon',
+                      content: '<p><strong>09:30 - 11:00</strong> Açılış Töreni ve Protokol Konuşmaları<br/><strong>11:30 - 13:00</strong> Bireysel Ses ve Ritim Değerlendirmeleri<br/><strong>14:00 - 16:30</strong> Tanışma Çemberi ve Müzik Oyunları</p>',
+                    },
+                    {
+                      id: 't2',
+                      title: '2. Gün: Ritim & Orff Atölyeleri',
+                      content: '<p><strong>09:30 - 12:00</strong> Vurmalı Çalgılar ile Grup Dinamiği Çalışması<br/><strong>13:30 - 15:30</strong> Piyano ve Melodika Birebir Seansları<br/><strong>16:00 - 17:00</strong> Veli Bilgilendirme ve Deneyim Paylaşım Çemberi</p>',
+                    },
+                    {
+                      id: 't3',
+                      title: '3. Gün: Büyük Kapanış Konseri',
+                      content: '<p><strong>10:00 - 12:30</strong> Sahne Provası ve Işık-Ses Düzenlemeleri<br/><strong>14:30 - 16:30</strong> Tüm Katılımcıların Yer Aldığı Gala Konseri ve Sertifika Töreni</p>',
+                    },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
   ]
 
   const categories = [

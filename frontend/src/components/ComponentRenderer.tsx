@@ -17,6 +17,9 @@ import { Countdown } from './Countdown'
 import { PostGrid } from './PostGrid'
 import { TeamMember } from './TeamMember'
 import { LogoTicker } from './LogoTicker'
+import { PricingTable } from './PricingTable'
+import { Testimonial } from './Testimonial'
+import { ProgressBar } from './ProgressBar'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -1257,14 +1260,24 @@ const NodeItem: React.FC<{
       }
 
       case 'Accordion': {
-        return <Accordion items={props.items} />
+        return (
+          <Accordion
+            items={props.items || []}
+            allowMultiple={props.allowMultiple || false}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            cardBg={styles.backgroundColor || props.cardBg}
+            titleColor={styles.color || props.titleColor}
+          />
+        )
       }
 
       case 'Tabs': {
         return (
           <Tabs
-            tabs={props.tabs}
+            tabs={props.tabs || []}
             siteSlug={siteSlug}
+            accentColor={props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            tabStyle={props.tabStyle || 'pills'}
             isEditing={isEditing}
             selectedNodeId={selectedNodeId}
             onSelectNode={onSelectNode}
@@ -1534,6 +1547,53 @@ const NodeItem: React.FC<{
             grayscale={props.grayscale !== false}
             pauseOnHover={props.pauseOnHover !== false}
             direction={props.direction || 'left'}
+          />
+        )
+      }
+
+      case 'PricingTable': {
+        return (
+          <PricingTable
+            title={props.title || 'Bağış Paketi'}
+            price={props.price || '500 ₺'}
+            period={props.period}
+            description={props.description}
+            badge={props.badge}
+            isFeatured={props.isFeatured || false}
+            features={props.features || []}
+            buttonText={props.buttonText || 'Hemen Destek Ol'}
+            buttonUrl={props.buttonUrl || '#'}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            cardBg={styles.backgroundColor || props.cardBg}
+          />
+        )
+      }
+
+      case 'Testimonial': {
+        return (
+          <Testimonial
+            name={props.name || 'Ad Soyad'}
+            role={props.role}
+            quote={props.quote || 'Değerli görüş ve deneyimlerinizi buraya yazabilirsiniz.'}
+            rating={props.rating ?? 5}
+            imageUrl={normalizeMediaUrl(props.imageUrl, siteSlug)}
+            accentColor={props.accentColor || (site?.theme_config as any)?.secondary_color || '#F59E0B'}
+            cardBg={styles.backgroundColor || props.cardBg}
+          />
+        )
+      }
+
+      case 'ProgressBar': {
+        return (
+          <ProgressBar
+            label={props.label}
+            percentage={props.percentage ?? 75}
+            valueText={props.valueText}
+            barColor={styles.borderColor || props.barColor || site?.theme_config?.primary_color || '#10B981'}
+            trackBg={props.trackBg}
+            height={props.height || 16}
+            showStripes={props.showStripes !== false}
+            textColor={styles.color || props.textColor}
           />
         )
       }
