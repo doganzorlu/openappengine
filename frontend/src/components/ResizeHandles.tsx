@@ -5,6 +5,8 @@ interface ResizeHandlesProps {
   node: ComponentNode
   isSelected: boolean
   onUpdateNode?: (updatedNode: ComponentNode) => void
+  onDuplicateNode?: (nodeId: string) => void
+  onDeleteNode?: (nodeId: string) => void
   children: React.ReactNode
 }
 
@@ -12,6 +14,8 @@ export const ResizeHandles: React.FC<ResizeHandlesProps> = ({
   node,
   isSelected,
   onUpdateNode,
+  onDuplicateNode,
+  onDeleteNode,
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -106,7 +110,6 @@ export const ResizeHandles: React.FC<ResizeHandlesProps> = ({
 
       if (node.type === 'Column') {
         const percent = Math.min(100, Math.max(10, Math.round((newWidthPx / parentRect.width) * 100)))
-        // Snap to common column grid percentages
         let snappedPercent = percent
         if (Math.abs(percent - 25) <= 3) snappedPercent = 25
         else if (Math.abs(percent - 33.3) <= 3) snappedPercent = 33.3
@@ -252,12 +255,157 @@ export const ResizeHandles: React.FC<ResizeHandlesProps> = ({
     liveStyle.width = typeof liveDimensions.width === 'number' ? `${liveDimensions.width}px` : liveDimensions.width
   }
 
+  const isTextType = node.type === 'Heading' || node.type === 'Button' || node.type === 'RichText'
+
   return (
     <div
       ref={containerRef}
       style={liveStyle}
       className={`relative ${isSelected ? 'transition-none' : ''} ${isResizing ? 'select-none ring-2 ring-purple-500' : ''}`}
     >
+      {/* PowerPoint-style Floating Quick Action Bar (Direct controls above selected element) */}
+      {isSelected && (
+        <div
+          className="absolute -top-11 left-0 z-50 flex items-center gap-1.5 bg-gray-900/95 text-white px-2.5 py-1 rounded-xl shadow-2xl border border-gray-700/80 backdrop-blur-md text-xs select-none animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Component Badge */}
+          <span className="font-mono text-[10px] font-bold text-purple-300 uppercase px-1.5 py-0.5 rounded bg-purple-900/60 mr-0.5">
+            {node.type}
+          </span>
+
+          {/* Alignment Tools */}
+          <div className="flex items-center gap-0.5 bg-gray-800 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateNode?.({
+                  ...node,
+                  props: { ...node.props, align: 'left' },
+                  styles: { ...(node.styles || {}), textAlign: 'left' },
+                })
+              }
+              title="Sola Hizala"
+              className="p-1 hover:bg-gray-700 rounded text-gray-300 hover:text-white transition"
+            >
+              ⇤
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateNode?.({
+                  ...node,
+                  props: { ...node.props, align: 'center' },
+                  styles: { ...(node.styles || {}), textAlign: 'center' },
+                })
+              }
+              title="Ortala"
+              className="p-1 hover:bg-gray-700 rounded text-gray-300 hover:text-white transition"
+            >
+              ⫿
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateNode?.({
+                  ...node,
+                  props: { ...node.props, align: 'right' },
+                  styles: { ...(node.styles || {}), textAlign: 'right' },
+                })
+              }
+              title="Sağa Hizala"
+              className="p-1 hover:bg-gray-700 rounded text-gray-300 hover:text-white transition"
+            >
+              ⇥
+            </button>
+          </div>
+
+          {/* Typography Steppers for Text/Button/Heading */}
+          {isTextType && (
+            <div className="flex items-center gap-0.5 bg-gray-800 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const current = parseFloat(node.styles?.fontSize || '24') || 24
+                  const newSize = Math.max(12, current - 2)
+                  onUpdateNode?.({
+                    ...node,
+                    styles: { ...(node.styles || {}), fontSize: `${newSize}px` },
+                  })
+                }}
+                title="Yazıyı Küçült (A-)"
+                className="px-1.5 py-0.5 hover:bg-gray-700 rounded text-[11px] font-bold text-gray-300 hover:text-white transition"
+              >
+                A-
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const current = parseFloat(node.styles?.fontSize || '24') || 24
+                  const newSize = Math.min(84, current + 2)
+                  onUpdateNode?.({
+                    ...node,
+                    styles: { ...(node.styles || {}), fontSize: `${newSize}px` },
+                  })
+                }}
+                title="Yazıyı Büyüt (A+)"
+                className="px-1.5 py-0.5 hover:bg-gray-700 rounded text-[11px] font-bold text-gray-300 hover:text-white transition"
+              >
+                A+
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const isBold = node.styles?.fontWeight === 700 || node.styles?.fontWeight === 'bold'
+                  onUpdateNode?.({
+                    ...node,
+                    styles: { ...(node.styles || {}), fontWeight: isBold ? 400 : 700 },
+                  })
+                }}
+                title="Kalınlaştır / Normal Yap (Bold)"
+                className={`px-1.5 py-0.5 rounded text-[11px] font-bold hover:bg-gray-700 transition ${
+                  node.styles?.fontWeight === 700 || node.styles?.fontWeight === 'bold'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-300'
+                }`}
+              >
+                B
+              </button>
+            </div>
+          )}
+
+          {/* Quick Duplicate & Delete Tools for Selected Element */}
+          <div className="flex items-center gap-0.5 bg-gray-800 rounded-lg p-0.5 border-l border-gray-700/80 pl-1">
+            {onDuplicateNode && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDuplicateNode(node.id)
+                }}
+                title="Öğeyi Çoğalt (Kopyala)"
+                className="p-1 hover:bg-gray-700 rounded text-gray-300 hover:text-white transition"
+              >
+                📋
+              </button>
+            )}
+            {onDeleteNode && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDeleteNode(node.id)
+                }}
+                title="Öğeyi Sil"
+                className="p-1 hover:bg-red-900/80 rounded text-red-300 hover:text-red-100 transition"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {children}
 
       {/* Interactive PowerPoint-style Resize Handles (Shown only when selected) */}
@@ -265,7 +413,7 @@ export const ResizeHandles: React.FC<ResizeHandlesProps> = ({
         <>
           {/* Active Tooltip Badge during dragging */}
           {tooltip && (
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-2xl border border-gray-700 pointer-events-none whitespace-nowrap animate-fade-in flex items-center gap-1.5">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-2xl border border-gray-700 pointer-events-none whitespace-nowrap animate-fade-in flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
               <span>{tooltip}</span>
             </div>

@@ -193,6 +193,8 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
                   onUpdateNode={onUpdateNode}
+                  onDuplicateNode={onDuplicateNode}
+                  onDeleteNode={onDeleteNode}
                 />
               </div>
             )
@@ -471,6 +473,8 @@ const NodeItem: React.FC<{
   selectedNodeId?: string | null
   onSelectNode?: (node: ComponentNode) => void
   onUpdateNode?: (updatedNode: ComponentNode) => void
+  onDuplicateNode?: (nodeId: string) => void
+  onDeleteNode?: (nodeId: string) => void
 }> = ({
   node,
   siteSlug,
@@ -480,6 +484,8 @@ const NodeItem: React.FC<{
   selectedNodeId = null,
   onSelectNode,
   onUpdateNode,
+  onDuplicateNode,
+  onDeleteNode,
 }) => {
   const { type, props = {}, styles = {}, children = [] } = node
   const isSelected = isEditing && selectedNodeId === node.id
@@ -604,6 +610,8 @@ const NodeItem: React.FC<{
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
                   onUpdateNode={onUpdateNode}
+                  onDuplicateNode={onDuplicateNode}
+                  onDeleteNode={onDeleteNode}
                 />
               </div>
 
@@ -648,6 +656,9 @@ const NodeItem: React.FC<{
                 isEditing={isEditing}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
+                onUpdateNode={onUpdateNode}
+                onDuplicateNode={onDuplicateNode}
+                onDeleteNode={onDeleteNode}
               />
             </div>
           )
@@ -719,6 +730,8 @@ const NodeItem: React.FC<{
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
                   onUpdateNode={onUpdateNode}
+                  onDuplicateNode={onDuplicateNode}
+                  onDeleteNode={onDeleteNode}
                 />
               </div>
             </div>
@@ -743,6 +756,8 @@ const NodeItem: React.FC<{
                   selectedNodeId={selectedNodeId}
                   onSelectNode={onSelectNode}
                   onUpdateNode={onUpdateNode}
+                  onDuplicateNode={onDuplicateNode}
+                  onDeleteNode={onDeleteNode}
                 />
               </div>
             )
@@ -794,6 +809,8 @@ const NodeItem: React.FC<{
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
                 onUpdateNode={onUpdateNode}
+                onDuplicateNode={onDuplicateNode}
+                onDeleteNode={onDeleteNode}
                 inGrid={true}
               />
             </div>
@@ -820,6 +837,8 @@ const NodeItem: React.FC<{
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
                 onUpdateNode={onUpdateNode}
+                onDuplicateNode={onDuplicateNode}
+                onDeleteNode={onDeleteNode}
               />
             </div>
           )
@@ -839,6 +858,8 @@ const NodeItem: React.FC<{
               selectedNodeId={selectedNodeId}
               onSelectNode={onSelectNode}
               onUpdateNode={onUpdateNode}
+              onDuplicateNode={onDuplicateNode}
+              onDeleteNode={onDeleteNode}
             />
           </div>
         )
@@ -853,15 +874,40 @@ const NodeItem: React.FC<{
           align === 'center' ? 'text-center' :
           align === 'right' ? 'text-right' : 'text-left'
 
+        const editableProps = isSelected
+          ? {
+              contentEditable: true,
+              suppressContentEditableWarning: true,
+              onBlur: (e: React.FocusEvent<HTMLElement>) => {
+                const text = e.currentTarget.innerText
+                if (text !== props.text && onUpdateNode) {
+                  onUpdateNode({
+                    ...node,
+                    props: { ...node.props, text },
+                  })
+                }
+              },
+              onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  e.currentTarget.blur()
+                }
+              },
+            }
+          : {}
+
         // Hero heading
         if (styles.fontSize === '5.5em' || node.id === 'c568d68' || styles.fontSize === '2em' || node.id === '3f78df5') {
           return (
             <div className="flex justify-center w-full px-2">
               <h2
+                {...editableProps}
                 style={{ ...color, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
-                className="bg-[#54595FAB] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl text-base sm:text-2xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-wider leading-snug shadow-xl backdrop-blur-sm border border-white/20 text-center uppercase my-2 max-w-[320px] sm:max-w-4xl mx-auto break-words"
+                className={`bg-[#54595FAB] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl text-base sm:text-2xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-wider leading-snug shadow-xl backdrop-blur-sm border border-white/20 text-center uppercase my-2 max-w-[320px] sm:max-w-4xl mx-auto break-words ${
+                  isSelected ? 'outline-none cursor-text ring-2 ring-purple-400' : ''
+                }`}
               >
-                {renderFormattedText(props.text)}
+                {isSelected ? props.text : renderFormattedText(props.text)}
               </h2>
             </div>
           )
@@ -870,6 +916,7 @@ const NodeItem: React.FC<{
         if (level === 'h1') {
           return (
             <h1
+              {...editableProps}
               style={{
                 ...color,
                 ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
@@ -878,9 +925,9 @@ const NodeItem: React.FC<{
               }}
               className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight w-full ${
                 props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
-              } ${alignClass}`}
+              } ${alignClass} ${isSelected ? 'outline-none cursor-text ring-2 ring-purple-400 rounded px-1' : ''}`}
             >
-              {renderFormattedText(props.text)}
+              {isSelected ? props.text : renderFormattedText(props.text)}
             </h1>
           )
         }
@@ -895,15 +942,18 @@ const NodeItem: React.FC<{
         if (isFooterHeading) {
           return (
             <h2
+              {...editableProps}
               style={{
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 600,
                 color: '#F8F9FA',
                 textShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}
-              className="text-lg sm:text-xl font-semibold text-[#F8F9FA] tracking-wide text-center w-full mb-3"
+              className={`text-lg sm:text-xl font-semibold text-[#F8F9FA] tracking-wide text-center w-full mb-3 ${
+                isSelected ? 'outline-none cursor-text ring-2 ring-purple-400 rounded px-1' : ''
+              }`}
             >
-              {renderFormattedText(props.text)}
+              {isSelected ? props.text : renderFormattedText(props.text)}
             </h2>
           )
         }
@@ -914,6 +964,7 @@ const NodeItem: React.FC<{
 
         return (
           <h2
+            {...editableProps}
             style={{
               ...color,
               ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
@@ -927,9 +978,11 @@ const NodeItem: React.FC<{
                 : color.color
                 ? ''
                 : 'text-xl sm:text-2xl text-gray-800'
-            } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass}`}
+            } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass} ${
+              isSelected ? 'outline-none cursor-text ring-2 ring-purple-400 rounded px-1' : ''
+            }`}
           >
-            {renderFormattedText(props.text)}
+            {isSelected ? props.text : renderFormattedText(props.text)}
           </h2>
         )
       }
@@ -978,8 +1031,25 @@ const NodeItem: React.FC<{
 
         return (
           <div
+            {...(isSelected
+              ? {
+                  contentEditable: true,
+                  suppressContentEditableWarning: true,
+                  onBlur: (e: React.FocusEvent<HTMLDivElement>) => {
+                    const html = e.currentTarget.innerHTML
+                    if (html !== props.html && onUpdateNode) {
+                      onUpdateNode({
+                        ...node,
+                        props: { ...node.props, html },
+                      })
+                    }
+                  },
+                }
+              : {})}
             style={customStyle}
-            className={`leading-relaxed space-y-3 ${isWhiteText ? 'text-white' : customStyle.color ? '' : 'text-gray-700'} ${alignClass}`}
+            className={`leading-relaxed space-y-3 ${isWhiteText ? 'text-white' : customStyle.color ? '' : 'text-gray-700'} ${alignClass} ${
+              isSelected ? 'outline-none cursor-text ring-2 ring-purple-400/80 rounded p-1.5' : ''
+            }`}
             dangerouslySetInnerHTML={{ __html: props.html }}
           />
         )
@@ -1007,6 +1077,9 @@ const NodeItem: React.FC<{
               href={normalizeMediaUrl(props.url, siteSlug) || '#'}
               target={props.target || '_self'}
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (isEditing) e.preventDefault()
+              }}
               style={btnStyle}
               className={`inline-flex items-center justify-center text-center gap-2 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-base leading-snug shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-[320px] sm:max-w-xl mx-auto whitespace-normal break-words ${
                 isRedBtn
@@ -1017,7 +1090,32 @@ const NodeItem: React.FC<{
               }`}
             >
               {props.icon && <i className={props.icon} />}
-              <span>{renderFormattedText(props.text) || 'Tıklayınız'}</span>
+              <span
+                {...(isSelected
+                  ? {
+                      contentEditable: true,
+                      suppressContentEditableWarning: true,
+                      onBlur: (e: React.FocusEvent<HTMLElement>) => {
+                        const text = e.currentTarget.innerText
+                        if (text !== props.text && onUpdateNode) {
+                          onUpdateNode({
+                            ...node,
+                            props: { ...node.props, text },
+                          })
+                        }
+                      },
+                      onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          e.currentTarget.blur()
+                        }
+                      },
+                    }
+                  : {})}
+                className={isSelected ? 'outline-none cursor-text ring-1 ring-white/70 rounded px-1' : ''}
+              >
+                {isSelected ? (props.text || 'Tıklayınız') : (renderFormattedText(props.text) || 'Tıklayınız')}
+              </span>
             </a>
           </div>
         )
@@ -1382,7 +1480,13 @@ const NodeItem: React.FC<{
 
   if (isEditing) {
     return (
-      <ResizeHandles node={node} isSelected={isSelected} onUpdateNode={onUpdateNode}>
+      <ResizeHandles
+        node={node}
+        isSelected={isSelected}
+        onUpdateNode={onUpdateNode}
+        onDuplicateNode={onDuplicateNode}
+        onDeleteNode={onDeleteNode}
+      >
         <div
           onClick={handleSelect}
           className={`relative group cursor-pointer transition-all ${
@@ -1391,15 +1495,13 @@ const NodeItem: React.FC<{
               : 'hover:outline-dashed hover:outline-1 hover:outline-blue-400'
           }`}
         >
-          <span
-            className={`absolute -top-3 left-2 z-20 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider shadow-sm transition-opacity ${
-              isSelected
-                ? 'bg-purple-600 text-white opacity-100 font-bold'
-                : 'bg-blue-600 text-white opacity-0 group-hover:opacity-100'
-            }`}
-          >
-            {type}
-          </span>
+          {!isSelected && (
+            <span
+              className="absolute -top-3 left-2 z-20 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider shadow-sm transition-opacity bg-blue-600 text-white opacity-0 group-hover:opacity-100"
+            >
+              {type}
+            </span>
+          )}
           {renderContent()}
         </div>
       </ResizeHandles>

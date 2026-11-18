@@ -20,7 +20,9 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   siteSlug = 'otizmuzikokulu',
   token = '',
 }) => {
-  const [activeTab, setActiveTab] = useState<'props' | 'styles'>('props')
+  const [activeTab, setActiveTab] = useState<'props' | 'styles'>(() => {
+    return new URLSearchParams(window.location.search).get('tab') === 'styles' ? 'styles' : 'props'
+  })
   const [pickerConfig, setPickerConfig] = useState<{
     isOpen: boolean
     targetKey: string
@@ -610,15 +612,122 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     className="w-full px-2.5 py-1.5 border rounded bg-white outline-none"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Typography Section */}
+            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+              <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                <span>Tipografi & Yazı Tipi</span>
+                <span className="text-[10px] text-purple-600 font-mono font-bold">Aa</span>
+              </h4>
+              <div className="space-y-3">
+                {/* Font Family */}
                 <div>
-                  <label className="block text-gray-600 mb-0.5">Yazı Boyutu (Font Size)</label>
-                  <input
-                    type="text"
-                    placeholder="örn: 18px, 1.25rem"
-                    value={styles.fontSize || ''}
-                    onChange={(e) => handleStyleChange('fontSize', e.target.value)}
-                    className="w-full px-2.5 py-1.5 border rounded bg-white outline-none"
-                  />
+                  <label className="block text-gray-600 mb-1">Yazı Tipi Ailesi (Font Family)</label>
+                  <select
+                    value={styles.fontFamily || 'Poppins, sans-serif'}
+                    onChange={(e) => handleStyleChange('fontFamily', e.target.value)}
+                    className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none font-medium"
+                  >
+                    <option value="Poppins, sans-serif">Poppins (Modern & Sade)</option>
+                    <option value="Inter, sans-serif">Inter (Temiz & Düz)</option>
+                    <option value="Roboto, sans-serif">Roboto (Geometrik Sans)</option>
+                    <option value="Montserrat, sans-serif">Montserrat (Güçlü Başlık)</option>
+                    <option value="'Playfair Display', serif">Playfair Display (Zarif Serif)</option>
+                    <option value="'Cinzel', serif">Cinzel (Klasik / Prestij)</option>
+                    <option value="system-ui, sans-serif">Sistem Fontu (Varsayılan)</option>
+                  </select>
+                </div>
+
+                {/* Font Size with Quick Presets */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-600">Yazı Boyutu (Font Size)</label>
+                    <span className="text-[11px] font-mono font-bold text-purple-600">{styles.fontSize || '24px'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <input
+                      type="text"
+                      placeholder="örn: 24px"
+                      value={styles.fontSize || ''}
+                      onChange={(e) => handleStyleChange('fontSize', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none"
+                    />
+                  </div>
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap gap-1">
+                    {['12px', '14px', '16px', '18px', '20px', '24px', '32px', '40px', '48px', '56px'].map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => handleStyleChange('fontSize', sz)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                          styles.fontSize === sz
+                            ? 'bg-purple-600 text-white border-purple-600 font-bold'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Font Weight */}
+                <div>
+                  <label className="block text-gray-600 mb-1">Yazı Kalınlığı (Font Weight)</label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { label: 'İnce', val: 300 },
+                      { label: 'Normal', val: 400 },
+                      { label: 'Yarı', val: 600 },
+                      { label: 'Kalın', val: 700 },
+                    ].map((fw) => (
+                      <button
+                        key={fw.val}
+                        type="button"
+                        onClick={() => handleStyleChange('fontWeight', fw.val)}
+                        className={`py-1 text-center rounded text-[10px] border transition ${
+                          styles.fontWeight === fw.val || (fw.val === 700 && styles.fontWeight === 'bold')
+                            ? 'bg-purple-600 text-white border-purple-600 font-bold'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {fw.label} ({fw.val})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Text Alignment */}
+                <div>
+                  <label className="block text-gray-600 mb-1">Metin Hizalama (Text Align)</label>
+                  <div className="grid grid-cols-4 gap-1 bg-white p-1 rounded-lg border border-gray-200">
+                    {[
+                      { align: 'left', icon: '⇤', title: 'Sola' },
+                      { align: 'center', icon: '⫿', title: 'Ortala' },
+                      { align: 'right', icon: '⇥', title: 'Sağa' },
+                      { align: 'justify', icon: '⇿', title: 'İki Yana' },
+                    ].map((a) => (
+                      <button
+                        key={a.align}
+                        type="button"
+                        onClick={() => {
+                          handleStyleChange('textAlign', a.align)
+                          handlePropChange('align', a.align)
+                        }}
+                        className={`py-1 text-center rounded text-xs transition ${
+                          styles.textAlign === a.align || props.align === a.align
+                            ? 'bg-purple-600 text-white font-bold shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title={a.title}
+                      >
+                        {a.icon}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

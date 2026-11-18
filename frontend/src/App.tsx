@@ -60,8 +60,24 @@ export function App() {
   const [selectedNode, setSelectedNode] = useState<ComponentNode | null>(null)
 
   useEffect(() => {
-    if (page?.layout && page.layout.length > 0 && new URLSearchParams(window.location.search).get('select') === '1' && !selectedNode) {
-      setSelectedNode(page.layout[0])
+    if (page?.layout && page.layout.length > 0 && !selectedNode) {
+      const selectParam = new URLSearchParams(window.location.search).get('select')
+      if (selectParam === '1') {
+        setSelectedNode(page.layout[0])
+      } else if (selectParam === 'heading') {
+        const findHeading = (nodes: ComponentNode[]): ComponentNode | null => {
+          for (const n of nodes) {
+            if (n.type === 'Heading') return n
+            if (n.children) {
+              const found = findHeading(n.children)
+              if (found) return found
+            }
+          }
+          return null
+        }
+        const h = findHeading(page.layout)
+        if (h) setSelectedNode(h)
+      }
     }
   }, [page])
   const [isSaving, setIsSaving] = useState(false)
