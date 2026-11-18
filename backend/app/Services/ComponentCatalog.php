@@ -18,6 +18,8 @@ class ComponentCatalog
                     'category' => 'Layout',
                     'description' => 'Top-level section wrapper for pages. Can have background image/color, shape dividers, and columns.',
                     'props' => [
+                        'columns' => ['type' => 'number', 'enum' => [1, 2, 3, 4, 5, 6], 'default' => 1, 'description' => 'Multi-column grid count (1 to 6 columns)'],
+                        'gap' => ['type' => 'string', 'enum' => ['none', 'sm', 'md', 'lg'], 'default' => 'md', 'description' => 'Column spacing: none (0), sm (16px), md (24px), lg (32px)'],
                         'layout' => ['type' => 'string', 'enum' => ['boxed', 'full_width'], 'default' => 'boxed'],
                         'flexDirection' => ['type' => 'string', 'enum' => ['row', 'column'], 'default' => 'row'],
                         'justifyContent' => ['type' => 'string', 'enum' => ['start', 'center', 'end', 'space-between', 'space-around'], 'default' => 'start'],

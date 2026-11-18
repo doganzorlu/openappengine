@@ -89,6 +89,19 @@ export function App() {
         }
         const h = findHeading(page.layout)
         if (h) setSelectedNode(h)
+      } else if (selectParam === 'column') {
+        const findColumn = (nodes: ComponentNode[]): ComponentNode | null => {
+          for (const n of nodes) {
+            if (n.type === 'Column') return n
+            if (n.children) {
+              const found = findColumn(n.children)
+              if (found) return found
+            }
+          }
+          return null
+        }
+        const c = findColumn(page.layout)
+        if (c) setSelectedNode(c)
       }
     }
   }, [page])

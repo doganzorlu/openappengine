@@ -78,6 +78,70 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
     })
   }
 
+  const handleSetColumnCount = (count: number) => {
+    const existingCols = (selectedNode.children || []).filter((c) => c.type === 'Column')
+    const nonCols = (selectedNode.children || []).filter((c) => c.type !== 'Column')
+
+    if (count <= 1) {
+      onUpdateNode({
+        ...selectedNode,
+        props: {
+          ...props,
+          columns: 1,
+        },
+      })
+      return
+    }
+
+    let cols = [...existingCols]
+    if (cols.length === 0) {
+      cols = [
+        {
+          id: 'col_' + Math.random().toString(36).substring(2, 9),
+          type: 'Column',
+          props: { width: Math.round(100 / count), align: 'left' },
+          styles: {},
+          children: nonCols,
+        },
+      ]
+    }
+
+    while (cols.length < count) {
+      cols.push({
+        id: 'col_' + Math.random().toString(36).substring(2, 9),
+        type: 'Column',
+        props: { width: Math.round(100 / count), align: 'left' },
+        styles: {},
+        children: [],
+      })
+    }
+
+    const equalWidth = Math.round(100 / count)
+    const updatedCols = cols.map((col) => ({
+      ...col,
+      props: {
+        ...col.props,
+        width: equalWidth,
+      },
+    }))
+
+    onUpdateNode({
+      ...selectedNode,
+      props: {
+        ...props,
+        columns: count,
+      },
+      children: updatedCols,
+    })
+  }
+
+  const handleAddColumn = () => {
+    const colChildren = (selectedNode.children || []).filter((c) => c.type === 'Column')
+    const currentCount = props.columns || (colChildren.length > 1 ? colChildren.length : 1)
+    const nextCount = Math.min(currentCount + 1, 6)
+    handleSetColumnCount(nextCount)
+  }
+
   return (
     <aside className="fixed right-0 top-14 bottom-0 w-80 sm:w-96 bg-white border-l border-gray-200 flex flex-col shadow-2xl z-40 overflow-hidden">
       {/* Header */}
@@ -431,6 +495,115 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             {/* Section Props */}
             {type === 'Section' && (
               <>
+                {/* Multi-Column Container Controls */}
+                <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-bold text-purple-900 uppercase tracking-wider">
+                      📐 Kolon Yapısı (Konteyner)
+                    </label>
+                    <span className="text-[11px] font-mono text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full font-bold">
+                      {props.columns || (selectedNode.children?.filter((c) => c.type === 'Column').length || 1)} Kolon
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 mb-3">
+                    {[
+                      { count: 1, label: '1 Kolon' },
+                      { count: 2, label: '2 Kolon' },
+                      { count: 3, label: '3 Kolon' },
+                      { count: 4, label: '4 Kolon' },
+                      { count: 5, label: '5 Kolon' },
+                      { count: 6, label: '6 Kolon' },
+                    ].map((item) => {
+                      const currentCount = props.columns || (selectedNode.children?.filter((c) => c.type === 'Column').length || 1)
+                      const isActive = currentCount === item.count
+                      return (
+                        <button
+                          key={item.count}
+                          type="button"
+                          onClick={() => handleSetColumnCount(item.count)}
+                          className={`py-2 px-1 rounded-lg text-xs font-bold border transition flex flex-col items-center gap-1 ${
+                            isActive
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-0.5 opacity-80">
+                            {Array.from({ length: item.count }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={`h-2.5 rounded-sm ${isActive ? 'bg-white' : 'bg-purple-500'} ${
+                                  item.count <= 3 ? 'w-2.5' : 'w-1.5'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span>{item.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Column Gap */}
+                  <div className="mb-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Kolon Boşluğu (Gap)</label>
+                    <div className="grid grid-cols-4 gap-1 text-xs">
+                      {[
+                        { id: 'none', label: 'Yok (0)' },
+                        { id: 'sm', label: 'Dar (16)' },
+                        { id: 'md', label: 'Normal (24)' },
+                        { id: 'lg', label: 'Geniş (32)' },
+                      ].map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => handlePropChange('gap', g.id)}
+                          className={`py-1.5 rounded-lg font-semibold border transition ${
+                            (props.gap || 'md') === g.id
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dikey Hizalama */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Dikey Hizalama</label>
+                    <div className="grid grid-cols-4 gap-1 text-xs">
+                      {[
+                        { id: 'stretch', label: 'Eşit Boy' },
+                        { id: 'start', label: 'Üst' },
+                        { id: 'center', label: 'Orta' },
+                        { id: 'end', label: 'Alt' },
+                      ].map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => handlePropChange('alignItems', a.id)}
+                          className={`py-1.5 rounded-lg font-semibold border transition ${
+                            (props.alignItems || 'stretch') === a.id
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddColumn}
+                    className="mt-3 w-full py-1.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span>➕</span> Yeni Kolon Ekle ({Math.min((props.columns || 1) + 1, 6)} Kolon Yap)
+                  </button>
+                </div>
+
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block font-semibold text-gray-700">Arka Plan Görseli</label>
@@ -474,6 +647,123 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     placeholder="örn: 500px veya 80vh"
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
+                </div>
+              </>
+            )}
+
+            {/* Column Props */}
+            {type === 'Column' && (
+              <>
+                <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-200 text-xs text-purple-900 mb-1">
+                  <span className="font-bold">💡 Kolon Konteyneri:</span> Bu kolonun içerisindeki bileşenlerin hizalamasını, genişliğini ve kart görünümünü özelleştirebilirsiniz.
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Genişlik Oranı</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { label: 'Oto', val: 0 },
+                      { label: '%25', val: 25 },
+                      { label: '%33', val: 33 },
+                      { label: '%50', val: 50 },
+                      { label: '%66', val: 66 },
+                      { label: '%75', val: 75 },
+                      { label: '%100', val: 100 },
+                    ].map((w) => (
+                      <button
+                        key={w.val}
+                        type="button"
+                        onClick={() => handlePropChange('width', w.val || '')}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-semibold border transition ${
+                          (Number(props.width) === w.val || (!props.width && w.val === 0))
+                            ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">İçerik Hizalama</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'left', label: 'Sol' },
+                      { id: 'center', label: 'Orta' },
+                      { id: 'right', label: 'Sağ' },
+                    ].map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => handlePropChange('align', a.id)}
+                        className={`py-1.5 rounded-lg text-xs font-semibold border transition ${
+                          (props.align || 'left') === a.id
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <ColorPickerInput
+                  label="Kolon Arka Plan Rengi"
+                  value={props.bgColor || styles.backgroundColor}
+                  onChange={(c) => {
+                    handlePropChange('bgColor', c)
+                    handleStyleChange('backgroundColor', c)
+                  }}
+                />
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">İç Boşluk (Padding)</label>
+                  <input
+                    type="text"
+                    value={styles.padding || props.padding || ''}
+                    onChange={(e) => {
+                      handleStyleChange('padding', e.target.value)
+                      handlePropChange('padding', e.target.value)
+                    }}
+                    placeholder="örn: 24px veya 1.5rem"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Köşe Yuvarlaklığı (Border Radius)</label>
+                  <input
+                    type="text"
+                    value={styles.borderRadius || props.borderRadius || ''}
+                    onChange={(e) => {
+                      handleStyleChange('borderRadius', e.target.value)
+                      handlePropChange('borderRadius', e.target.value)
+                    }}
+                    placeholder="örn: 16px veya 1rem"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Kenarlık (Border)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={styles.borderWidth || ''}
+                      onChange={(e) => handleStyleChange('borderWidth', e.target.value)}
+                      placeholder="örn: 1px"
+                      className="w-1/2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                    <input
+                      type="color"
+                      value={styles.borderColor || '#e2e8f0'}
+                      onChange={(e) => handleStyleChange('borderColor', e.target.value)}
+                      className="w-12 h-10 p-1 border rounded-lg cursor-pointer"
+                    />
+                  </div>
                 </div>
               </>
             )}

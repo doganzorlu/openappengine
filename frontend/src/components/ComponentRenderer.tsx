@@ -267,6 +267,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
                   themeTokens={activeTheme}
+                  inGrid={inGrid}
                 />
               </div>
             )
@@ -548,6 +549,7 @@ const NodeItem: React.FC<{
   onDuplicateNode?: (nodeId: string) => void
   onDeleteNode?: (nodeId: string) => void
   themeTokens?: ThemeTokens
+  inGrid?: boolean
 }> = ({
   node,
   siteSlug,
@@ -560,6 +562,7 @@ const NodeItem: React.FC<{
   onDuplicateNode,
   onDeleteNode,
   themeTokens,
+  inGrid = false,
 }) => {
   const { type, props = {}, styles = {}, children = [] } = node
 
@@ -618,6 +621,16 @@ const NodeItem: React.FC<{
         if (styles.margin) bgStyle.margin = styles.margin
 
         const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
+        const secBg = styles.backgroundColor || props.bgColor
+        const isSecDark = isDarkColor(secBg)
+        const sectionThemeTokens: ThemeTokens = {
+          ...activeTheme,
+          ...(secBg ? { backgroundColor: secBg } : {}),
+          isDark: isSecDark || (secBg ? isSecDark : activeTheme.isDark),
+          headingColor: isSecDark ? '#ffffff' : activeTheme.headingColor,
+          textColor: isSecDark ? '#e2e8f0' : activeTheme.textColor,
+        }
+
         const isHeader = children.some(
           (c) =>
             c.type === 'SiteLogo' ||
@@ -642,12 +655,34 @@ const NodeItem: React.FC<{
         )
 
         const isFooter = node.id === 'd94ff7a' || props.bgColor === '#023E8A' || styles.backgroundColor === '#023E8A'
-        const hasMultipleColumns = children.filter((c) => c.type === 'Column').length > 1
+        const colChildren = children.filter((c) => c.type === 'Column')
+        const hasMultipleColumns = colChildren.length > 1
+        const columnCount = props.columns || (hasMultipleColumns ? colChildren.length : 1)
+        const isGridMode = columnCount > 1
+
+        const gapClass = props.gap === 'none' || props.gap === '0' ? 'gap-0' :
+                         props.gap === 'sm' || props.gap === '16' ? 'gap-4' :
+                         props.gap === 'lg' || props.gap === '32' ? 'gap-8' :
+                         'gap-6'
+
+        const gridColsClass = 
+          columnCount === 2 ? 'grid-cols-1 md:grid-cols-2' :
+          columnCount === 3 ? 'grid-cols-1 md:grid-cols-3' :
+          columnCount === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
+          columnCount === 5 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5' :
+          columnCount >= 6 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6' :
+          ''
+
+        const alignItemsClass =
+          props.alignItems === 'start' ? 'items-start' :
+          props.alignItems === 'center' ? 'items-center' :
+          props.alignItems === 'end' ? 'items-end' :
+          'items-stretch'
 
         const childWrapperClass = isFooter
           ? 'flex flex-col md:flex-row items-stretch md:items-start justify-center gap-8 md:gap-0 max-w-5xl mx-auto w-full text-white'
-          : hasMultipleColumns
-          ? 'flex flex-col md:flex-row flex-wrap items-stretch justify-center gap-6 w-full max-w-full'
+          : isGridMode
+          ? `grid ${gridColsClass} ${gapClass} ${alignItemsClass} w-full max-w-full`
           : isRow
           ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
           : hasLeftAlignedHeading
@@ -709,6 +744,8 @@ const NodeItem: React.FC<{
                   onUpdateNode={onUpdateNode}
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
+                  inGrid={isGridMode}
+                  themeTokens={sectionThemeTokens}
                 />
               </div>
 
@@ -785,6 +822,8 @@ const NodeItem: React.FC<{
         const widthVal = typeof props.width === 'number' ? props.width : parseFloat(props.width || '100')
         const widthClass = isHeroColumn
           ? 'w-full flex justify-center items-center'
+          : inGrid
+          ? 'w-full h-full'
           : widthVal <= 26
           ? 'w-full md:w-1/4'
           : widthVal <= 34
@@ -963,20 +1002,29 @@ const NodeItem: React.FC<{
         return (
           <div
             style={boxStyle}
-            className={`w-full ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : ''}`}
+            className={`w-full ${inGrid ? 'h-full' : ''} ${animationClass} space-y-6 ${props.align === 'center' ? 'text-center' : props.align === 'right' ? 'text-right' : ''}`}
           >
-            <ComponentRenderer
-              nodes={children}
-              siteSlug={siteSlug}
-              site={site}
-              menus={menus}
-              isEditing={isEditing}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={onSelectNode}
-              onUpdateNode={onUpdateNode}
-              onDuplicateNode={onDuplicateNode}
-              onDeleteNode={onDeleteNode}
-            />
+            {children.length === 0 && isEditing ? (
+              <div className="border-2 border-dashed border-purple-300 bg-purple-50/40 rounded-2xl p-6 text-center text-purple-600 text-xs flex flex-col items-center justify-center min-h-[140px] hover:border-purple-500 hover:bg-purple-50/70 transition group cursor-pointer">
+                <span className="text-xl mb-1 group-hover:scale-110 transition-transform">➕</span>
+                <span className="font-bold">Boş Kolon</span>
+                <span className="text-[11px] text-gray-400 mt-0.5">Bileşen eklemek için seçin</span>
+              </div>
+            ) : (
+              <ComponentRenderer
+                nodes={children}
+                siteSlug={siteSlug}
+                site={site}
+                menus={menus}
+                isEditing={isEditing}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={onSelectNode}
+                onUpdateNode={onUpdateNode}
+                onDuplicateNode={onDuplicateNode}
+                onDeleteNode={onDeleteNode}
+                themeTokens={columnThemeTokens}
+              />
+            )}
           </div>
         )
       }

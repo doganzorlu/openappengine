@@ -10,7 +10,7 @@ interface BlockLibraryModalProps {
 
 interface BlockTemplate {
   id: string
-  category: 'hero' | 'features' | 'counters' | 'media' | 'faq' | 'form'
+  category: 'hero' | 'features' | 'counters' | 'media' | 'faq' | 'form' | 'layout'
   title: string
   description: string
   previewIcon: string
@@ -23,7 +23,9 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
   onInsertBlock,
   brandColor = '#4F46E5',
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    return new URLSearchParams(window.location.search).get('cat') || 'all'
+  })
 
   if (!isOpen) return null
 
@@ -1886,10 +1888,257 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
         ],
       }),
     },
+    {
+      id: 'grid-2col',
+      category: 'layout',
+      title: '2 Kolonlu Eşit Grid (%50 / %50)',
+      description: 'Yan yana iki eşit genişlikte kolon. Metin-görsel veya ikili kartlar için ideal.',
+      previewIcon: '⚖️',
+      generateNode: (_col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: {
+          columns: 2,
+          gap: 'md',
+          alignItems: 'stretch',
+          bgColor: '#FFFFFF',
+        },
+        styles: { padding: '60px 20px' },
+        children: [
+          {
+            id: 'col_' + uniqid(),
+            type: 'Column',
+            props: { width: 50, align: 'left' },
+            styles: { padding: '24px', backgroundColor: '#F8FAFC', borderRadius: '16px' },
+            children: [
+              {
+                id: 'h_' + uniqid(),
+                type: 'Heading',
+                props: { text: 'Sol Kolon Başlığı', level: 'h3', align: 'left', color: '#1E293B' },
+                styles: {},
+              },
+              {
+                id: 't_' + uniqid(),
+                type: 'RichText',
+                props: {
+                  html: '<p class="text-slate-600">Bu kolona dilediğiniz metin, görsel veya form bileşenini ekleyebilirsiniz.</p>',
+                  align: 'left',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_' + uniqid(),
+            type: 'Column',
+            props: { width: 50, align: 'left' },
+            styles: { padding: '24px', backgroundColor: '#F8FAFC', borderRadius: '16px' },
+            children: [
+              {
+                id: 'h_' + uniqid(),
+                type: 'Heading',
+                props: { text: 'Sağ Kolon Başlığı', level: 'h3', align: 'left', color: '#1E293B' },
+                styles: {},
+              },
+              {
+                id: 't_' + uniqid(),
+                type: 'RichText',
+                props: {
+                  html: '<p class="text-slate-600">Bu kolon da bağımsız olarak özelleştirilebilir ve kendi bileşenlerini barındırır.</p>',
+                  align: 'left',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'grid-3col',
+      category: 'layout',
+      title: '3 Kolonlu Eşit Grid (%33 / %33 / %33)',
+      description: 'Üç eşit kolonlu esnek kart ızgarası. Hizmetler, paketler veya özellikler için.',
+      previewIcon: '📐',
+      generateNode: (_col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: {
+          columns: 3,
+          gap: 'md',
+          alignItems: 'stretch',
+          bgColor: '#F8FAFC',
+        },
+        styles: { padding: '60px 20px' },
+        children: [1, 2, 3].map((num) => ({
+          id: 'col_' + uniqid(),
+          type: 'Column',
+          props: { width: 33, align: 'center' },
+          styles: { padding: '28px 20px', backgroundColor: '#FFFFFF', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' },
+          children: [
+            {
+              id: 'h_' + uniqid(),
+              type: 'Heading',
+              props: { text: `Kolon ${num}`, level: 'h4', align: 'center', color: '#1E293B' },
+              styles: {},
+            },
+            {
+              id: 't_' + uniqid(),
+              type: 'RichText',
+              props: {
+                html: `<p class="text-slate-500 text-sm">${num}. kolon içeriğinizi buraya yerleştirebilirsiniz.</p>`,
+                align: 'center',
+              },
+              styles: {},
+            },
+          ],
+        })),
+      }),
+    },
+    {
+      id: 'grid-4col',
+      category: 'layout',
+      title: '4 Kolonlu Grid (%25 / %25 / %25 / %25)',
+      description: 'Dört kolonlu kompakt ızgara. İstatistikler, ekip veya özellik vitrini için.',
+      previewIcon: '▦',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: {
+          columns: 4,
+          gap: 'md',
+          alignItems: 'stretch',
+          bgColor: '#FFFFFF',
+        },
+        styles: { padding: '60px 20px' },
+        children: [1, 2, 3, 4].map((num) => ({
+          id: 'col_' + uniqid(),
+          type: 'Column',
+          props: { width: 25, align: 'center' },
+          styles: { padding: '24px 16px', backgroundColor: '#F1F5F9', borderRadius: '16px' },
+          children: [
+            {
+              id: 'h_' + uniqid(),
+              type: 'Heading',
+              props: { text: `Özellik ${num}`, level: 'h4', align: 'center', color: col || '#4F46E5' },
+              styles: {},
+            },
+            {
+              id: 't_' + uniqid(),
+              type: 'RichText',
+              props: {
+                html: `<p class="text-slate-500 text-xs text-center">${num}. öğe için kısa açıklama bilgisi.</p>`,
+                align: 'center',
+              },
+              styles: {},
+            },
+          ],
+        })),
+      }),
+    },
+    {
+      id: 'grid-6col',
+      category: 'layout',
+      title: '6 Kolonlu Izgara (Logo & Metrik)',
+      description: 'Altı kolonlu kompakt mikro ızgara. Sponsor logoları veya mini metrikler için.',
+      previewIcon: '፨',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: {
+          columns: 6,
+          gap: 'sm',
+          alignItems: 'center',
+          bgColor: '#F8FAFC',
+        },
+        styles: { padding: '40px 20px' },
+        children: [1, 2, 3, 4, 5, 6].map((num) => ({
+          id: 'col_' + uniqid(),
+          type: 'Column',
+          props: { width: 16, align: 'center' },
+          styles: { padding: '16px 8px', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' },
+          children: [
+            {
+              id: 'h_' + uniqid(),
+              type: 'Heading',
+              props: { text: `0${num}`, level: 'h5', align: 'center', color: col || '#4F46E5' },
+              styles: {},
+            },
+          ],
+        })),
+      }),
+    },
+    {
+      id: 'layout-asymmetric',
+      category: 'layout',
+      title: 'Asimetrik Düzen (Sol %35 / Sağ %65)',
+      description: 'Sol tarafta sabit başlık veya görsel, sağ tarafta geniş içerik alanı.',
+      previewIcon: '📑',
+      generateNode: (_col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: {
+          columns: 2,
+          gap: 'lg',
+          alignItems: 'start',
+          bgColor: '#FFFFFF',
+        },
+        styles: { padding: '70px 20px' },
+        children: [
+          {
+            id: 'col_' + uniqid(),
+            type: 'Column',
+            props: { width: 35, align: 'left' },
+            styles: { padding: '24px', backgroundColor: '#EEF2FF', borderRadius: '20px' },
+            children: [
+              {
+                id: 'h_' + uniqid(),
+                type: 'Heading',
+                props: { text: 'Neden Bizimle Çalışmalısınız?', level: 'h3', align: 'left', color: '#1E1B4B' },
+                styles: {},
+              },
+              {
+                id: 't_' + uniqid(),
+                type: 'RichText',
+                props: {
+                  html: '<p class="text-indigo-950/70 text-sm mt-3">Kurumsal hedeflerinizi ileriye taşıyan çözümlerimiz hakkında detayları inceleyin.</p>',
+                  align: 'left',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_' + uniqid(),
+            type: 'Column',
+            props: { width: 65, align: 'left' },
+            styles: { padding: '24px' },
+            children: [
+              {
+                id: 'h_' + uniqid(),
+                type: 'Heading',
+                props: { text: 'Geniş İçerik ve Hizmet Detayları', level: 'h3', align: 'left', color: '#1E293B' },
+                styles: {},
+              },
+              {
+                id: 't_' + uniqid(),
+                type: 'RichText',
+                props: {
+                  html: '<p class="text-slate-600 text-base leading-relaxed mt-2">Bu alanda detaylı paragraflar, maddeler, görseller ve video bileşenlerini dilediğiniz gibi kullanabilirsiniz.</p>',
+                  align: 'left',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
   ]
 
   const categories = [
     { id: 'all', label: 'Tüm Şablonlar', icon: '✨' },
+    { id: 'layout', label: 'Kolon & Grid Düzenleri', icon: '📐' },
     { id: 'hero', label: 'Hero Başlıklar', icon: '🚀' },
     { id: 'features', label: 'Hizmetler & Özellikler', icon: '⭐' },
     { id: 'counters', label: 'Sayaçlar', icon: '📊' },
