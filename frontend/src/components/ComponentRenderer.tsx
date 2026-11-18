@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import type { ComponentNode, Site, Menu, ThemeTokens } from '../types'
 import { Timeline } from './Timeline'
 import { ImageAccordion } from './ImageAccordion'
@@ -61,6 +61,106 @@ export function isDarkColor(color?: string | null): boolean {
     }
   }
   return false
+}
+
+export const ScrollReveal: React.FC<{
+  children: React.ReactNode
+  animation?: string
+  delay?: number
+  duration?: number
+  className?: string
+  isEditing?: boolean
+}> = ({
+  children,
+  animation = 'slideInUp',
+  delay = 0,
+  duration = 750,
+  className = '',
+  isEditing = false,
+}) => {
+  const [isVisible, setIsVisible] = useState(isEditing)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isEditing) {
+      setIsVisible(true)
+      return
+    }
+
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsVisible(true)
+      return
+    }
+
+    // Immediately trigger if already in viewport on mount (e.g. above-the-fold content)
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      if (rect.top < (window.innerHeight || 900) && rect.bottom >= 0) {
+        setIsVisible(true)
+      }
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          if (ref.current) observer.unobserve(ref.current)
+        }
+      },
+      {
+        threshold: 0.05,
+        rootMargin: '0px 0px -20px 0px',
+      }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [isEditing])
+
+  if (!animation || animation === 'none') {
+    return <div className={className}>{children}</div>
+  }
+
+  const getTransform = () => {
+    if (isVisible) return 'none'
+    switch (animation) {
+      case 'slideInUp':
+      case 'fadeInUp':
+        return 'translate3d(0, 36px, 0)'
+      case 'slideInDown':
+      case 'fadeInDown':
+        return 'translate3d(0, -36px, 0)'
+      case 'slideInLeft':
+      case 'fadeInLeft':
+        return 'translate3d(-40px, 0, 0)'
+      case 'slideInRight':
+      case 'fadeInRight':
+        return 'translate3d(40px, 0, 0)'
+      case 'zoomIn':
+        return 'scale3d(0.92, 0.92, 1)'
+      case 'fadeIn':
+      default:
+        return 'none'
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: getTransform(),
+        transition: `opacity ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+        willChange: isVisible ? 'auto' : 'opacity, transform',
+      }}
+      className={className}
+    >
+      {children}
+    </div>
+  )
 }
 
 interface RendererProps {
@@ -626,7 +726,7 @@ const NodeItem: React.FC<{
         if (props.minHeight) {
           bgStyle.minHeight = typeof props.minHeight === 'number' ? `${props.minHeight}px` : props.minHeight
         }
-        if (props.bgAttachment === 'fixed') {
+        if (props.bgAttachment === 'fixed' || styles.backgroundAttachment === 'fixed') {
           bgStyle.backgroundAttachment = 'fixed'
         }
 
@@ -2098,6 +2198,22 @@ const NodeItem: React.FC<{
           {renderContent()}
         </div>
       </ResizeHandles>
+    )
+  }
+
+  const animation = props.animation || styles.animation
+  const animationDelay = props.animationDelay || styles.animationDelay || 0
+
+  if (animation && animation !== 'none') {
+    return (
+      <ScrollReveal
+        animation={animation}
+        delay={animationDelay}
+        duration={styles.animationDuration || 750}
+        isEditing={false}
+      >
+        {renderContent()}
+      </ScrollReveal>
     )
   }
 

@@ -630,6 +630,38 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
+
+                {props.bgImage && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Arka Plan Sabitleme (Parallax)
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handlePropChange('bgAttachment', 'scroll')}
+                        className={`py-1.5 px-2 rounded-lg font-bold border transition ${
+                          (props.bgAttachment || 'scroll') !== 'fixed'
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        Normal Kaydır
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePropChange('bgAttachment', 'fixed')}
+                        className={`py-1.5 px-2 rounded-lg font-bold border transition ${
+                          props.bgAttachment === 'fixed'
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        📌 Sabit Kal (Parallax)
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <ColorPickerInput
                   label="Arka Plan Rengi"
                   value={props.bgColor || styles.backgroundColor}
@@ -3094,6 +3126,55 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </div>
             </div>
 
+            {/* Scroll Reveal Animation Section */}
+            <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-200">
+              <h4 className="font-bold text-purple-900 mb-2 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                <span>✨ Açılış Animasyonu (Scroll Reveal)</span>
+                <span className="text-[10px] text-purple-600 font-mono font-bold">FX</span>
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-700 text-xs font-semibold mb-1">Giriş Efekti</label>
+                  <select
+                    value={styles.animation || props.animation || 'none'}
+                    onChange={(e) => {
+                      handleStyleChange('animation', e.target.value)
+                      handlePropChange('animation', e.target.value)
+                    }}
+                    className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none font-medium text-xs text-gray-800"
+                  >
+                    <option value="none">Efektsiz (Sabit)</option>
+                    <option value="slideInUp">Aşağıdan Kayarak Gel (slideInUp)</option>
+                    <option value="fadeIn">Yumuşakça Belirerek Açıl (fadeIn)</option>
+                    <option value="zoomIn">Büyüyerek Açıl (zoomIn)</option>
+                    <option value="slideInLeft">Soldan Kayarak Gel (slideInLeft)</option>
+                    <option value="slideInRight">Sağdan Kayarak Gel (slideInRight)</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-700 text-xs font-semibold">Gecikme (ms)</label>
+                    <span className="text-[11px] font-mono text-purple-600 font-bold">
+                      {styles.animationDelay || props.animationDelay || 0} ms
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="50"
+                    value={styles.animationDelay || props.animationDelay || 0}
+                    onChange={(e) => {
+                      const v = Number(e.target.value)
+                      handleStyleChange('animationDelay', v)
+                      handlePropChange('animationDelay', v)
+                    }}
+                    className="w-full accent-purple-600"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
               <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-[11px]">
                 Görünüm & Renkler
@@ -3127,6 +3208,55 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     value={styles.boxShadow || ''}
                     onChange={(e) => handleStyleChange('boxShadow', e.target.value)}
                     className="w-full px-2.5 py-1.5 border rounded bg-white outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Scroll Reveal Animation Section */}
+            <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-200">
+              <h4 className="font-bold text-purple-900 mb-2 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                <span>✨ Açılış Animasyonu (Scroll Reveal)</span>
+                <span className="text-[10px] text-purple-600 font-mono font-bold">FX</span>
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-700 text-xs font-semibold mb-1">Giriş Efekti</label>
+                  <select
+                    value={styles.animation || props.animation || 'none'}
+                    onChange={(e) => {
+                      handleStyleChange('animation', e.target.value)
+                      handlePropChange('animation', e.target.value)
+                    }}
+                    className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none font-medium text-xs text-gray-800"
+                  >
+                    <option value="none">Efektsiz (Sabit)</option>
+                    <option value="slideInUp">Aşağıdan Kayarak Gel (slideInUp)</option>
+                    <option value="fadeIn">Yumuşakça Belirerek Açıl (fadeIn)</option>
+                    <option value="zoomIn">Büyüyerek Açıl (zoomIn)</option>
+                    <option value="slideInLeft">Soldan Kayarak Gel (slideInLeft)</option>
+                    <option value="slideInRight">Sağdan Kayarak Gel (slideInRight)</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-700 text-xs font-semibold">Gecikme (ms)</label>
+                    <span className="text-[11px] font-mono text-purple-600 font-bold">
+                      {styles.animationDelay || props.animationDelay || 0} ms
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="50"
+                    value={styles.animationDelay || props.animationDelay || 0}
+                    onChange={(e) => {
+                      const v = Number(e.target.value)
+                      handleStyleChange('animationDelay', v)
+                      handlePropChange('animationDelay', v)
+                    }}
+                    className="w-full accent-purple-600"
                   />
                 </div>
               </div>
@@ -3245,6 +3375,55 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scroll Reveal Animation Section */}
+            <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-200">
+              <h4 className="font-bold text-purple-900 mb-2 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                <span>✨ Açılış Animasyonu (Scroll Reveal)</span>
+                <span className="text-[10px] text-purple-600 font-mono font-bold">FX</span>
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-700 text-xs font-semibold mb-1">Giriş Efekti</label>
+                  <select
+                    value={styles.animation || props.animation || 'none'}
+                    onChange={(e) => {
+                      handleStyleChange('animation', e.target.value)
+                      handlePropChange('animation', e.target.value)
+                    }}
+                    className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none font-medium text-xs text-gray-800"
+                  >
+                    <option value="none">Efektsiz (Sabit)</option>
+                    <option value="slideInUp">Aşağıdan Kayarak Gel (slideInUp)</option>
+                    <option value="fadeIn">Yumuşakça Belirerek Açıl (fadeIn)</option>
+                    <option value="zoomIn">Büyüyerek Açıl (zoomIn)</option>
+                    <option value="slideInLeft">Soldan Kayarak Gel (slideInLeft)</option>
+                    <option value="slideInRight">Sağdan Kayarak Gel (slideInRight)</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-700 text-xs font-semibold">Gecikme (ms)</label>
+                    <span className="text-[11px] font-mono text-purple-600 font-bold">
+                      {styles.animationDelay || props.animationDelay || 0} ms
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="50"
+                    value={styles.animationDelay || props.animationDelay || 0}
+                    onChange={(e) => {
+                      const v = Number(e.target.value)
+                      handleStyleChange('animationDelay', v)
+                      handlePropChange('animationDelay', v)
+                    }}
+                    className="w-full accent-purple-600"
+                  />
                 </div>
               </div>
             </div>
