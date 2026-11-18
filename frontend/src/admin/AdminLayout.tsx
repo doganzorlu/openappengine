@@ -4,6 +4,7 @@ import { PagesTab } from './PagesTab'
 import { PostsTab } from './PostsTab'
 import { FormsTab } from './FormsTab'
 import { MediaTab } from './MediaTab'
+import { PopupTab } from './PopupTab'
 import { MenusTab } from './MenusTab'
 import { ImporterTab } from './ImporterTab'
 import { SettingsTab } from './SettingsTab'
@@ -83,7 +84,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'menus', label: 'Menüler & Navigasyon', icon: '🧭' },
     { id: 'posts', label: 'Yazılar & Blog', icon: '✍️' },
     { id: 'forms', label: 'Gelen İletiler', icon: '📬' },
-    { id: 'media', label: 'Medya & Galeri', icon: '🖼️' },
+    { id: 'media', label: 'Medya & Doküman', icon: '📁' },
+    { id: 'popup', label: 'Popup & Duyuru', icon: '🪟' },
     { id: 'settings', label: 'Site Yönetimi & Ekip', icon: '⚙️', adminOnly: true },
     { id: 'importer', label: 'WordPress Importer', icon: '📥', adminOnly: true },
   ]
@@ -322,6 +324,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {activeTab === 'media' && (
             <MediaTab siteSlug={currentSlug} token={token} />
+          )}
+
+          {activeTab === 'popup' && (
+            <PopupTab siteSlug={currentSlug} token={token} />
           )}
 
           {activeTab === 'importer' && (

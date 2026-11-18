@@ -74,6 +74,10 @@ Route::prefix('v1')->group(function () {
             Route::put('/media/{mediaId}', [AdminController::class, 'updateMedia']);
             Route::delete('/media/{mediaId}', [AdminController::class, 'deleteMedia']);
 
+            // Popup / Announcement Builder
+            Route::get('/popup', [AdminController::class, 'getPopupSettings']);
+            Route::put('/popup', [AdminController::class, 'updatePopupSettings']);
+
             // Menus / Navigation Builder
             Route::get('/menus', [AdminController::class, 'listMenus']);
             Route::post('/menus', [AdminController::class, 'createMenu']);

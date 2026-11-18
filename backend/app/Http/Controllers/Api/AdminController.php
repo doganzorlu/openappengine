@@ -463,6 +463,66 @@ class AdminController extends Controller
     }
 
     // ==========================================
+    // 4A. POPUP & ANNOUNCEMENT BUILDER
+    // ==========================================
+    public function getPopupSettings(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+        $popup = $site->settings['popup'] ?? [
+            'enabled' => false,
+            'title' => '',
+            'image_url' => '',
+            'description' => '',
+            'button_text' => '',
+            'button_url' => '',
+            'delay_seconds' => 0,
+            'show_once' => false,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'popup' => $popup,
+        ]);
+    }
+
+    public function updatePopupSettings(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+
+        $request->validate([
+            'enabled' => 'boolean',
+            'title' => 'nullable|string|max:255',
+            'image_url' => 'nullable|string|max:1000',
+            'description' => 'nullable|string',
+            'button_text' => 'nullable|string|max:255',
+            'button_url' => 'nullable|string|max:1000',
+            'delay_seconds' => 'nullable|integer|min:0|max:60',
+            'show_once' => 'nullable|boolean',
+        ]);
+
+        $settings = $site->settings ?? [];
+        $settings['popup'] = [
+            'enabled' => $request->boolean('enabled'),
+            'title' => $request->input('title', ''),
+            'image_url' => $request->input('image_url', ''),
+            'description' => $request->input('description', ''),
+            'button_text' => $request->input('button_text', ''),
+            'button_url' => $request->input('button_url', ''),
+            'delay_seconds' => (int) $request->input('delay_seconds', 0),
+            'show_once' => $request->boolean('show_once'),
+        ];
+
+        $site->settings = $settings;
+        $site->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Popup ayarları başarıyla kaydedildi.',
+            'popup' => $settings['popup'],
+        ]);
+    }
+
+    // ==========================================
     // 4B. MENUS & NAVIGATION BUILDER
     // ==========================================
     public function listMenus(Request $request, string $siteSlug): JsonResponse

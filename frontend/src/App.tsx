@@ -100,10 +100,28 @@ export function App() {
         const siteData = await siteRes.json()
         setSite(siteData.site)
         setMenus(siteData.menus || [])
-        setIsPopupOpen(Boolean(siteData.site?.settings?.popup?.enabled))
         const activeSlug = siteData.site.slug
         if (!currentSlug) {
           setCurrentSlug(activeSlug)
+        }
+
+        // Popup configuration & display rules
+        const popupConfig = siteData.site?.settings?.popup
+        if (popupConfig?.enabled) {
+          const sessionKey = `oae_popup_shown_${activeSlug}`
+          const alreadyShown = popupConfig.show_once && sessionStorage.getItem(sessionKey)
+          if (!alreadyShown) {
+            const delay = (popupConfig.delay_seconds || 0) * 1000
+            if (delay > 0) {
+              setTimeout(() => setIsPopupOpen(true), delay)
+            } else {
+              setIsPopupOpen(true)
+            }
+          } else {
+            setIsPopupOpen(false)
+          }
+        } else {
+          setIsPopupOpen(false)
         }
 
         // 2. Fetch Active Page & Published Posts
@@ -655,46 +673,77 @@ export function App() {
         <Footer site={site} />
       )}
 
-      {/* Site Announcement Popup Modal (e.g. OMYO 2026) */}
-      {isPopupOpen && (site.settings as any)?.popup?.image_url && (
+      {/* Site Announcement Popup Modal (e.g. OMYO 2026 or Custom Announcements) */}
+      {isPopupOpen && ((site.settings as any)?.popup?.image_url || (site.settings as any)?.popup?.title) && (
         <div
-          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setIsPopupOpen(false)}
+          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => {
+            setIsPopupOpen(false)
+            if (site.slug) sessionStorage.setItem(`oae_popup_shown_${site.slug}`, '1')
+          }}
         >
           <div
-            className="bg-white rounded-lg shadow-2xl max-w-[460px] w-full p-4 relative flex flex-col items-center animate-zoom-in"
+            className="bg-white rounded-2xl shadow-2xl max-w-[460px] w-full p-5 relative flex flex-col items-center animate-zoom-in border border-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
-              onClick={() => setIsPopupOpen(false)}
-              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-sm shadow z-10"
+              onClick={() => {
+                setIsPopupOpen(false)
+                if (site.slug) sessionStorage.setItem(`oae_popup_shown_${site.slug}`, '1')
+              }}
+              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-sm shadow z-10 transition hover:scale-105"
               aria-label="Kapat"
             >
               ✕
             </button>
-            <img
-              src={(site.settings as any).popup.image_url}
-              alt={site.name}
-              className="w-full h-auto max-h-[72vh] object-contain rounded"
-            />
+
+            {(site.settings as any).popup.image_url && (
+              <img
+                src={(site.settings as any).popup.image_url}
+                alt={(site.settings as any).popup.title || site.name}
+                className="w-full h-auto max-h-[65vh] object-contain rounded-xl shadow-xs"
+              />
+            )}
+
+            {(site.settings as any).popup.title && (
+              <h3 className="mt-3 text-base sm:text-lg font-black text-gray-900 text-center">
+                {(site.settings as any).popup.title}
+              </h3>
+            )}
+
+            {(site.settings as any).popup.description && (
+              <p className="mt-1 text-xs text-gray-600 text-center leading-relaxed">
+                {(site.settings as any).popup.description}
+              </p>
+            )}
+
             {(site.settings as any).popup.button_text && (
               <button
                 type="button"
                 onClick={() => {
                   const btnUrl = (site.settings as any).popup.button_url || ''
                   setIsPopupOpen(false)
-                  if (btnUrl.includes('post=')) {
+                  if (site.slug) sessionStorage.setItem(`oae_popup_shown_${site.slug}`, '1')
+
+                  if (btnUrl.startsWith('http://') || btnUrl.startsWith('https://') || btnUrl.endsWith('.pdf')) {
+                    window.open(btnUrl, '_blank')
+                  } else if (btnUrl.includes('post=')) {
                     const params = new URLSearchParams(btnUrl.split('?')[1] || '')
                     const postSlug = params.get('post')
                     if (postSlug) {
                       window.dispatchEvent(new CustomEvent('openappengine:open-post', { detail: { slug: postSlug } }))
                     }
+                  } else if (btnUrl.startsWith('/?')) {
+                    window.location.href = btnUrl
+                  } else if (btnUrl.startsWith('#')) {
+                    window.location.hash = btnUrl
                   }
                 }}
-                className="mt-3 px-5 py-2 rounded bg-[#333333] hover:bg-black text-white text-xs font-semibold transition shadow"
+                className="mt-4 w-full py-2.5 px-5 rounded-xl bg-[#023E8A] hover:bg-[#0077B6] text-white text-xs font-bold transition shadow-md hover:scale-[1.02] active:scale-95 text-center flex items-center justify-center gap-1.5"
               >
-                {(site.settings as any).popup.button_text}
+                <span>{(site.settings as any).popup.button_text}</span>
+                <span>↗</span>
               </button>
             )}
           </div>
