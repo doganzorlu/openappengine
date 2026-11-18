@@ -53,9 +53,17 @@ export function App() {
   const [error, setError] = useState<string | null>(null)
 
   // Editor State
-  const [isEditorMode, setIsEditorMode] = useState(false)
+  const [isEditorMode, setIsEditorMode] = useState(() => {
+    return new URLSearchParams(window.location.search).get('editor') === '1'
+  })
   const [isEngineBarVisible, setIsEngineBarVisible] = useState(false)
   const [selectedNode, setSelectedNode] = useState<ComponentNode | null>(null)
+
+  useEffect(() => {
+    if (page?.layout && page.layout.length > 0 && new URLSearchParams(window.location.search).get('select') === '1' && !selectedNode) {
+      setSelectedNode(page.layout[0])
+    }
+  }, [page])
   const [isSaving, setIsSaving] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false)
@@ -555,127 +563,130 @@ export function App() {
         </div>
       )}
 
-      {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
-      {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
-        <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
-          <ComponentRenderer
-            nodes={site.settings.header_layout}
-            siteSlug={site.slug}
-            site={site}
-            menus={menus}
-            isEditing={false}
-            selectedNodeId={null}
-            onSelectNode={() => {}}
-          />
-        </header>
-      ) : (
-        <Navbar site={site} menus={menus} />
-      )}
+      {/* Site Canvas Container (Leaves room on the right for fixed Inspector in Editor Mode) */}
+      <div className={`flex-1 flex flex-col w-full transition-all duration-200 ${isEditorMode ? 'pr-80 sm:pr-96' : ''}`}>
+        {/* Dynamic Navbar (Render custom Elementor header if available, otherwise default Navbar) */}
+        {site.settings?.header_layout && site.settings.header_layout.length > 0 ? (
+          <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
+            <ComponentRenderer
+              nodes={site.settings.header_layout}
+              siteSlug={site.slug}
+              site={site}
+              menus={menus}
+              isEditing={false}
+              selectedNodeId={null}
+              onSelectNode={() => {}}
+            />
+          </header>
+        ) : (
+          <Navbar site={site} menus={menus} />
+        )}
 
-      {/* Main Workspace (Split layout if Editor is active) */}
-      <div className="flex-1 flex w-full">
-        <main className="flex-1 min-w-0 transition-all">
-          <ComponentRenderer
-            nodes={page.layout}
-            siteSlug={site.slug}
-            site={site}
-            menus={menus}
-            isEditing={isEditorMode}
-            selectedNodeId={selectedNode?.id || null}
-            onSelectNode={(node) => setSelectedNode(node)}
-            isTopLevel={true}
-            onMoveNode={handleMoveSection}
-            onDuplicateNode={handleDuplicateSection}
-            onDeleteNode={handleDeleteSection}
-            onAddBlockAtIndex={(idx) => {
-              setBlockInsertIndex(idx)
-              setIsBlockLibraryOpen(true)
-            }}
-          />
+        {/* Main Workspace */}
+        <div className="flex-1 flex w-full">
+          <main className="flex-1 min-w-0 transition-all">
+            <ComponentRenderer
+              nodes={page.layout}
+              siteSlug={site.slug}
+              site={site}
+              menus={menus}
+              isEditing={isEditorMode}
+              selectedNodeId={selectedNode?.id || null}
+              onSelectNode={(node) => setSelectedNode(node)}
+              isTopLevel={true}
+              onMoveNode={handleMoveSection}
+              onDuplicateNode={handleDuplicateSection}
+              onDeleteNode={handleDeleteSection}
+              onAddBlockAtIndex={(idx) => {
+                setBlockInsertIndex(idx)
+                setIsBlockLibraryOpen(true)
+              }}
+            />
 
-          {/* Published Blog Posts / Articles Section (Shown when site has multiple posts and no custom loop carousel) */}
-          {posts.length > 1 &&
-            !page.layout?.some((s: any) => s.children?.some((c: any) => c.type === 'SlideCarousel')) && (
-            <section className="py-16 bg-slate-50 border-t border-gray-100">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-                <div className="text-center max-w-2xl mx-auto">
-                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900">Yazılar & Duyurular</h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {site.name} güncel haber, duyuru ve makaleleri
-                  </p>
+            {/* Published Blog Posts / Articles Section (Shown when site has multiple posts and no custom loop carousel) */}
+            {posts.length > 1 &&
+              !page.layout?.some((s: any) => s.children?.some((c: any) => c.type === 'SlideCarousel')) && (
+              <section className="py-16 bg-slate-50 border-t border-gray-100">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                  <div className="text-center max-w-2xl mx-auto">
+                    <h2 className="text-2xl sm:text-3xl font-black text-gray-900">Yazılar & Duyurular</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      {site.name} güncel haber, duyuru ve makaleleri
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {posts.slice(0, 9).map((post) => (
+                      <article
+                        key={post.id}
+                        onClick={() => setActivePost(post)}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between cursor-pointer group"
+                      >
+                        <div className="space-y-3">
+                          {post.published_at && (
+                            <div className="text-[11px] font-semibold text-purple-600">
+                              {new Date(post.published_at).toLocaleDateString('tr-TR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </div>
+                          )}
+                          <h3 className="font-bold text-gray-900 text-base group-hover:text-purple-700 transition line-clamp-2">
+                            {post.title}
+                          </h3>
+                          {post.excerpt && (
+                            <div
+                              className="text-xs text-gray-600 line-clamp-3"
+                              dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                            />
+                          )}
+                        </div>
+                        <div className="pt-4 mt-4 border-t border-gray-50 text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          <span>Devamını Oku</span>
+                          <span>&rarr;</span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
+              </section>
+            )}
+          </main>
+        </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {posts.slice(0, 9).map((post) => (
-                    <article
-                      key={post.id}
-                      onClick={() => setActivePost(post)}
-                      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between cursor-pointer group"
-                    >
-                      <div className="space-y-3">
-                        {post.published_at && (
-                          <div className="text-[11px] font-semibold text-purple-600">
-                            {new Date(post.published_at).toLocaleDateString('tr-TR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </div>
-                        )}
-                        <h3 className="font-bold text-gray-900 text-base group-hover:text-purple-700 transition line-clamp-2">
-                          {post.title}
-                        </h3>
-                        {post.excerpt && (
-                          <div
-                            className="text-xs text-gray-600 line-clamp-3"
-                            dangerouslySetInnerHTML={{ __html: post.excerpt }}
-                          />
-                        )}
-                      </div>
-                      <div className="pt-4 mt-4 border-t border-gray-50 text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                        <span>Devamını Oku</span>
-                        <span>&rarr;</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-        </main>
-
-        {/* Right Inspector Panel in Editor Mode */}
-        {isEditorMode && (
-          <InspectorPanel
-            selectedNode={selectedNode}
-            onUpdateNode={handleUpdateNode}
-            onDeleteNode={handleDeleteNode}
-            onClose={() => setSelectedNode(null)}
-            siteSlug={site?.slug || 'otizmuzikokulu'}
-            token={authToken || ''}
-          />
+        {/* Dynamic Footer (Render custom Elementor footer if available, otherwise default Footer) */}
+        {site.settings?.footer_layout && site.settings.footer_layout.length > 0 ? (
+          <footer className="w-full">
+            <ComponentRenderer
+              nodes={site.settings.footer_layout}
+              siteSlug={site.slug}
+              site={site}
+              menus={menus}
+              isEditing={false}
+              selectedNodeId={null}
+              onSelectNode={() => {}}
+            />
+          </footer>
+        ) : (
+          <Footer site={site} />
         )}
       </div>
 
-      {/* Dynamic Footer (Render custom Elementor footer if available, otherwise default Footer) */}
-      {site.settings?.footer_layout && site.settings.footer_layout.length > 0 ? (
-        <footer className="w-full">
-          <ComponentRenderer
-            nodes={site.settings.footer_layout}
-            siteSlug={site.slug}
-            site={site}
-            menus={menus}
-            isEditing={false}
-            selectedNodeId={null}
-            onSelectNode={() => {}}
-          />
-        </footer>
-      ) : (
-        <Footer site={site} />
+      {/* Right Inspector Panel in Editor Mode (Always fixed to viewport with its own scroll container) */}
+      {isEditorMode && (
+        <InspectorPanel
+          selectedNode={selectedNode}
+          onUpdateNode={handleUpdateNode}
+          onDeleteNode={handleDeleteNode}
+          onClose={() => setSelectedNode(null)}
+          siteSlug={site?.slug || 'otizmuzikokulu'}
+          token={authToken || ''}
+        />
       )}
 
-      {/* Site Announcement Popup Modal (e.g. OMYO 2026 or Custom Announcements) */}
-      {isPopupOpen && ((site.settings as any)?.popup?.image_url || (site.settings as any)?.popup?.title) && (
+      {/* Site Announcement Popup Modal (Suppressed in Editor Mode) */}
+      {!isEditorMode && isPopupOpen && ((site.settings as any)?.popup?.image_url || (site.settings as any)?.popup?.title) && (
         <div
           className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
           onClick={() => {
