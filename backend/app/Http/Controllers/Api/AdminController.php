@@ -575,11 +575,13 @@ class AdminController extends Controller
             'url' => 'required|string|max:500',
             'target' => 'nullable|string|in:_self,_blank',
             'sort_order' => 'nullable|integer',
+            'parent_id' => 'nullable|integer|exists:menu_items,id',
         ]);
 
         $maxOrder = (int) $menu->items()->max('sort_order');
         $item = MenuItem::create([
             'menu_id' => $menu->id,
+            'parent_id' => $request->input('parent_id'),
             'title' => $request->input('title'),
             'url' => $request->input('url'),
             'target' => $request->input('target', '_self'),
@@ -600,9 +602,10 @@ class AdminController extends Controller
             'url' => 'sometimes|required|string|max:500',
             'target' => 'nullable|string|in:_self,_blank',
             'sort_order' => 'nullable|integer',
+            'parent_id' => 'nullable|integer',
         ]);
 
-        $item->update($request->only(['title', 'url', 'target', 'sort_order']));
+        $item->update($request->only(['title', 'url', 'target', 'sort_order', 'parent_id']));
 
         return response()->json(['success' => true, 'item' => $item]);
     }
@@ -612,6 +615,9 @@ class AdminController extends Controller
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
         $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
         $item = MenuItem::where('menu_id', $menu->id)->where('id', $itemId)->firstOrFail();
+
+        // Also delete sub-items if any
+        MenuItem::where('parent_id', $item->id)->delete();
         $item->delete();
 
         return response()->json(['success' => true, 'message' => 'Menü öğesi silindi.']);
@@ -622,10 +628,23 @@ class AdminController extends Controller
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
         $menu = Menu::where('site_id', $site->id)->where('id', $menuId)->firstOrFail();
 
-        $ids = $request->input('item_ids', []);
-        if (is_array($ids)) {
-            foreach ($ids as $index => $id) {
-                MenuItem::where('menu_id', $menu->id)->where('id', (int)$id)->update(['sort_order' => $index + 1]);
+        // Support array of objects with id, parent_id, sort_order OR flat item_ids
+        $items = $request->input('items');
+        if (is_array($items)) {
+            foreach ($items as $index => $it) {
+                if (isset($it['id'])) {
+                    MenuItem::where('menu_id', $menu->id)->where('id', (int)$it['id'])->update([
+                        'sort_order' => $it['sort_order'] ?? ($index + 1),
+                        'parent_id' => !empty($it['parent_id']) ? (int)$it['parent_id'] : null,
+                    ]);
+                }
+            }
+        } else {
+            $ids = $request->input('item_ids', []);
+            if (is_array($ids)) {
+                foreach ($ids as $index => $id) {
+                    MenuItem::where('menu_id', $menu->id)->where('id', (int)$id)->update(['sort_order' => $index + 1]);
+                }
             }
         }
 
