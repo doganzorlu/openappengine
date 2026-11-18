@@ -84,14 +84,23 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
             )
             const marginClass = isCenteredCol ? 'mx-auto' : ''
 
+            const isHeaderCol =
+              node.children &&
+              node.children.some((c: any) => c.type === 'NavMenu' || c.type === 'SiteLogo')
+
             const isFooterCol =
-              node.id === 'e69091a' ||
-              node.id === '161f785' ||
-              node.id === '42904ea' ||
-              (node.children && node.children.some((c: any) => c.type === 'IconList' || c.type === 'SocialIcons'))
+              !isHeaderCol &&
+              (node.id === 'e69091a' ||
+                node.id === '161f785' ||
+                node.id === '42904ea' ||
+                (node.children &&
+                  node.children.some((c: any) => c.type === 'IconList') &&
+                  !node.children.some((c: any) => c.type === 'NavMenu')))
+
             const isCenterFooterCol =
-              node.id === '161f785' ||
-              (node.children && node.children.some((c: any) => c.type === 'IconList'))
+              !isHeaderCol &&
+              (node.id === '161f785' ||
+                (node.children && node.children.some((c: any) => c.type === 'IconList')))
             const footerColBorder = isCenterFooterCol ? 'md:border-x md:border-white/20' : ''
 
             const colWidthClass = inGrid
@@ -590,12 +599,14 @@ const NodeItem: React.FC<{
       }
 
       case 'Column': {
+        const isHeaderCol = children.some((c) => c.type === 'NavMenu' || c.type === 'SiteLogo')
         const isFooterCol =
-          node.id === 'e69091a' ||
-          node.id === '161f785' ||
-          node.id === '42904ea' ||
-          (children.some((c) => c.type === 'IconList' || c.type === 'SocialIcons') &&
-            (styles.borderColor || props.align === 'center'))
+          !isHeaderCol &&
+          (node.id === 'e69091a' ||
+            node.id === '161f785' ||
+            node.id === '42904ea' ||
+            (children.some((c) => c.type === 'IconList') &&
+              (styles.borderColor || props.align === 'center')))
 
         if (isFooterCol) {
           return (
