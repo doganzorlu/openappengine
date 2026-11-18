@@ -7,6 +7,7 @@ import { InspectorPanel } from './components/InspectorPanel'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLogin } from './admin/AdminLogin'
 import { BlockLibraryModal } from './components/BlockLibraryModal'
+import { CookieConsentBanner } from './components/CookieConsentBanner'
 
 interface SiteListItem {
   id: number
@@ -1228,6 +1229,13 @@ export function App() {
         onClose={() => setIsBlockLibraryOpen(false)}
         onInsertBlock={handleInsertBlock}
         brandColor={site.settings?.brand_color || '#4F46E5'}
+      />
+
+      {/* Cookie & KVKK Consent Banner */}
+      <CookieConsentBanner
+        site={site}
+        siteSlug={currentSlug}
+        isEditing={isEditorMode}
       />
 
       {/* Toast Notification */}

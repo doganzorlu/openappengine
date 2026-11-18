@@ -85,6 +85,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/popup', [AdminController::class, 'getPopupSettings']);
             Route::put('/popup', [AdminController::class, 'updatePopupSettings']);
 
+            // Cookie & KVKK Consent Management
+            Route::get('/cookie-consent', [AdminController::class, 'getCookieConsentSettings']);
+            Route::put('/cookie-consent', [AdminController::class, 'updateCookieConsentSettings']);
+
             // Menus / Navigation Builder
             Route::get('/menus', [AdminController::class, 'listMenus']);
             Route::post('/menus', [AdminController::class, 'createMenu']);

@@ -533,6 +533,65 @@ class AdminController extends Controller
         ]);
     }
 
+    public function getCookieConsentSettings(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+
+        $defaultPolicy = "<h3>1. Veri Sorumlusu</h3>\n"
+            . "<p>6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verileriniz veri sorumlusu sıfatıyla tarafımızca işlenmektedir.</p>\n\n"
+            . "<h3>2. Kişisel Verilerin İşlenme Amacı</h3>\n"
+            . "<p>Kişisel verileriniz; web sitemizin temel işlevlerinin yerine getirilmesi, kullanıcı deneyiminin geliştirilmesi, iletişim ve talep süreçlerinin yönetilmesi amaçlarıyla hukuka ve dürüstlük kurallarına uygun olarak işlenmektedir.</p>\n\n"
+            . "<h3>3. Çerez (Cookie) Kullanımı ve Türleri</h3>\n"
+            . "<p>Sitemizde aşağıdaki çerez kategorileri kullanılmaktadır:</p>\n"
+            . "<ul>\n"
+            . "  <li><strong>Zorunlu Çerezler:</strong> Sitenin düzgün çalışması ve temel güvenlik fonksiyonları için gereklidir. Kapatılamaz.</li>\n"
+            . "  <li><strong>Analitik Çerezler:</strong> Ziyaretçi trafiği ve kullanım istatistiklerini anonim olarak ölçümlememize yarar.</li>\n"
+            . "  <li><strong>Pazarlama Çerezleri:</strong> İlgi alanlarınıza göre kişiselleştirilmiş içerik ve duyurular sunmak için kullanılır.</li>\n"
+            . "</ul>\n\n"
+            . "<h3>4. İlgili Kişinin KVKK 11. Madde Kapsamındaki Hakları</h3>\n"
+            . "<p>KVKK'nın 11. maddesi uyarınca; verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, silinmesini veya düzeltilmesini isteme haklarına sahipsiniz.</p>";
+
+        $cookieConsent = $site->settings['cookie_consent'] ?? [
+            'enabled' => true,
+            'position' => 'bottom',
+            'title' => '🍪 Çerez ve Gizlilik Tercihleriniz',
+            'message' => 'Sitemizde kullanıcı deneyimini iyileştirmek, temel işlevleri sunmak ve site trafiğini analiz etmek amacıyla çerezler (cookies) kullanılmaktadır. Detaylı bilgi için KVKK ve Çerez Politikamızı inceleyebilirsiniz.',
+            'accept_all_text' => 'Tümünü Kabul Et',
+            'reject_text' => 'Sadece Zorunluları Kabul Et',
+            'settings_text' => 'Çerez Tercihleri & KVKK',
+            'badge_enabled' => true,
+            'badge_text' => '🍪 Çerez Ayarları',
+            'categories' => [
+                'necessary' => ['enabled' => true, 'required' => true, 'name' => 'Zorunlu Çerezler', 'desc' => 'Sitenin güvenli ve doğru çalışması için zorunludur, kapatılamaz.'],
+                'analytics' => ['enabled' => true, 'required' => false, 'name' => 'Analitik & İstatistik', 'desc' => 'Ziyaretçi trafiğini ve sayfa kullanımlarını anonim olarak analiz etmemizi sağlar.'],
+                'marketing' => ['enabled' => false, 'required' => false, 'name' => 'Pazarlama & Sosyal Medya', 'desc' => 'İlgi alanlarınıza uygun kişiselleştirilmiş içerik ve duyurular sunar.'],
+            ],
+            'policy_modal_title' => 'KVKK Aydınlatma Metni & Çerez Politikası',
+            'policy_content' => $defaultPolicy,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'cookie_consent' => $cookieConsent,
+        ]);
+    }
+
+    public function updateCookieConsentSettings(Request $request, string $siteSlug): JsonResponse
+    {
+        $site = $this->authorizeSite($request, $siteSlug, 'editor');
+
+        $settings = $site->settings ?? [];
+        $settings['cookie_consent'] = $request->input('cookie_consent', []);
+        $site->settings = $settings;
+        $site->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Çerez ve KVKK ayarları başarıyla güncellendi.',
+            'cookie_consent' => $site->settings['cookie_consent'],
+        ]);
+    }
+
     // ==========================================
     // 4B. MENUS & NAVIGATION BUILDER
     // ==========================================

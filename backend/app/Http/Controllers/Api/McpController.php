@@ -59,6 +59,8 @@ class McpController extends Controller
                 'create_post' => $this->toolCreatePost($args),
                 'list_submissions' => $this->toolListSubmissions($args),
                 'update_submission_status' => $this->toolUpdateSubmissionStatus($args),
+                'get_cookie_settings' => $this->toolGetCookieSettings($args),
+                'update_cookie_settings' => $this->toolUpdateCookieSettings($args),
                 default => throw new \Exception("Unknown tool: {$tool}"),
             };
 
@@ -464,6 +466,28 @@ class McpController extends Controller
         ];
     }
 
+    private function toolGetCookieSettings(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+        return $site->settings['cookie_consent'] ?? ['enabled' => true, 'position' => 'bottom'];
+    }
+
+    private function toolUpdateCookieSettings(array $args): array
+    {
+        $slug = $args['site_slug'] ?? 'otizmuzikokulu';
+        $site = Site::where('slug', $slug)->firstOrFail();
+        $settings = $site->settings ?? [];
+        $currentCookie = $settings['cookie_consent'] ?? [];
+        $settings['cookie_consent'] = array_merge($currentCookie, $args['cookie_consent'] ?? []);
+        $site->settings = $settings;
+        $site->save();
+        return [
+            'message' => "Cookie and KVKK settings updated for site {$slug}",
+            'cookie_consent' => $site->settings['cookie_consent'],
+        ];
+    }
+
     private function getToolsSchema(): array
     {
         return [
@@ -668,6 +692,32 @@ class McpController extends Controller
                         'note' => ['type' => 'string'],
                     ],
                     'required' => ['submission_id', 'status'],
+                ],
+            ],
+            [
+                'name' => 'get_cookie_settings',
+                'description' => 'Get the site-wide Cookie & KVKK policy and consent banner configuration',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                    ],
+                    'required' => ['site_slug'],
+                ],
+            ],
+            [
+                'name' => 'update_cookie_settings',
+                'description' => 'Update the site-wide Cookie & KVKK consent banner, categories, and policy text',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'site_slug' => ['type' => 'string'],
+                        'cookie_consent' => [
+                            'type' => 'object',
+                            'description' => 'Cookie consent config including enabled, position, title, message, and policy_content',
+                        ],
+                    ],
+                    'required' => ['site_slug', 'cookie_consent'],
                 ],
             ],
         ];

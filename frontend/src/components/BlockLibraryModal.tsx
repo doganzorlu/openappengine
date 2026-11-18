@@ -303,6 +303,79 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
       }),
     },
     {
+      id: 'kvkk-policy-section',
+      category: 'faq',
+      title: 'KVKK & Gizlilik Politikası Bölümü',
+      description: 'Yasal mevzuata uygun, 4 maddelik açılır-kapanır resmi KVKK aydınlatma metni akordiyonu.',
+      previewIcon: '📜',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed', bgColor: '#FFFFFF' },
+        styles: { padding: '70px 20px' },
+        children: [
+          {
+            id: 'col_kvkk_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: { maxWidth: '850px', margin: '0 auto' },
+            children: [
+              {
+                id: 'h_kvkk_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'Kişisel Verilerin Korunması (KVKK) ve Çerez Politikası',
+                  level: 'h2',
+                  align: 'center',
+                  color: '#1E293B',
+                },
+                styles: { margin: '0 0 16px 0' },
+              },
+              {
+                id: 't_kvkk_' + uniqid(),
+                type: 'RichText',
+                props: {
+                  html: '<p class="text-slate-500 text-center text-sm max-w-xl mx-auto mb-8">6698 Sayılı Kişisel Verilerin Korunması Kanunu uyarınca haklarınız ve veri işleme süreçlerimiz hakkında detaylı bilgi edinin.</p>',
+                  align: 'center',
+                },
+                styles: {},
+              },
+              {
+                id: 'acc_kvkk_' + uniqid(),
+                type: 'Accordion',
+                props: {
+                  accordionColor: col || '#4F46E5',
+                  items: [
+                    {
+                      id: uniqid(),
+                      title: '1. Veri Sorumlusu ve Temsilcisi',
+                      content: '6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verileriniz veri sorumlusu olarak kurumumuz tarafından aşağıda açıklanan kapsamda işlenebilecektir.',
+                    },
+                    {
+                      id: uniqid(),
+                      title: '2. Kişisel Verilerin Hangi Amaçla İşleneceği',
+                      content: 'Toplanan kişisel verileriniz; sunulan hizmetlerden faydalandırılmanız, iletişim taleplerinizin yanıtlanması, yasal yükümlülüklerimizin yerine getirilmesi ve kullanıcı deneyiminin geliştirilmesi amaçlarıyla işlenmektedir.',
+                    },
+                    {
+                      id: uniqid(),
+                      title: '3. Çerez (Cookie) Kullanımı ve Kategorileri',
+                      content: 'Sitemizde teknik işlevsellik için zorunlu çerezler ile kullanım istatistiklerini anonim olarak analiz etmeye yarayan analitik çerezler kullanılmaktadır. Tarayıcınız üzerinden çerez tercihlerinizi dilediğiniz zaman değiştirebilirsiniz.',
+                    },
+                    {
+                      id: uniqid(),
+                      title: '4. KVKK 11. Madde Uyarınca Haklarınız',
+                      content: 'Kişisel veri sahibi olarak; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, amacına uygun kullanılıp kullanılmadığını öğrenme, düzeltilmesini veya silinmesini isteme haklarına sahipsiniz.',
+                    },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
       id: 'contact-section',
       category: 'form',
       title: 'İletişim & Başvuru Formu',

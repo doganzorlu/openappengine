@@ -5,6 +5,7 @@ import { PostsTab } from './PostsTab'
 import { FormsTab } from './FormsTab'
 import { MediaTab } from './MediaTab'
 import { PopupTab } from './PopupTab'
+import { CookieConsentTab } from './CookieConsentTab'
 import { MenusTab } from './MenusTab'
 import { ImporterTab } from './ImporterTab'
 import { SettingsTab } from './SettingsTab'
@@ -90,6 +91,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'mcp', label: 'AI & MCP Ajanı', icon: '🤖' },
     { id: 'media', label: 'Medya & Doküman', icon: '📁' },
     { id: 'popup', label: 'Popup & Duyuru', icon: '🪟' },
+    { id: 'cookies', label: 'Çerez & KVKK', icon: '🍪' },
     { id: 'settings', label: 'Site Yönetimi & Ekip', icon: '⚙️', adminOnly: true },
     { id: 'importer', label: 'WordPress Importer', icon: '📥', adminOnly: true },
   ]
@@ -336,6 +338,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {activeTab === 'popup' && (
             <PopupTab siteSlug={currentSlug} token={token} />
+          )}
+
+          {activeTab === 'cookies' && (
+            <CookieConsentTab siteSlug={currentSlug} token={token} />
           )}
 
           {activeTab === 'importer' && (
