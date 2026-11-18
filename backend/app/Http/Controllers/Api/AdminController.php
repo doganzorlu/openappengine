@@ -210,7 +210,11 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'excerpt' => 'nullable|string',
+            'featured_image' => 'nullable|string',
+            'status' => 'nullable|in:published,draft',
         ]);
+
+        $status = $request->input('status', 'published');
 
         $post = Post::create([
             'site_id' => $site->id,
@@ -218,8 +222,9 @@ class AdminController extends Controller
             'slug' => Str::slug($request->input('title')),
             'excerpt' => $request->input('excerpt', ''),
             'content' => $request->input('content'),
-            'published_at' => now(),
-            'status' => 'published',
+            'featured_image' => $request->input('featured_image'),
+            'published_at' => $status === 'published' ? now() : null,
+            'status' => $status,
         ]);
 
         return response()->json(['success' => true, 'post' => $post]);
@@ -230,7 +235,13 @@ class AdminController extends Controller
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
         $post = Post::where('site_id', $site->id)->where('id', $postId)->firstOrFail();
 
-        $post->update($request->only(['title', 'content', 'excerpt', 'status']));
+        $data = $request->only(['title', 'content', 'excerpt', 'status', 'featured_image']);
+        if (isset($data['status'])) {
+            if ($data['status'] === 'published' && !$post->published_at) {
+                $data['published_at'] = now();
+            }
+        }
+        $post->update($data);
         return response()->json(['success' => true, 'post' => $post]);
     }
 

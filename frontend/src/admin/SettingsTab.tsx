@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { MediaPickerModal, type MediaItem } from '../components/MediaPickerModal'
 
 interface SettingsTabProps {
   siteSlug: string
@@ -33,6 +34,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
   })
   const [generalLoading, setGeneralLoading] = useState(true)
   const [generalSaving, setGeneralSaving] = useState(false)
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false)
 
   // SMTP Settings State
   const [smtp, setSmtp] = useState({
@@ -353,18 +355,37 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Logo URL</label>
-                  <input
-                    type="text"
-                    placeholder="https://.../logo.png"
-                    value={general.logo_url}
-                    onChange={(e) => setGeneral({ ...general, logo_url: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500"
-                  />
+                  <label className="block font-semibold text-gray-700 mb-1">Logo</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://.../logo.png"
+                      value={general.logo_url}
+                      onChange={(e) => setGeneral({ ...general, logo_url: e.target.value })}
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsLogoModalOpen(true)}
+                      className="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs shrink-0 flex items-center gap-1.5 transition"
+                    >
+                      <span>🖼️</span>
+                      <span>Medyadan Seç</span>
+                    </button>
+                  </div>
                   {general.logo_url && (
-                    <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-gray-100 flex items-center gap-2">
-                      <img src={general.logo_url} alt="Logo" className="max-h-8 object-contain" />
-                      <span className="text-[11px] text-gray-400">Önizleme</span>
+                    <div className="mt-2 p-2.5 bg-slate-50 rounded-xl border border-gray-200 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <img src={general.logo_url} alt="Logo" className="max-h-8 object-contain" />
+                        <span className="text-[11px] text-gray-500 font-medium">Logo Önizleme</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setGeneral({ ...general, logo_url: '' })}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1"
+                      >
+                        Kaldır
+                      </button>
                     </div>
                   )}
                 </div>
@@ -686,6 +707,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ siteSlug, token, userR
           </div>
         </div>
       )}
+
+      {/* Media Picker Modal for Site Logo */}
+      <MediaPickerModal
+        isOpen={isLogoModalOpen}
+        onClose={() => setIsLogoModalOpen(false)}
+        onSelect={(item: MediaItem) => {
+          setGeneral({ ...general, logo_url: item.file_url })
+          setIsLogoModalOpen(false)
+        }}
+        siteSlug={siteSlug}
+        token={token}
+        allowedTypes="image"
+        title="Site Logosu Seç"
+      />
     </div>
   )
 }

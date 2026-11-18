@@ -146,7 +146,17 @@ export function App() {
 
         if (postsRes.ok) {
           const postsData = await postsRes.json()
-          setPosts(postsData.posts || [])
+          const loadedPosts = postsData.posts || []
+          setPosts(loadedPosts)
+
+          // Check if post parameter exists in URL
+          const targetPostSlug = new URLSearchParams(window.location.search).get('post')
+          if (targetPostSlug) {
+            const foundPost = loadedPosts.find((p: any) => p.slug === targetPostSlug)
+            if (foundPost) {
+              setActivePost(foundPost)
+            }
+          }
         } else {
           setPosts([])
         }
@@ -620,27 +630,38 @@ export function App() {
                       <article
                         key={post.id}
                         onClick={() => setActivePost(post)}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between cursor-pointer group"
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all p-5 flex flex-col justify-between cursor-pointer group"
                       >
-                        <div className="space-y-3">
-                          {post.published_at && (
-                            <div className="text-[11px] font-semibold text-purple-600">
-                              {new Date(post.published_at).toLocaleDateString('tr-TR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                              })}
+                        <div>
+                          {post.featured_image && (
+                            <div className="aspect-video w-full rounded-xl overflow-hidden mb-3 bg-gray-100">
+                              <img
+                                src={post.featured_image}
+                                alt={post.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
                             </div>
                           )}
-                          <h3 className="font-bold text-gray-900 text-base group-hover:text-purple-700 transition line-clamp-2">
-                            {post.title}
-                          </h3>
-                          {post.excerpt && (
-                            <div
-                              className="text-xs text-gray-600 line-clamp-3"
-                              dangerouslySetInnerHTML={{ __html: post.excerpt }}
-                            />
-                          )}
+                          <div className="space-y-2">
+                            {post.published_at && (
+                              <div className="text-[11px] font-semibold text-purple-600">
+                                {new Date(post.published_at).toLocaleDateString('tr-TR', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
+                              </div>
+                            )}
+                            <h3 className="font-bold text-gray-900 text-base group-hover:text-purple-700 transition line-clamp-2">
+                              {post.title}
+                            </h3>
+                            {post.excerpt && (
+                              <div
+                                className="text-xs text-gray-600 line-clamp-3"
+                                dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                              />
+                            )}
+                          </div>
                         </div>
                         <div className="pt-4 mt-4 border-t border-gray-50 text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                           <span>Devamını Oku</span>
@@ -685,8 +706,8 @@ export function App() {
         />
       )}
 
-      {/* Site Announcement Popup Modal (Suppressed in Editor Mode) */}
-      {!isEditorMode && isPopupOpen && ((site.settings as any)?.popup?.image_url || (site.settings as any)?.popup?.title) && (
+      {/* Site Announcement Popup Modal (Suppressed in Editor Mode or when Reading a Post) */}
+      {!isEditorMode && !activePost && isPopupOpen && ((site.settings as any)?.popup?.image_url || (site.settings as any)?.popup?.title) && (
         <div
           className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
           onClick={() => {
@@ -775,10 +796,21 @@ export function App() {
             <button
               type="button"
               onClick={() => setActivePost(null)}
-              className="sticky top-2 float-right w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm"
+              className="sticky top-2 float-right w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm shadow-sm"
             >
               ✕
             </button>
+
+            {activePost.featured_image && (
+              <div className="w-full h-56 sm:h-72 rounded-2xl overflow-hidden shadow-md bg-gray-100">
+                <img
+                  src={activePost.featured_image}
+                  alt={activePost.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
             <div className="space-y-2 pr-10">
               {activePost.published_at && (
                 <div className="text-xs font-bold text-purple-600">
@@ -789,7 +821,9 @@ export function App() {
                   })}
                 </div>
               )}
-              <h1 className="text-xl sm:text-3xl font-black text-gray-900">{activePost.title}</h1>
+              <h1 className="text-xl sm:text-3xl font-black text-gray-900 leading-tight">
+                {activePost.title}
+              </h1>
             </div>
             <div
               className="prose prose-sm sm:prose max-w-none text-gray-700 leading-relaxed space-y-4"

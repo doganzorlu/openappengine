@@ -334,7 +334,7 @@ class SiteController extends Controller
             ->where('status', 'published')
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->get(['id', 'title', 'slug', 'excerpt', 'content', 'published_at', 'created_at']);
+            ->get(['id', 'title', 'slug', 'excerpt', 'content', 'featured_image', 'published_at', 'created_at']);
 
         return response()->json(['posts' => $posts]);
     }
