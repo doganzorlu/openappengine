@@ -1,3 +1,15 @@
+export interface ThemeTokens {
+  primaryColor: string
+  secondaryColor: string
+  accentColor: string
+  textColor: string
+  headingColor: string
+  fontFamily: string
+  backgroundColor: string
+  borderRadius?: string
+  isDark: boolean
+}
+
 export interface MenuItem {
   id: number
   title: string

@@ -5,6 +5,8 @@ interface ColorPickerInputProps {
   value?: string | null
   onChange: (color: string) => void
   allowTransparent?: boolean
+  inheritedColor?: string
+  inheritedLabel?: string
 }
 
 // Quick pick row (most commonly used web/brand colors)
@@ -62,6 +64,8 @@ export const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   value = '',
   onChange,
   allowTransparent = true,
+  inheritedColor,
+  inheritedLabel = 'Tema / Miras',
 }) => {
   const [showFullPalette, setShowFullPalette] = useState(false)
   const currentColor = value || ''
@@ -86,9 +90,23 @@ export const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
             )}
           </span>
 
-          <span className="font-mono text-gray-700 truncate flex-1 font-semibold text-[11px]">
-            {isTransparent ? 'Şeffaf / Yok' : currentColor}
-          </span>
+          <div className="flex-1 flex items-center justify-between min-w-0 pr-1">
+            <span className="font-mono text-gray-700 truncate font-semibold text-[11px]">
+              {isTransparent
+                ? 'Şeffaf / Yok'
+                : currentColor || (inheritedColor ? `${inheritedLabel}: ${inheritedColor}` : 'Varsayılan')}
+            </span>
+            {currentColor && currentColor !== 'transparent' && inheritedColor && (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                title="Özel Rengi Kaldır (Temadan Miras Al)"
+                className="text-[10px] text-purple-600 hover:text-purple-800 font-bold hover:underline shrink-0 ml-1"
+              >
+                ↺ Miras Al
+              </button>
+            )}
+          </div>
         </div>
 
         {/* HTML5 Native Color Picker Wheel */}

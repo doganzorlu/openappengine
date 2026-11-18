@@ -940,6 +940,7 @@ export function App() {
           onClose={() => setSelectedNode(null)}
           siteSlug={site?.slug || 'otizmuzikokulu'}
           token={authToken || ''}
+          site={site}
         />
       )}
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { ComponentNode } from '../types'
+import type { ComponentNode, Site } from '../types'
 import { MediaPickerModal, type MediaItem } from './MediaPickerModal'
 import { ColorPickerInput } from './ColorPickerInput'
 
@@ -10,6 +10,7 @@ interface InspectorPanelProps {
   onClose: () => void
   siteSlug?: string
   token?: string
+  site?: Site | null
 }
 
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
@@ -19,7 +20,13 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onClose,
   siteSlug = 'otizmuzikokulu',
   token = '',
+  site = null,
 }) => {
+  const siteGlobalColors = (site?.settings as any)?.global_colors || {}
+  const sitePrimaryColor = siteGlobalColors.primary || site?.theme_config?.primary_color || '#9333ea'
+  const siteHeadingColor = siteGlobalColors.heading || siteGlobalColors.primary || '#111827'
+  const siteTextColor = siteGlobalColors.text || '#1f2937'
+  void sitePrimaryColor; void siteTextColor;
   const [activeTab, setActiveTab] = useState<'props' | 'styles'>(() => {
     return new URLSearchParams(window.location.search).get('tab') === 'styles' ? 'styles' : 'props'
   })
@@ -156,6 +163,8 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 <ColorPickerInput
                   label="Metin Rengi"
                   value={props.color || styles.color}
+                  inheritedColor={siteHeadingColor}
+                  inheritedLabel="Tema Başlık Rengi"
                   onChange={(c) => {
                     handlePropChange('color', c)
                     handleStyleChange('color', c)

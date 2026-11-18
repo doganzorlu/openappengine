@@ -1,5 +1,5 @@
 import React from 'react'
-import type { ComponentNode, Site, Menu } from '../types'
+import type { ComponentNode, Site, Menu, ThemeTokens } from '../types'
 import { Timeline } from './Timeline'
 import { ImageAccordion } from './ImageAccordion'
 import { ContactForm } from './ContactForm'
@@ -40,6 +40,29 @@ import { ImageHotspots } from './ImageHotspots'
 import { ContentToggle } from './ContentToggle'
 import { ScrollToTop } from './ScrollToTop'
 
+export function isDarkColor(color?: string | null): boolean {
+  if (!color || color === 'transparent') return false
+  const trimmed = color.trim().toLowerCase()
+  if (trimmed.startsWith('#')) {
+    const hex = trimmed.replace('#', '')
+    const fullHex = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
+    const r = parseInt(fullHex.substring(0, 2), 16) || 0
+    const g = parseInt(fullHex.substring(2, 4), 16) || 0
+    const b = parseInt(fullHex.substring(4, 6), 16) || 0
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance < 0.5
+  }
+  if (trimmed.startsWith('rgb')) {
+    const nums = trimmed.match(/\d+/g)
+    if (nums && nums.length >= 3) {
+      const [r, g, b] = nums.map(Number)
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      return luminance < 0.5
+    }
+  }
+  return false
+}
+
 interface RendererProps {
   nodes: ComponentNode[]
   siteSlug: string
@@ -55,6 +78,7 @@ interface RendererProps {
   onDuplicateNode?: (nodeId: string) => void
   onDeleteNode?: (nodeId: string) => void
   onAddBlockAtIndex?: (index: number) => void
+  themeTokens?: ThemeTokens
 }
 
 export const ComponentRenderer: React.FC<RendererProps> = ({
@@ -72,7 +96,28 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   onDuplicateNode,
   onDeleteNode,
   onAddBlockAtIndex,
+  themeTokens,
 }) => {
+  // 1. Resolve Inherited Theme Tokens (Site -> Page -> Container -> Component)
+  const siteGlobalColors = (site?.settings as any)?.global_colors || {}
+  const primaryColor = siteGlobalColors.primary || site?.theme_config?.primary_color || '#9333ea'
+  const secondaryColor = siteGlobalColors.secondary || '#f59e0b'
+  const accentColor = siteGlobalColors.accent || '#3b82f6'
+  const defaultFontFamily = site?.theme_config?.font_family || 'Poppins, sans-serif'
+  const defaultTextColor = siteGlobalColors.text || '#1f2937'
+  const defaultHeadingColor = siteGlobalColors.heading || '#111827'
+
+  const activeTheme: ThemeTokens = themeTokens || {
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    textColor: defaultTextColor,
+    headingColor: defaultHeadingColor,
+    fontFamily: defaultFontFamily,
+    backgroundColor: '#ffffff',
+    isDark: false,
+  }
+
   if (!nodes || !Array.isArray(nodes)) return null
 
   return (
@@ -221,6 +266,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                   onUpdateNode={onUpdateNode}
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
+                  themeTokens={activeTheme}
                 />
               </div>
             )
@@ -501,6 +547,7 @@ const NodeItem: React.FC<{
   onUpdateNode?: (updatedNode: ComponentNode) => void
   onDuplicateNode?: (nodeId: string) => void
   onDeleteNode?: (nodeId: string) => void
+  themeTokens?: ThemeTokens
 }> = ({
   node,
   siteSlug,
@@ -512,8 +559,29 @@ const NodeItem: React.FC<{
   onUpdateNode,
   onDuplicateNode,
   onDeleteNode,
+  themeTokens,
 }) => {
   const { type, props = {}, styles = {}, children = [] } = node
+
+  // Resolve ThemeTokens (Site -> Page -> Container -> Component)
+  const siteGlobalColors = (site?.settings as any)?.global_colors || {}
+  const primaryColor = siteGlobalColors.primary || site?.theme_config?.primary_color || '#9333ea'
+  const secondaryColor = siteGlobalColors.secondary || '#f59e0b'
+  const accentColor = siteGlobalColors.accent || '#3b82f6'
+  const defaultFontFamily = site?.theme_config?.font_family || 'Poppins, sans-serif'
+  const defaultTextColor = siteGlobalColors.text || '#1f2937'
+  const defaultHeadingColor = siteGlobalColors.heading || '#111827'
+
+  const activeTheme: ThemeTokens = themeTokens || {
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    textColor: defaultTextColor,
+    headingColor: defaultHeadingColor,
+    fontFamily: defaultFontFamily,
+    backgroundColor: '#ffffff',
+    isDark: false,
+  }
   const isSelected = isEditing && selectedNodeId === node.id
 
   const handleSelect = (e: React.MouseEvent) => {
@@ -665,6 +733,20 @@ const NodeItem: React.FC<{
       }
 
       case 'Column': {
+        const colBg = styles.backgroundColor || props.bgColor || props.backgroundColor
+        const colColor = styles.color || props.textColor || props.color
+        const colFont = styles.fontFamily || props.fontFamily
+        const isColDark = isDarkColor(colBg)
+
+        const columnThemeTokens: ThemeTokens = {
+          ...activeTheme,
+          ...(colBg ? { backgroundColor: colBg } : {}),
+          ...(colFont ? { fontFamily: colFont } : {}),
+          isDark: isColDark || (colBg ? isColDark : activeTheme.isDark),
+          headingColor: colColor || (isColDark ? '#ffffff' : activeTheme.headingColor),
+          textColor: colColor || (isColDark ? '#e2e8f0' : activeTheme.textColor),
+        }
+
         const isHeaderCol = children.some((c) => c.type === 'NavMenu' || c.type === 'SiteLogo')
         const isFooterCol =
           !isHeaderCol &&
@@ -688,6 +770,7 @@ const NodeItem: React.FC<{
                 onUpdateNode={onUpdateNode}
                 onDuplicateNode={onDuplicateNode}
                 onDeleteNode={onDeleteNode}
+                  themeTokens={columnThemeTokens}
               />
             </div>
           )
@@ -761,6 +844,7 @@ const NodeItem: React.FC<{
                   onUpdateNode={onUpdateNode}
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
+                  themeTokens={columnThemeTokens}
                 />
               </div>
             </div>
@@ -787,6 +871,7 @@ const NodeItem: React.FC<{
                   onUpdateNode={onUpdateNode}
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
+                  themeTokens={columnThemeTokens}
                 />
               </div>
             )
@@ -841,6 +926,7 @@ const NodeItem: React.FC<{
                 onDuplicateNode={onDuplicateNode}
                 onDeleteNode={onDeleteNode}
                 inGrid={true}
+                  themeTokens={columnThemeTokens}
               />
             </div>
           )
@@ -868,6 +954,7 @@ const NodeItem: React.FC<{
                 onUpdateNode={onUpdateNode}
                 onDuplicateNode={onDuplicateNode}
                 onDeleteNode={onDeleteNode}
+                  themeTokens={columnThemeTokens}
               />
             </div>
           )
@@ -897,7 +984,12 @@ const NodeItem: React.FC<{
       case 'Heading': {
         const level = props.level || 'h2'
         const align = styles.textAlign || props.align || 'left'
-        const color = styles.color || props.color ? { color: styles.color || props.color } : {}
+        const effectiveHeadingColor = styles.color || props.color || activeTheme.headingColor
+        const effectiveFontFamily = styles.fontFamily || props.fontFamily || activeTheme.fontFamily
+        const color = {
+          color: effectiveHeadingColor,
+          fontFamily: effectiveFontFamily,
+        }
 
         const alignClass =
           align === 'center' ? 'text-center' :
@@ -1037,7 +1129,10 @@ const NodeItem: React.FC<{
           )
         }
 
-        const customStyle: React.CSSProperties = {}
+        const customStyle: React.CSSProperties = {
+          color: styles.color || props.color || activeTheme.textColor,
+          fontFamily: styles.fontFamily || activeTheme.fontFamily,
+        }
         if (styles.color || props.color) customStyle.color = styles.color || props.color
         if (styles.fontSize || props.fontSize) customStyle.fontSize = styles.fontSize || props.fontSize
         if (styles.fontWeight || props.fontWeight) customStyle.fontWeight = styles.fontWeight || props.fontWeight
