@@ -212,6 +212,20 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   )
 }
 
+function renderFormattedText(text: string | undefined | null) {
+  if (!text) return null
+  if (!text.includes('<br') && !text.includes('\n')) {
+    return text
+  }
+  const lines = text.replace(/<br\s*\/?>/gi, '\n').split('\n')
+  return lines.map((line, idx) => (
+    <React.Fragment key={idx}>
+      {idx > 0 && <br />}
+      {line}
+    </React.Fragment>
+  ))
+}
+
 function getYoutubeEmbedUrl(url: string): string {
   if (!url) return ''
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
@@ -826,7 +840,7 @@ const NodeItem: React.FC<{
                 style={{ ...color, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
                 className="bg-[#54595FAB] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl text-base sm:text-2xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-wider leading-snug shadow-xl backdrop-blur-sm border border-white/20 text-center uppercase my-2 max-w-[320px] sm:max-w-4xl mx-auto break-words"
               >
-                {props.text}
+                {renderFormattedText(props.text)}
               </h2>
             </div>
           )
@@ -835,12 +849,17 @@ const NodeItem: React.FC<{
         if (level === 'h1') {
           return (
             <h1
-              style={color}
-              className={`text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight w-full ${
+              style={{
+                ...color,
+                ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
+                ...(styles.fontWeight ? { fontWeight: styles.fontWeight } : {}),
+                ...(styles.fontFamily ? { fontFamily: styles.fontFamily } : {}),
+              }}
+              className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight w-full ${
                 props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
               } ${alignClass}`}
             >
-              {props.text}
+              {renderFormattedText(props.text)}
             </h1>
           )
         }
@@ -863,7 +882,7 @@ const NodeItem: React.FC<{
               }}
               className="text-lg sm:text-xl font-semibold text-[#F8F9FA] tracking-wide text-center w-full mb-3"
             >
-              {props.text}
+              {renderFormattedText(props.text)}
             </h2>
           )
         }
@@ -889,7 +908,7 @@ const NodeItem: React.FC<{
                 : 'text-xl sm:text-2xl text-gray-800'
             } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass}`}
           >
-            {props.text}
+            {renderFormattedText(props.text)}
           </h2>
         )
       }
@@ -977,7 +996,7 @@ const NodeItem: React.FC<{
               }`}
             >
               {props.icon && <i className={props.icon} />}
-              <span>{props.text || 'Tıklayınız'}</span>
+              <span>{renderFormattedText(props.text) || 'Tıklayınız'}</span>
             </a>
           </div>
         )
