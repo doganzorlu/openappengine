@@ -632,6 +632,8 @@ export function App() {
             onUpdateNode={handleUpdateNode}
             onDeleteNode={handleDeleteNode}
             onClose={() => setSelectedNode(null)}
+            siteSlug={site?.slug || 'otizmuzikokulu'}
+            token={authToken || ''}
           />
         )}
       </div>

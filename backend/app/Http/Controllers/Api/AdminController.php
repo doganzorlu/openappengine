@@ -366,8 +366,36 @@ class AdminController extends Controller
     {
         $site = $this->authorizeSite($request, $siteSlug, 'editor');
 
+        if ($request->hasFile('files')) {
+            $request->validate([
+                'files' => 'required|array',
+                'files.*' => 'file|max:51200', // max 50MB per file
+            ]);
+
+            $uploaded = [];
+            foreach ($request->file('files') as $file) {
+                $media = $this->storageService->storeUploadedFile($site, $file);
+                $uploaded[] = [
+                    'id' => $media->id,
+                    'name' => $media->name,
+                    'filename' => $media->name,
+                    'path' => $media->file_url,
+                    'file_url' => $media->file_url,
+                    'mime_type' => $media->mime_type,
+                    'size' => $media->file_size,
+                    'alt_text' => $media->alt_text,
+                    'meta' => $media->meta,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'media' => $uploaded,
+            ]);
+        }
+
         $request->validate([
-            'file' => 'required|file|max:20480', // max 20MB
+            'file' => 'required|file|max:51200', // max 50MB
             'alt_text' => 'nullable|string|max:255',
         ]);
 

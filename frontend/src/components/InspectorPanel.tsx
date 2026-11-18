@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
 import type { ComponentNode } from '../types'
+import { MediaPickerModal, type MediaItem } from './MediaPickerModal'
 
 interface InspectorPanelProps {
   selectedNode: ComponentNode | null
   onUpdateNode: (updatedNode: ComponentNode) => void
   onDeleteNode: (nodeId: string) => void
   onClose: () => void
+  siteSlug?: string
+  token?: string
 }
 
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
@@ -13,8 +16,21 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onUpdateNode,
   onDeleteNode,
   onClose,
+  siteSlug = 'otizmuzikokulu',
+  token = '',
 }) => {
   const [activeTab, setActiveTab] = useState<'props' | 'styles'>('props')
+  const [pickerConfig, setPickerConfig] = useState<{
+    isOpen: boolean
+    targetKey: string
+    allowedTypes: 'all' | 'image' | 'document'
+    title: string
+  }>({
+    isOpen: false,
+    targetKey: '',
+    allowedTypes: 'image',
+    title: 'Görsel Seç',
+  })
 
   if (!selectedNode) {
     return (
@@ -161,11 +177,28 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Hedef Bağlantı (URL)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Hedef Bağlantı (URL)</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'url',
+                          allowedTypes: 'all',
+                          title: 'Hedef Dosya / PDF Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      📄 Medya / PDF Seç
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={props.url || ''}
                     onChange={(e) => handlePropChange('url', e.target.value)}
+                    placeholder="https://... veya /storage/...pdf"
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
@@ -187,11 +220,28 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             {type === 'Image' && (
               <>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Görsel URL</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Görsel URL</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'url',
+                          allowedTypes: 'image',
+                          title: 'Görsel Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      🖼️ Medyadan Seç
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={props.url || ''}
                     onChange={(e) => handlePropChange('url', e.target.value)}
+                    placeholder="/storage/... veya https://..."
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
@@ -286,20 +336,54 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Görsel URL</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Görsel URL</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'imageUrl',
+                          allowedTypes: 'image',
+                          title: 'Kart Görseli Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      🖼️ Medyadan Seç
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={props.imageUrl || ''}
                     onChange={(e) => handlePropChange('imageUrl', e.target.value)}
+                    placeholder="/storage/... veya https://..."
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Tıklama Bağlantısı (URL)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Tıklama Bağlantısı (URL)</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'url',
+                          allowedTypes: 'all',
+                          title: 'Hedef Belge / Link Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      📄 Medya / PDF Seç
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={props.url || ''}
                     onChange={(e) => handlePropChange('url', e.target.value)}
+                    placeholder="https://... veya #hedef"
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
@@ -310,11 +394,28 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             {type === 'Section' && (
               <>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Arka Plan Görseli</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Arka Plan Görseli</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'bgImage',
+                          allowedTypes: 'image',
+                          title: 'Arka Plan Görseli Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      🖼️ Medyadan Seç
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={props.bgImage || ''}
                     onChange={(e) => handlePropChange('bgImage', e.target.value)}
+                    placeholder="/storage/..."
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                 </div>
@@ -532,6 +633,22 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Universal Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={pickerConfig.isOpen}
+        onClose={() => setPickerConfig((prev) => ({ ...prev, isOpen: false }))}
+        onSelect={(media: MediaItem) => {
+          handlePropChange(pickerConfig.targetKey, media.file_url)
+          if (pickerConfig.targetKey === 'url' && type === 'Image' && media.alt_text) {
+            handlePropChange('alt', media.alt_text)
+          }
+        }}
+        siteSlug={siteSlug}
+        token={token}
+        allowedTypes={pickerConfig.allowedTypes}
+        title={pickerConfig.title}
+      />
     </aside>
   )
 }
