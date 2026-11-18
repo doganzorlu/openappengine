@@ -1,4 +1,5 @@
-# OS Files
+# Antigravity Local Agents Config
+.agents/
 .DS_Store
 ._*
 Thumbs.db
