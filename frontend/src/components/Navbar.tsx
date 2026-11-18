@@ -29,13 +29,16 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [isTransparent])
 
+  const isScrolledPreview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('scrolled') === '1'
+  const isScrolledActive = scrolled || isScrolledPreview
+
   const headerClass = isTransparent
-    ? scrolled
-      ? 'fixed top-0 inset-x-0 z-40 bg-neutral-950/90 backdrop-blur-md text-white shadow-xl border-b border-white/10 transition-all duration-300'
-      : 'absolute top-0 inset-x-0 z-40 bg-transparent text-white border-none transition-all duration-300'
+    ? isScrolledActive
+      ? 'sticky top-0 -mb-20 z-40 bg-neutral-950/85 backdrop-blur-md text-white shadow-xl border-b border-white/10 transition-all duration-300'
+      : 'sticky top-0 -mb-20 z-40 bg-transparent text-white border-b border-transparent transition-all duration-300'
     : 'sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300'
 
-  const navItemClass = isTransparent && !scrolled
+  const navItemClass = isTransparent
     ? 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-white/90 hover:text-white hover:bg-white/10 transition-all'
     : 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-gray-700 hover:text-neutral-950 hover:bg-gray-100 transition-all'
 
@@ -53,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
               src={logoUrl}
               alt={site.name}
               className={`h-10 sm:h-12 w-auto max-w-[200px] object-contain group-hover:scale-105 transition-transform ${
-                isTransparent && !scrolled ? 'brightness-0 invert' : ''
+                isTransparent ? 'brightness-0 invert' : ''
               }`}
             />
           ) : (
@@ -65,13 +68,13 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
           {!hideBrandText && (
             <div>
               <span className={`font-extrabold text-base sm:text-xl tracking-tight block transition-colors ${
-                isTransparent && !scrolled ? 'text-white' : 'text-gray-900 group-hover:text-purple-700'
+                isTransparent ? 'text-white' : 'text-gray-900 group-hover:text-purple-700'
               }`}>
                 {site.name}
               </span>
               {site.description && (
                 <span className={`text-[11px] sm:text-xs font-medium block line-clamp-1 ${
-                  isTransparent && !scrolled ? 'text-white/70' : 'text-gray-500'
+                  isTransparent ? 'text-white/70' : 'text-gray-500'
                 }`}>
                   {site.description}
                 </span>
@@ -106,8 +109,8 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
               href={ctaUrl}
               target={ctaUrl.startsWith('http') ? '_blank' : '_self'}
               className={`hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 ${
-                isTransparent && !scrolled
-                  ? 'bg-white text-neutral-900 hover:bg-neutral-100 shadow-white/10'
+                isTransparent
+                  ? 'bg-white text-neutral-900 hover:bg-neutral-100 shadow-md shadow-black/20'
                   : 'bg-neutral-900 text-white hover:bg-black'
               }`}
             >
@@ -120,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className={`md:hidden p-2 rounded-lg transition-colors ${
-              isTransparent && !scrolled
+              isTransparent
                 ? 'text-white hover:bg-white/10'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
             }`}
