@@ -654,7 +654,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcfcfc] w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#fcfcfc] w-full max-w-full overflow-x-clip">
       {/* Top Engine Control Bar (Visible in Editor Mode or when toggled open) */}
       {isEngineBarVisible || isEditorMode ? (
         <header className="sticky top-0 z-50 bg-gray-900 text-white border-b border-gray-800 shadow-md">
@@ -880,7 +880,7 @@ export function App() {
             />
           </header>
         ) : (
-          <Navbar site={site} menus={menus} />
+          <Navbar site={site} menus={menus} isEngineBarVisible={isEngineBarVisible || isEditorMode} />
         )}
 
         {/* Main Workspace */}

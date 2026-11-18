@@ -5,9 +5,10 @@ import { normalizeMediaUrl, resolveSiteUrl, handleInternalLinkClick } from './Im
 interface NavbarProps {
   site: Site
   menus: Menu[]
+  isEngineBarVisible?: boolean
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
+export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible = false }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -21,22 +22,24 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus }) => {
   const ctaUrl = site.settings?.header_cta_url || (site.theme_config as any)?.header_cta_url
 
   useEffect(() => {
-    if (!isTransparent) return
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40)
+      setScrolled(window.scrollY > 30)
     }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [isTransparent])
+  }, [])
 
   const isScrolledPreview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('scrolled') === '1'
   const isScrolledActive = scrolled || isScrolledPreview
+  const topPosition = isEngineBarVisible ? 'top-14' : 'top-0'
 
   const headerClass = isTransparent
-    ? isScrolledActive
-      ? 'sticky top-0 -mb-20 z-40 bg-neutral-950/85 backdrop-blur-md text-white shadow-xl border-b border-white/10 transition-all duration-300'
-      : 'sticky top-0 -mb-20 z-40 bg-transparent text-white border-b border-transparent transition-all duration-300'
-    : 'sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300'
+    ? `fixed ${topPosition} inset-x-0 z-40 transition-all duration-300 ${
+        isScrolledActive
+          ? 'bg-neutral-950/85 backdrop-blur-md text-white shadow-xl border-b border-white/10'
+          : 'bg-transparent text-white border-b border-transparent'
+      }`
+    : `sticky ${topPosition} z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300`
 
   const navItemClass = isTransparent
     ? 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-white/90 hover:text-white hover:bg-white/10 transition-all'
