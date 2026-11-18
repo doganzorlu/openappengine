@@ -259,6 +259,26 @@ export function App() {
         if (seoImage) {
           setMetaTag('meta[property="og:image"]', 'content', seoImage)
         }
+
+        // Dynamically load Google Fonts if specified in site theme
+        const themeFonts = [
+          siteData.site?.theme_config?.font_family,
+          siteData.site?.theme_config?.heading_font_family,
+        ].filter(Boolean) as string[]
+
+        themeFonts.forEach((fStr) => {
+          const fontName = fStr.split(',')[0].replace(/['"]/g, '').trim()
+          if (fontName && !['inherit', 'initial', 'system-ui'].includes(fontName.toLowerCase())) {
+            const fontId = `oae-font-${fontName.toLowerCase().replace(/\s+/g, '-')}`
+            if (!document.getElementById(fontId)) {
+              const link = document.createElement('link')
+              link.id = fontId
+              link.rel = 'stylesheet'
+              link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap`
+              document.head.appendChild(link)
+            }
+          }
+        })
       } catch (err: any) {
         setError(err.message || 'Veriler yüklenirken bir hata oluştu.')
       } finally {
@@ -820,7 +840,11 @@ export function App() {
       >
         {/* Device Frame Wrapper (Applies device borders, shadows & responsive constraints in Tablet/Mobile) */}
         <div
-          className={`transition-all duration-300 flex flex-col bg-white ${
+          style={{
+            fontFamily: site?.theme_config?.font_family || undefined,
+            backgroundColor: (site?.theme_config as any)?.secondary_color || (site?.settings as any)?.global_colors?.secondary || undefined,
+          }}
+          className={`relative transition-all duration-300 flex flex-col bg-white ${
             viewportMode === 'tablet'
               ? 'w-[768px] max-w-full rounded-[32px] shadow-2xl border-[10px] border-slate-800 ring-1 ring-black/10 overflow-hidden my-auto'
               : viewportMode === 'mobile'

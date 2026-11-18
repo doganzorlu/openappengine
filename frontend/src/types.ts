@@ -33,8 +33,13 @@ export interface Site {
   settings: Record<string, any>
   theme_config: {
     primary_color?: string
+    secondary_color?: string
+    accent_color?: string
     font_family?: string
+    heading_font_family?: string
     logo_url?: string
+    header_transparent?: boolean
+    [key: string]: any
   }
 }
 

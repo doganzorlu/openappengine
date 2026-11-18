@@ -293,10 +293,13 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
 
 function renderFormattedText(text: string | undefined | null) {
   if (!text) return null
-  if (!text.includes('<br') && !text.includes('\n')) {
+  if (/<[a-z][\s\S]*>/i.test(text)) {
+    return <span dangerouslySetInnerHTML={{ __html: text }} />
+  }
+  if (!text.includes('\n')) {
     return text
   }
-  const lines = text.replace(/<br\s*\/?>/gi, '\n').split('\n')
+  const lines = text.split('\n')
   return lines.map((line, idx) => (
     <React.Fragment key={idx}>
       {idx > 0 && <br />}
@@ -635,7 +638,7 @@ const NodeItem: React.FC<{
 
         const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
         const secBg = styles.backgroundColor || props.bgColor
-        const isSecDark = isDarkColor(secBg)
+        const isSecDark = isDarkColor(secBg) || !!bgImageUrl || (props.bgOverlayOpacity ? props.bgOverlayOpacity > 0.3 : false)
         const sectionThemeTokens: ThemeTokens = {
           ...activeTheme,
           ...(secBg ? { backgroundColor: secBg } : {}),
@@ -744,7 +747,15 @@ const NodeItem: React.FC<{
             )}
 
             {/* Container Content */}
-            <div className={`relative ${isHeader ? 'overflow-visible z-40' : 'z-10'} mx-auto px-4 sm:px-6 lg:px-8 w-full ${isHeader ? 'max-w-7xl' : 'max-w-6xl'}`}>
+            <div
+              className={`relative ${isHeader ? 'overflow-visible z-40' : 'z-10'} mx-auto w-full ${
+                props.fullWidth || props.contentWidth === 'full' || styles.maxWidth === '100%'
+                  ? 'max-w-none px-0'
+                  : props.contentWidth === 'wide' || isHeader
+                  ? 'max-w-7xl px-4 sm:px-6 lg:px-8'
+                  : 'max-w-6xl px-4 sm:px-6 lg:px-8'
+              }`}
+            >
               <div className={childWrapperClass}>
                 <ComponentRenderer
                   nodes={children}
@@ -1046,10 +1057,17 @@ const NodeItem: React.FC<{
         const level = props.level || 'h2'
         const align = styles.textAlign || props.align || 'left'
         const effectiveHeadingColor = styles.color || props.color || activeTheme.headingColor
-        const effectiveFontFamily = styles.fontFamily || props.fontFamily || activeTheme.fontFamily
-        const color = {
+        const effectiveFontFamily =
+          styles.fontFamily ||
+          props.fontFamily ||
+          (site?.theme_config as any)?.heading_font_family ||
+          activeTheme.fontFamily
+        const color: React.CSSProperties = {
           color: effectiveHeadingColor,
           fontFamily: effectiveFontFamily,
+          fontStyle: (styles.fontStyle || props.fontStyle) as any,
+          letterSpacing: styles.letterSpacing || props.letterSpacing,
+          lineHeight: styles.lineHeight || props.lineHeight,
         }
 
         const alignClass =
@@ -1252,6 +1270,13 @@ const NodeItem: React.FC<{
         if (styles.borderRadius) btnStyle.borderRadius = styles.borderRadius
         if (styles.boxShadow) btnStyle.boxShadow = styles.boxShadow
         if (styles.padding) btnStyle.padding = styles.padding
+        if (styles.border || props.border) btnStyle.border = styles.border || props.border
+        if (styles.borderColor || props.borderColor) btnStyle.borderColor = styles.borderColor || props.borderColor
+        if (styles.borderWidth || props.borderWidth) btnStyle.borderWidth = styles.borderWidth || props.borderWidth
+        if (styles.borderStyle) btnStyle.borderStyle = styles.borderStyle
+        if (styles.fontSize || props.fontSize) btnStyle.fontSize = styles.fontSize || props.fontSize
+        if (styles.fontFamily || props.fontFamily) btnStyle.fontFamily = styles.fontFamily || props.fontFamily
+        if (styles.letterSpacing || props.letterSpacing) btnStyle.letterSpacing = styles.letterSpacing || props.letterSpacing
 
         const isRedBtn = (styles.backgroundColor || props.bgColor) === '#FD0101' || node.id === 'c1edc74'
         const hasCustomBg = Boolean(btnStyle.backgroundColor)
@@ -1271,10 +1296,10 @@ const NodeItem: React.FC<{
                 handleInternalLinkClick(e, resolvedBtnUrl)
               }}
               style={btnStyle}
-              className={`inline-flex items-center justify-center text-center gap-2 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-base leading-snug shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-[320px] sm:max-w-xl mx-auto whitespace-normal break-words ${
+              className={`inline-flex items-center justify-center text-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm leading-snug shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-full whitespace-normal break-words ${
                 isRedBtn
                   ? 'bg-[#FD0101] hover:bg-red-700 text-white shadow-red-500/30'
-                  : hasCustomBg
+                  : hasCustomBg || btnStyle.border
                   ? ''
                   : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
               }`}

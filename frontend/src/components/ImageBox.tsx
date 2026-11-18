@@ -2,12 +2,22 @@ import React from 'react'
 
 export function normalizeMediaUrl(url?: string | null, siteSlug: string = 'otizmkonfederasyonu'): string {
   if (!url) return ''
-  if (url.startsWith('/storage/')) return url
-  let clean = url.replace(/^https?:\/\/[^\/]+/, '')
-  if (clean.includes('/wp-content/uploads/')) {
-    clean = clean.replace(/.*?\/wp-content\/uploads\//, `/storage/sites/${siteSlug}/media/`)
+  const trimmed = url.trim()
+  if (trimmed.startsWith('/storage/')) return trimmed
+  if (trimmed.startsWith('data:')) return trimmed
+  if (trimmed.startsWith('blob:')) return trimmed
+
+  // If it's a full URL, keep it intact so remote CDN and live site assets load reliably
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
   }
-  return clean
+
+  // If it's a relative uploads path, map to local site media storage
+  if (trimmed.startsWith('/wp-content/uploads/')) {
+    return `/storage/sites/${siteSlug}/media/` + trimmed.replace(/^\/wp-content\/uploads\//, '')
+  }
+
+  return trimmed
 }
 
 export function resolveSiteUrl(
