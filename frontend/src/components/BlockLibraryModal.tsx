@@ -352,6 +352,109 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
         ],
       }),
     },
+    {
+      id: 'gallery-carousel',
+      category: 'media',
+      title: 'Fotoğraf Galerisi & Karusel',
+      description: 'Ziyaretçilerin gezinebileceği otomatik geçişli çoklu görsel galerisi.',
+      previewIcon: '🖼️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed', bgColor: '#F8F9FA' },
+        styles: { padding: '60px 20px', backgroundColor: '#F8F9FA' },
+        children: [
+          {
+            id: 'h_gal_' + uniqid(),
+            type: 'Heading',
+            props: {
+              text: 'FOTOĞRAF GALERİSİ',
+              level: 'h2',
+              align: 'center',
+              color: col || '#0077B6',
+              withDivider: true,
+            },
+            styles: { textAlign: 'center', margin: '0 0 30px 0' },
+          },
+          {
+            id: 'car_' + uniqid(),
+            type: 'SlideCarousel',
+            props: {
+              slidesToShow: 3,
+              autoplay: true,
+            },
+            styles: {},
+            children: [
+              {
+                id: 'im_1_' + uniqid(),
+                type: 'ImageBox',
+                props: {
+                  title: 'Etkinlik Fotoğrafı 1',
+                  description: 'Galeri detayı ve açıklama metni.',
+                  imageUrl: '',
+                },
+                styles: {},
+              },
+              {
+                id: 'im_2_' + uniqid(),
+                type: 'ImageBox',
+                props: {
+                  title: 'Etkinlik Fotoğrafı 2',
+                  description: 'Galeri detayı ve açıklama metni.',
+                  imageUrl: '',
+                },
+                styles: {},
+              },
+              {
+                id: 'im_3_' + uniqid(),
+                type: 'ImageBox',
+                props: {
+                  title: 'Etkinlik Fotoğrafı 3',
+                  description: 'Galeri detayı ve açıklama metni.',
+                  imageUrl: '',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'documents-download',
+      category: 'media',
+      title: 'PDF & Doküman İndirme Bloğu',
+      description: 'Önemli PDF formları, kılavuzlar veya belgeler için şık indirme kartları.',
+      previewIcon: '📄',
+      generateNode: () => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '60px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'h_doc_' + uniqid(),
+            type: 'Heading',
+            props: {
+              text: 'BELGELER & DOKÜMANLAR',
+              level: 'h2',
+              align: 'left',
+              withDivider: true,
+            },
+            styles: { margin: '0 0 25px 0' },
+          },
+          {
+            id: 'dl_list_' + uniqid(),
+            type: 'DownloadsList',
+            props: {
+              category: 'otobusler',
+              title: 'İndirilebilir Dosyalar',
+            },
+            styles: {},
+          },
+        ],
+      }),
+    },
   ]
 
   const categories = [

@@ -394,7 +394,8 @@ export function App() {
         currentSlug={currentSlug || site?.slug || 'berilzorlu'}
         onSwitchSite={handleSiteChange}
         onExitAdmin={() => setViewMode('public')}
-        onOpenVisualEditor={(_pageSlug) => {
+        onOpenVisualEditor={(pageSlug) => {
+          if (pageSlug) setCurrentPageSlug(pageSlug)
           setViewMode('public')
           setIsEditorMode(true)
         }}
