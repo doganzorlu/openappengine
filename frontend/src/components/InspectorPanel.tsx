@@ -2195,6 +2195,511 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </>
             )}
 
+            {/* DualColorHeading Props */}
+            {type === 'DualColorHeading' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">1. Düz Metin (Başlangıç)</label>
+                  <input
+                    type="text"
+                    value={props.firstText || ''}
+                    placeholder="Örn: Farklı Gelişen Bireylerde "
+                    onChange={(e) => handlePropChange('firstText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">2. Vurgulu Metin (Son Kısım)</label>
+                  <input
+                    type="text"
+                    value={props.secondText || ''}
+                    placeholder="Örn: Müzik Terapisi"
+                    onChange={(e) => handlePropChange('secondText', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Üst Başlık / Kategori (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    value={props.subtitle || ''}
+                    placeholder="Örn: VİZYONUMUZ"
+                    onChange={(e) => handlePropChange('subtitle', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Vurgu Stili</label>
+                    <select
+                      value={props.secondStyle || 'gradient'}
+                      onChange={(e) => handlePropChange('secondStyle', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="gradient">Gradyan Renk</option>
+                      <option value="text">Düz Renk</option>
+                      <option value="highlight">Kutulu Vurgu</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Başlık Düzeyi</label>
+                    <select
+                      value={props.level || 'h2'}
+                      onChange={(e) => handlePropChange('level', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="h1">H1 (Büyük)</option>
+                      <option value="h2">H2 (Orta)</option>
+                      <option value="h3">H3 (Küçük)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorPickerInput
+                    label="1. Metin Rengi"
+                    value={props.firstColor || '#1E293B'}
+                    onChange={(c) => handlePropChange('firstColor', c)}
+                  />
+                  <ColorPickerInput
+                    label="2. Vurgu Rengi"
+                    value={props.secondColor || '#4F46E5'}
+                    onChange={(c) => handlePropChange('secondColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* InfoBox Props */}
+            {type === 'InfoBox' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">İkon / Emoji</label>
+                    <input
+                      type="text"
+                      value={props.icon || ''}
+                      placeholder="⭐, 🎹, 💡"
+                      onChange={(e) => handlePropChange('icon', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Rozet (Badge)</label>
+                    <input
+                      type="text"
+                      value={props.badge || ''}
+                      placeholder="Yeni, Popüler"
+                      onChange={(e) => handlePropChange('badge', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Başlık</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Örn: Birebir Piyano Seansı"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Açıklama</label>
+                  <textarea
+                    rows={3}
+                    value={props.description || ''}
+                    placeholder="Hizmet detayları ve açıklaması..."
+                    onChange={(e) => handlePropChange('description', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Buton Metni</label>
+                    <input
+                      type="text"
+                      value={props.buttonText || ''}
+                      placeholder="Detaylı Bilgi"
+                      onChange={(e) => handlePropChange('buttonText', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Buton Linki</label>
+                    <input
+                      type="text"
+                      value={props.buttonUrl || ''}
+                      placeholder="/hizmetler veya #"
+                      onChange={(e) => handlePropChange('buttonUrl', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <ColorPickerInput
+                  label="Vurgu Rengi"
+                  value={props.accentColor || '#4F46E5'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+              </>
+            )}
+
+            {/* PriceMenu Props */}
+            {type === 'PriceMenu' && (
+              <>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Menü Başlığı</label>
+                  <input
+                    type="text"
+                    value={props.title || ''}
+                    placeholder="Hizmet ve Katkı Payı Listesi"
+                    onChange={(e) => handlePropChange('title', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Alt Açıklama</label>
+                  <input
+                    type="text"
+                    value={props.subtitle || ''}
+                    placeholder="Özet açıklama..."
+                    onChange={(e) => handlePropChange('subtitle', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <ColorPickerInput
+                  label="Fiyat Vurgu Rengi"
+                  value={props.accentColor || '#023E8A'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Maddeler (Hizmetler)</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = props.items || []
+                        handlePropChange('items', [
+                          ...cur,
+                          { title: 'Yeni Hizmet', price: '500 ₺', description: 'Hizmet detayı', badge: '' },
+                        ])
+                      }}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      + Madde Ekle
+                    </button>
+                  </div>
+                  <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    {(props.items || []).map((itm: any, iIdx: number) => (
+                      <div key={iIdx} className="p-2 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={itm.title || ''}
+                            placeholder="Hizmet Adı"
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[iIdx] = { ...cur[iIdx], title: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="flex-1 px-2 py-1 text-xs font-bold border rounded bg-white"
+                          />
+                          <input
+                            type="text"
+                            value={itm.price || ''}
+                            placeholder="Fiyat"
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[iIdx] = { ...cur[iIdx], price: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="w-20 px-2 py-1 text-xs font-bold border rounded bg-white text-right"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cur = (props.items || []).filter((_: any, i: number) => i !== iIdx)
+                              handlePropChange('items', cur)
+                            }}
+                            className="text-gray-400 hover:text-red-500 px-1 text-sm shrink-0"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={itm.description || ''}
+                            placeholder="Kısa açıklama..."
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[iIdx] = { ...cur[iIdx], description: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="flex-1 px-2 py-1 text-xs border rounded bg-white"
+                          />
+                          <input
+                            type="text"
+                            value={itm.badge || ''}
+                            placeholder="Rozet"
+                            onChange={(e) => {
+                              const cur = [...(props.items || [])]
+                              cur[iIdx] = { ...cur[iIdx], badge: e.target.value }
+                              handlePropChange('items', cur)
+                            }}
+                            className="w-16 px-1.5 py-1 text-xs border rounded bg-white"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ImageHotspots Props */}
+            {type === 'ImageHotspots' && (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Fotoğraf</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPickerConfig({
+                          isOpen: true,
+                          targetKey: 'imageUrl',
+                          allowedTypes: 'image',
+                          title: 'Fotoğraf Seç',
+                        })
+                      }
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      🖼️ Seç
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={props.imageUrl || ''}
+                    placeholder="/storage/..."
+                    onChange={(e) => handlePropChange('imageUrl', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Yükseklik (px)</label>
+                    <input
+                      type="number"
+                      min="250"
+                      max="700"
+                      value={props.height || 460}
+                      onChange={(e) => handlePropChange('height', parseInt(e.target.value, 10) || 460)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <ColorPickerInput
+                    label="Pin Rengi"
+                    value={props.accentColor || '#FFB92C'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-gray-700">Noktalar (Pinler)</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = props.hotspots || []
+                        handlePropChange('hotspots', [
+                          ...cur,
+                          { id: 'spot_' + Date.now(), x: 50, y: 50, title: 'Yeni Nokta', description: 'Açıklama...', link: '' },
+                        ])
+                      }}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      + Pin Ekle
+                    </button>
+                  </div>
+                  <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    {(props.hotspots || []).map((spot: any, sIdx: number) => (
+                      <div key={sIdx} className="p-2 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={spot.title || ''}
+                            placeholder="Nokta Başlığı"
+                            onChange={(e) => {
+                              const cur = [...(props.hotspots || [])]
+                              cur[sIdx] = { ...cur[sIdx], title: e.target.value }
+                              handlePropChange('hotspots', cur)
+                            }}
+                            className="flex-1 px-2 py-1 text-xs font-bold border rounded bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cur = (props.hotspots || []).filter((_: any, i: number) => i !== sIdx)
+                              handlePropChange('hotspots', cur)
+                            }}
+                            className="text-gray-400 hover:text-red-500 px-1 text-sm shrink-0"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-[11px]">
+                          <div>
+                            <span className="text-gray-500">X (%):</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={spot.x ?? 50}
+                              onChange={(e) => {
+                                const cur = [...(props.hotspots || [])]
+                                cur[sIdx] = { ...cur[sIdx], x: parseInt(e.target.value, 10) || 0 }
+                                handlePropChange('hotspots', cur)
+                              }}
+                              className="w-full px-1.5 py-0.5 border rounded bg-white font-bold"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Y (%):</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={spot.y ?? 50}
+                              onChange={(e) => {
+                                const cur = [...(props.hotspots || [])]
+                                cur[sIdx] = { ...cur[sIdx], y: parseInt(e.target.value, 10) || 0 }
+                                handlePropChange('hotspots', cur)
+                              }}
+                              className="w-full px-1.5 py-0.5 border rounded bg-white font-bold"
+                            />
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={spot.description || ''}
+                          placeholder="Açıklama metni..."
+                          onChange={(e) => {
+                            const cur = [...(props.hotspots || [])]
+                            cur[sIdx] = { ...cur[sIdx], description: e.target.value }
+                            handlePropChange('hotspots', cur)
+                          }}
+                          className="w-full px-2 py-1 text-xs border rounded bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ContentToggle Props */}
+            {type === 'ContentToggle' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">1. Seçenek Adı</label>
+                    <input
+                      type="text"
+                      value={props.labelPrimary || ''}
+                      placeholder="Aylık Destek"
+                      onChange={(e) => handlePropChange('labelPrimary', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">2. Seçenek Adı</label>
+                    <input
+                      type="text"
+                      value={props.labelSecondary || ''}
+                      placeholder="Tek Seferlik"
+                      onChange={(e) => handlePropChange('labelSecondary', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">2. Seçenek Rozeti</label>
+                  <input
+                    type="text"
+                    value={props.badgeSecondary || ''}
+                    placeholder="Önerilen, %20 İndirim"
+                    onChange={(e) => handlePropChange('badgeSecondary', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">1. Seçenek İçeriği (HTML)</label>
+                  <textarea
+                    rows={3}
+                    value={props.contentPrimary || ''}
+                    onChange={(e) => handlePropChange('contentPrimary', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">2. Seçenek İçeriği (HTML)</label>
+                  <textarea
+                    rows={3}
+                    value={props.contentSecondary || ''}
+                    onChange={(e) => handlePropChange('contentSecondary', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-mono text-xs"
+                  />
+                </div>
+                <ColorPickerInput
+                  label="Aktif Switch Rengi"
+                  value={props.accentColor || '#4F46E5'}
+                  onChange={(c) => handlePropChange('accentColor', c)}
+                />
+              </>
+            )}
+
+            {/* ScrollToTop Props */}
+            {type === 'ScrollToTop' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Görünme Eşiği (px)</label>
+                    <input
+                      type="number"
+                      min="100"
+                      max="1200"
+                      value={props.threshold || 300}
+                      onChange={(e) => handlePropChange('threshold', parseInt(e.target.value, 10) || 300)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Konum</label>
+                    <select
+                      value={props.position || 'bottom-right'}
+                      onChange={(e) => handlePropChange('position', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="bottom-right">Sağ Alt</option>
+                      <option value="bottom-left">Sol Alt</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorPickerInput
+                    label="Buton Rengi"
+                    value={props.bgColor || '#0F172A'}
+                    onChange={(c) => handlePropChange('bgColor', c)}
+                  />
+                  <ColorPickerInput
+                    label="Ok Rengi"
+                    value={props.accentColor || '#FFFFFF'}
+                    onChange={(c) => handlePropChange('accentColor', c)}
+                  />
+                </div>
+              </>
+            )}
+
             {/* Align setting for all */}
             <div>
               <label className="block font-semibold text-gray-700 mb-1">Hizalama</label>

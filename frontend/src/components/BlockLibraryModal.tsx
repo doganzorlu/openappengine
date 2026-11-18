@@ -1631,6 +1631,261 @@ export const BlockLibraryModal: React.FC<BlockLibraryModalProps> = ({
         ],
       }),
     },
+    {
+      id: 'dual-heading-banner',
+      category: 'hero',
+      title: 'İki Renkli Vurgulu Başlık Bloğu',
+      description: 'İlk kısmı kurumsal, ikinci kısmı canlı gradyan renkte dikkat çekici başlık.',
+      previewIcon: '🎨',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '50px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_dh_' + uniqid(),
+            type: 'Column',
+            props: { width: 100, align: 'center' },
+            styles: {},
+            children: [
+              {
+                id: 'dh_comp_' + uniqid(),
+                type: 'DualColorHeading',
+                props: {
+                  subtitle: 'VİZYONUMUZ VE MİSYONUMUZ',
+                  firstText: 'Farklı Gelişen Bireylerde ',
+                  secondText: 'Müzik Terapisi',
+                  firstColor: '#1E293B',
+                  secondColor: col || '#4F46E5',
+                  secondStyle: 'gradient',
+                  level: 'h2',
+                  align: 'center',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'infobox-services-3col',
+      category: 'features',
+      title: 'Modern Hizmet & Bilgi Kartları (3 Sütun)',
+      description: 'İkonlu, rozetli, açıklamalı ve hover efektli modern özellik kutuları.',
+      previewIcon: '💡',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'h_inf_' + uniqid(),
+            type: 'Heading',
+            props: {
+              text: 'TEMEL ÇALIŞMA ALANLARIMIZ',
+              level: 'h2',
+              align: 'center',
+              color: col || '#023E8A',
+              withDivider: true,
+            },
+            styles: { textAlign: 'center', margin: '0 0 35px 0' },
+          },
+          {
+            id: 'col_ib1_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'ib_1_' + uniqid(),
+                type: 'InfoBox',
+                props: {
+                  icon: '🎹',
+                  badge: 'Birebir',
+                  title: 'Piyano & Tuşlular',
+                  description: 'İki el bağımsızlığı, motor refleksler ve müzikal ifadeyi geliştiren bireysel çalışma.',
+                  buttonText: 'Müfredatı İncele',
+                  buttonUrl: '#',
+                  accentColor: col || '#4F46E5',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_ib2_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'ib_2_' + uniqid(),
+                type: 'InfoBox',
+                props: {
+                  icon: '🥁',
+                  badge: 'Grup',
+                  title: 'Ritim & Orff Terapisi',
+                  description: 'Perküsyon çalgıları ile dikkat süresi, işitsel algı ve grup uyumunu pekiştiren seanslar.',
+                  buttonText: 'Müfredatı İncele',
+                  buttonUrl: '#',
+                  accentColor: col || '#4F46E5',
+                },
+                styles: {},
+              },
+            ],
+          },
+          {
+            id: 'col_ib3_' + uniqid(),
+            type: 'Column',
+            props: { width: 33.3 },
+            styles: {},
+            children: [
+              {
+                id: 'ib_3_' + uniqid(),
+                type: 'InfoBox',
+                props: {
+                  icon: '👥',
+                  badge: 'Destek',
+                  title: 'Veli Destek Çemberi',
+                  description: 'Akademisyenler ve özel eğitim danışmanları rehberliğinde velilere yönelik dayanışma seansları.',
+                  buttonText: 'Detaylı Bilgi',
+                  buttonUrl: '#',
+                  accentColor: col || '#4F46E5',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'price-menu-dotted',
+      category: 'features',
+      title: 'Noktalı Katkı Payı & Hizmet Menüsü',
+      description: 'Zarif noktalı bağlantılı hizmet ve seans katkı payları listesi.',
+      previewIcon: '🧾',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '60px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_pm_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'pm_comp_' + uniqid(),
+                type: 'PriceMenu',
+                props: {
+                  title: 'Eğitim & Atölye Katkı Payları',
+                  subtitle: 'Tüm katkı payları öğrencilerimizin enstrüman ve ders materyallerine aktarılmaktadır.',
+                  accentColor: col || '#023E8A',
+                  items: [
+                    { title: 'Bireysel Piyano Seansı (50 dk)', price: '750 ₺', description: 'Birebir çalgı ve nota eğitimi', badge: 'Popüler' },
+                    { title: 'Grup Ritim & Orff Atölyesi', price: '450 ₺', description: 'Vurmalı çalgılarla akran iletişimi' },
+                    { title: 'Koro & Birlikte Söyleme', price: '500 ₺', description: 'Ses ve doğru nefes teknikleri' },
+                    { title: 'Veli Rehberlik Seansı', price: 'Ücretsiz', description: 'Özel eğitim danışmanlığı buluşması', badge: 'Destek' },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'image-hotspots-interactive',
+      category: 'media',
+      title: 'Görsel Üzeri İnteraktif Noktalar (Hotspot)',
+      description: 'Fotoğraf üzerindeki noktalara gelindiğinde açılan bilgi balonları.',
+      previewIcon: '🎯',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '70px 20px', backgroundColor: '#F8FAFC' },
+        children: [
+          {
+            id: 'col_hs_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'h_hs_' + uniqid(),
+                type: 'Heading',
+                props: {
+                  text: 'ATÖLYE ALANIMIZI KEŞFEDİN',
+                  level: 'h2',
+                  align: 'center',
+                  color: col || '#023E8A',
+                  withDivider: true,
+                },
+                styles: { textAlign: 'center', margin: '0 0 30px 0' },
+              },
+              {
+                id: 'hs_comp_' + uniqid(),
+                type: 'ImageHotspots',
+                props: {
+                  imageUrl: '/storage/sites/otizmuzikokulu/media/2026/11/WhatsApp-Image-2026-11-15-at-19.48.10-1-1024x684.jpg',
+                  accentColor: col || '#FFB92C',
+                  height: 460,
+                  hotspots: [
+                    { id: '1', x: 28, y: 55, title: 'Bireysel Piyano Eğitmeni', description: 'Konservatuvar mezunu alanında uzman akademisyen eğitmen kadromuz.' },
+                    { id: '2', x: 72, y: 50, title: 'Özel Dokunsal Çalgı Seti', description: 'Farklı öğrenen bireylerin duyusal hassasiyetine uygun ritim çalgıları.' },
+                  ],
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    {
+      id: 'content-toggle-switch',
+      category: 'features',
+      title: 'İçerik Değiştirici Anahtar (Toggle Switch)',
+      description: 'İki farklı seçenek (Aylık/Tek Seferlik vb.) arasında geçiş sağlayan interaktif anahtar.',
+      previewIcon: '🎚️',
+      generateNode: (col) => ({
+        id: 'sec_' + uniqid(),
+        type: 'Section',
+        props: { layout: 'boxed' },
+        styles: { padding: '50px 20px', backgroundColor: '#FFFFFF' },
+        children: [
+          {
+            id: 'col_ct_' + uniqid(),
+            type: 'Column',
+            props: { width: 100 },
+            styles: {},
+            children: [
+              {
+                id: 'ct_comp_' + uniqid(),
+                type: 'ContentToggle',
+                props: {
+                  labelPrimary: 'Aylık Düzenli Destek',
+                  labelSecondary: 'Tek Seferlik Destek',
+                  badgeSecondary: 'Önerilen',
+                  contentPrimary: '<div class="text-center p-6 bg-purple-50/70 rounded-2xl border border-purple-100 text-gray-800 text-sm"><strong>Aylık Düzenli Destek:</strong> Her ay 1 öğrencimizin eğitim bursuna ve materyallerine kesintisiz katkı sağlayın.</div>',
+                  contentSecondary: '<div class="text-center p-6 bg-blue-50/70 rounded-2xl border border-blue-100 text-gray-800 text-sm"><strong>Tek Seferlik Destek:</strong> Dilediğiniz tutarda tek seferlik bağış ile müzik ve ritim terapi atölyesi fonumuza güç verin.</div>',
+                  accentColor: col || '#4F46E5',
+                },
+                styles: {},
+              },
+            ],
+          },
+        ],
+      }),
+    },
   ]
 
   const categories = [

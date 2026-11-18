@@ -33,6 +33,12 @@ import { NewsletterBox } from './NewsletterBox'
 import { SocialIcons } from './SocialIcons'
 import { AnimatedHeadline } from './AnimatedHeadline'
 import { DonutChart } from './DonutChart'
+import { DualColorHeading } from './DualColorHeading'
+import { InfoBox } from './InfoBox'
+import { PriceMenu } from './PriceMenu'
+import { ImageHotspots } from './ImageHotspots'
+import { ContentToggle } from './ContentToggle'
+import { ScrollToTop } from './ScrollToTop'
 
 interface RendererProps {
   nodes: ComponentNode[]
@@ -1791,6 +1797,83 @@ const NodeItem: React.FC<{
             centerLabel={props.centerLabel || '%100'}
             centerSubtitle={props.centerSubtitle || 'Şeffaflık'}
             size={props.size || 220}
+          />
+        )
+      }
+
+      case 'DualColorHeading': {
+        return (
+          <DualColorHeading
+            firstText={props.firstText || 'Farklı Gelişen Bireylerde '}
+            secondText={props.secondText || 'Müzik Terapisi'}
+            firstColor={props.firstColor || '#1E293B'}
+            secondColor={styles.borderColor || props.secondColor || site?.theme_config?.primary_color || '#4F46E5'}
+            secondStyle={props.secondStyle || 'gradient'}
+            level={props.level || 'h2'}
+            align={props.align || 'center'}
+            subtitle={props.subtitle}
+          />
+        )
+      }
+
+      case 'InfoBox': {
+        return (
+          <InfoBox
+            icon={props.icon || '⭐'}
+            badge={props.badge}
+            title={props.title || 'Hizmet Başlığı'}
+            description={props.description || 'Hizmet içeriği ve kazanımları...'}
+            buttonText={props.buttonText || 'Detaylı Bilgi'}
+            buttonUrl={props.buttonUrl || '#'}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+            cardBg={styles.backgroundColor || props.cardBg || '#FFFFFF'}
+          />
+        )
+      }
+
+      case 'PriceMenu': {
+        return (
+          <PriceMenu
+            title={props.title}
+            subtitle={props.subtitle}
+            items={props.items || []}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#023E8A'}
+            cardBg={styles.backgroundColor || props.cardBg || '#FFFFFF'}
+          />
+        )
+      }
+
+      case 'ImageHotspots': {
+        return (
+          <ImageHotspots
+            imageUrl={normalizeMediaUrl(props.imageUrl, siteSlug)}
+            hotspots={props.hotspots || []}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#FFB92C'}
+            height={props.height || 460}
+          />
+        )
+      }
+
+      case 'ContentToggle': {
+        return (
+          <ContentToggle
+            labelPrimary={props.labelPrimary || 'Aylık Destek'}
+            labelSecondary={props.labelSecondary || 'Tek Seferlik Destek'}
+            badgeSecondary={props.badgeSecondary}
+            contentPrimary={props.contentPrimary}
+            contentSecondary={props.contentSecondary}
+            accentColor={styles.borderColor || props.accentColor || site?.theme_config?.primary_color || '#4F46E5'}
+          />
+        )
+      }
+
+      case 'ScrollToTop': {
+        return (
+          <ScrollToTop
+            threshold={props.threshold || 300}
+            accentColor={props.accentColor || '#FFFFFF'}
+            bgColor={styles.backgroundColor || props.bgColor || '#0F172A'}
+            position={props.position || 'bottom-right'}
           />
         )
       }
