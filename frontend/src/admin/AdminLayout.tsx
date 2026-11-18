@@ -29,7 +29,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onOpenVisualEditor,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState(() => {
+    return new URLSearchParams(window.location.search).get('tab') || 'dashboard'
+  })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [stats, setStats] = useState<any | null>(null)
   const [sitesList, setSitesList] = useState<any[]>([])

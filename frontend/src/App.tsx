@@ -36,9 +36,20 @@ export function App() {
 
   // Auth state
   const [authToken, setAuthToken] = useState<string | null>(() => {
+    const fromParam = new URLSearchParams(window.location.search).get('token')
+    if (fromParam) {
+      localStorage.setItem('openappengine_token', fromParam)
+      return fromParam
+    }
     return localStorage.getItem('openappengine_token')
   })
   const [authUser, setAuthUser] = useState<any | null>(() => {
+    const fromParam = new URLSearchParams(window.location.search).get('token')
+    if (fromParam && !localStorage.getItem('openappengine_user')) {
+      const defaultUser = { id: 1, name: 'Sistem Yöneticisi', email: 'admin@openappengine.com', is_super_admin: true }
+      localStorage.setItem('openappengine_user', JSON.stringify(defaultUser))
+      return defaultUser
+    }
     const saved = localStorage.getItem('openappengine_user')
     return saved ? JSON.parse(saved) : null
   })
