@@ -259,7 +259,8 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     type="text"
                     value={props.text || ''}
                     onChange={(e) => handlePropChange('text', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    placeholder="Örn: Teklif Alın →"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs"
                   />
                 </div>
                 <div>
@@ -284,21 +285,94 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     type="text"
                     value={props.url || ''}
                     onChange={(e) => handlePropChange('url', e.target.value)}
-                    placeholder="https://... veya /storage/...pdf"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    placeholder="https://... veya /hakkimizda"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1 text-xs">Buton Stili (Varyant)</label>
+                    <select
+                      value={props.variant || 'solid'}
+                      onChange={(e) => handlePropChange('variant', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs bg-white"
+                    >
+                      <option value="solid">Dolu (Solid Fill)</option>
+                      <option value="outline">Çerçeveli (Outline)</option>
+                      <option value="link">Metin Linki (Link)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1 text-xs">Buton Şekli</label>
+                    <select
+                      value={props.shape || 'pill'}
+                      onChange={(e) => handlePropChange('shape', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs bg-white"
+                    >
+                      <option value="pill">Tam Yuvarlak Hap (Pill)</option>
+                      <option value="rounded">Köşeli Yuvarlak (Rounded-xl)</option>
+                      <option value="square">Düz Köşeli (Square)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1 text-xs">Boyut</label>
+                    <select
+                      value={props.size || 'md'}
+                      onChange={(e) => handlePropChange('size', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs bg-white"
+                    >
+                      <option value="xs">Çok Küçük (xs)</option>
+                      <option value="sm">Küçük (sm)</option>
+                      <option value="md">Standart (md)</option>
+                      <option value="lg">Büyük (lg)</option>
+                      <option value="xl">Ekstra Büyük (xl)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1 text-xs">Hover Animasyonu</label>
+                    <select
+                      value={props.hoverEffect || 'shrink'}
+                      onChange={(e) => handlePropChange('hoverEffect', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs bg-white"
+                    >
+                      <option value="shrink">Küçülme (Shrink - Elementor)</option>
+                      <option value="grow">Büyüme (Grow)</option>
+                      <option value="invert">Ters Renk (Invert)</option>
+                      <option value="none">Animasyonsuz</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 py-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={props.uppercase !== false}
+                      onChange={(e) => handlePropChange('uppercase', e.target.checked)}
+                      className="rounded text-purple-600"
+                    />
+                    <span className="font-semibold text-gray-700">BÜYÜK HARF (Uppercase)</span>
+                  </label>
+                </div>
+
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Hedef Sekme</label>
+                  <label className="block font-semibold text-gray-700 mb-1 text-xs">Hedef Sekme</label>
                   <select
                     value={props.target || '_self'}
                     onChange={(e) => handlePropChange('target', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full px-3 py-1.5 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-xs bg-white"
                   >
                     <option value="_self">Aynı Pencere (_self)</option>
                     <option value="_blank">Yeni Pencere (_blank)</option>
                   </select>
                 </div>
+
                 <ColorPickerInput
                   label="Buton Arka Plan Rengi"
                   value={props.bgColor || styles.backgroundColor}
@@ -315,6 +389,16 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     handleStyleChange('color', c)
                   }}
                 />
+                {props.variant === 'outline' && (
+                  <ColorPickerInput
+                    label="Kenarlık (Border) Rengi"
+                    value={props.borderColor || styles.borderColor}
+                    onChange={(c) => {
+                      handlePropChange('borderColor', c)
+                      handleStyleChange('borderColor', c)
+                    }}
+                  />
+                )}
               </>
             )}
 

@@ -1364,22 +1364,68 @@ const NodeItem: React.FC<{
           align === 'center' ? 'justify-center' :
           align === 'right' ? 'justify-end' : 'justify-start'
 
+        const variant = props.variant || (props.border || styles.border ? 'outline' : 'solid')
+        const shape = props.shape || (styles.borderRadius ? undefined : 'pill')
+        const size = props.size || 'md'
+        const hoverEffect = props.hoverEffect || 'shrink'
+        const isUppercase = props.uppercase !== false
+
+        // Size classes
+        const sizeClasses =
+          size === 'xs' ? 'px-3.5 py-1.5 text-xs' :
+          size === 'sm' ? 'px-5 py-2.5 text-xs' :
+          size === 'lg' ? 'px-9 py-4 text-base' :
+          size === 'xl' ? 'px-10 py-5 text-lg' :
+          'px-7 py-3.5 text-xs sm:text-sm'
+
+        // Shape classes
+        const shapeClass =
+          shape === 'pill' ? 'rounded-full' :
+          shape === 'square' ? 'rounded-none' :
+          shape === 'rounded' ? 'rounded-xl' : 'rounded-full'
+
+        // Hover effect classes
+        const hoverClass =
+          hoverEffect === 'shrink' ? 'hover:scale-[0.98] active:scale-95 transition-transform duration-200' :
+          hoverEffect === 'grow' ? 'hover:scale-105 active:scale-95 transition-transform duration-200' :
+          hoverEffect === 'invert' ? 'hover:invert transition-all duration-300' :
+          'hover:opacity-90 active:scale-95 transition-all duration-200'
+
+        // Fallback colors from theme or primary
+        const primaryCol = site?.theme_config?.primary_color || '#222222'
+        const defaultBg = variant === 'outline' ? 'transparent' : primaryCol
+        const defaultColor = variant === 'outline' ? primaryCol : '#ffffff'
+
         const btnStyle: React.CSSProperties = {}
-        if (styles.backgroundColor || props.bgColor) btnStyle.backgroundColor = styles.backgroundColor || props.bgColor
-        if (styles.color || props.color) btnStyle.color = styles.color || props.color
+        if (styles.backgroundColor || props.bgColor) {
+          btnStyle.backgroundColor = styles.backgroundColor || props.bgColor
+        } else if (variant === 'solid') {
+          btnStyle.backgroundColor = defaultBg
+        } else if (variant === 'outline') {
+          btnStyle.backgroundColor = 'transparent'
+        }
+
+        if (styles.color || props.color || props.textColor) {
+          btnStyle.color = styles.color || props.color || props.textColor
+        } else {
+          btnStyle.color = defaultColor
+        }
+
+        if (variant === 'outline') {
+          const bColor = props.borderColor || styles.borderColor || primaryCol
+          const bWidth = props.borderWidth || styles.borderWidth || '1.5px'
+          btnStyle.border = `${bWidth} solid ${bColor}`
+        } else if (styles.border || props.border) {
+          btnStyle.border = styles.border || props.border
+        }
+
         if (styles.borderRadius) btnStyle.borderRadius = styles.borderRadius
         if (styles.boxShadow) btnStyle.boxShadow = styles.boxShadow
         if (styles.padding) btnStyle.padding = styles.padding
-        if (styles.border || props.border) btnStyle.border = styles.border || props.border
-        if (styles.borderColor || props.borderColor) btnStyle.borderColor = styles.borderColor || props.borderColor
-        if (styles.borderWidth || props.borderWidth) btnStyle.borderWidth = styles.borderWidth || props.borderWidth
-        if (styles.borderStyle) btnStyle.borderStyle = styles.borderStyle
         if (styles.fontSize || props.fontSize) btnStyle.fontSize = styles.fontSize || props.fontSize
         if (styles.fontFamily || props.fontFamily) btnStyle.fontFamily = styles.fontFamily || props.fontFamily
         if (styles.letterSpacing || props.letterSpacing) btnStyle.letterSpacing = styles.letterSpacing || props.letterSpacing
 
-        const isRedBtn = (styles.backgroundColor || props.bgColor) === '#FD0101' || node.id === 'c1edc74'
-        const hasCustomBg = Boolean(btnStyle.backgroundColor)
         const resolvedBtnUrl = resolveSiteUrl(props.url, siteSlug, site?.domain)
 
         return (
@@ -1396,12 +1442,12 @@ const NodeItem: React.FC<{
                 handleInternalLinkClick(e, resolvedBtnUrl)
               }}
               style={btnStyle}
-              className={`inline-flex items-center justify-center text-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm leading-snug shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 max-w-full whitespace-normal break-words ${
-                isRedBtn
-                  ? 'bg-[#FD0101] hover:bg-red-700 text-white shadow-red-500/30'
-                  : hasCustomBg || btnStyle.border
-                  ? ''
-                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+              className={`inline-flex items-center justify-center text-center gap-2 ${sizeClasses} ${shapeClass} ${hoverClass} ${
+                isUppercase ? 'uppercase tracking-wider' : ''
+              } font-semibold leading-snug max-w-full whitespace-normal break-words cursor-pointer ${
+                variant === 'outline'
+                  ? 'hover:opacity-90'
+                  : 'shadow-sm hover:shadow-md'
               }`}
             >
               {props.icon && <i className={props.icon} />}

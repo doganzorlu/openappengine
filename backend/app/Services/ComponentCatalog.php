@@ -28,6 +28,10 @@ class ComponentCatalog
                     'how_to_apply' => 'Call update_site_theme with: { site_slug, header_transparent: true, sticky_header: true }.',
                 ],
                 'step_3_visual_effects_contract' => [
+                    'button_styles' => [
+                        'source_indicator' => 'Check CSS of buttons. If button has transparent background and solid border: set variant: "outline". If border-radius is 9999px: set shape: "pill". If Elementor shrink animation (e-animation-shrink) is present: set hoverEffect: "shrink". If text is uppercase: set uppercase: true.',
+                        'how_to_apply' => 'In Button props, define: { variant: "outline", shape: "pill", hoverEffect: "shrink", uppercase: true, borderColor: "#222222" }.',
+                    ],
                     'inputbox_and_form_styles' => [
                         'source_indicator' => 'Check CSS of inputs (input[type=text], select, textarea). If border-width is 0px 0px 1px 0px (or border-bottom only) and background is transparent:',
                         'how_to_apply' => 'In ContactForm props, set inputStyle: "underline" and cardStyle: "transparent". This applies the luxury editorial underline aesthetic with flush left alignment and crisp focus states.',
@@ -148,14 +152,18 @@ class ComponentCatalog
                 ],
                 'Button' => [
                     'category' => 'Interactive',
-                    'description' => 'Call-to-action button with icon, link and color inheritance.',
+                    'description' => 'Call-to-action button supporting solid, outline, and text link variants, pill/rounded/square shapes, hover animations (shrink/grow/invert), and uppercase tracking.',
                     'props' => [
-                        'text' => ['type' => 'string', 'required' => true],
-                        'url' => ['type' => 'string', 'required' => true],
-                        'bgColor' => ['type' => 'string', 'description' => 'Defaults to theme primary color'],
-                        'textColor' => ['type' => 'string'],
-                        'size' => ['type' => 'string', 'enum' => ['sm', 'md', 'lg', 'xl'], 'default' => 'md'],
-                        'shape' => ['type' => 'string', 'enum' => ['rounded', 'pill', 'square'], 'default' => 'rounded'],
+                        'text' => ['type' => 'string', 'required' => true, 'description' => 'Button label. Supports arrows like "Découvrir nos offres →"'],
+                        'url' => ['type' => 'string', 'required' => true, 'description' => 'Relative link (e.g. /offres, #contact) or external URL'],
+                        'variant' => ['type' => 'string', 'enum' => ['solid', 'outline', 'link'], 'default' => 'solid', 'description' => 'Visual style: "solid" (fill), "outline" (transparent bg with crisp border, inverts on hover), "link" (inline text with arrow)'],
+                        'shape' => ['type' => 'string', 'enum' => ['pill', 'rounded', 'square'], 'default' => 'pill', 'description' => 'Border radius: "pill" (rounded-full 9999px), "rounded" (rounded-xl), "square" (rounded-none)'],
+                        'size' => ['type' => 'string', 'enum' => ['xs', 'sm', 'md', 'lg', 'xl'], 'default' => 'md'],
+                        'hoverEffect' => ['type' => 'string', 'enum' => ['shrink', 'grow', 'invert', 'none'], 'default' => 'shrink', 'description' => 'Hover animation: "shrink" (matches Elementor e-animation-shrink), "grow", "invert"'],
+                        'uppercase' => ['type' => 'boolean', 'default' => true],
+                        'bgColor' => ['type' => 'string', 'description' => 'Background color. Defaults to theme primary_color (#222222)'],
+                        'textColor' => ['type' => 'string', 'description' => 'Text color'],
+                        'borderColor' => ['type' => 'string', 'description' => 'Border color for outline buttons'],
                         'align' => ['type' => 'string', 'enum' => ['left', 'center', 'right']],
                     ],
                 ],

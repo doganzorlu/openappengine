@@ -426,6 +426,31 @@ class ElementorParser
                     $settings['button_text_color'] ?? $settings['text_color'] ?? null,
                     $settings['__globals__']['button_text_color'] ?? $settings['__globals__']['text_color'] ?? null
                 );
+                
+                // Extract Button Variant & Shape
+                $hasBorder = !empty($settings['border_border']) && $settings['border_border'] !== 'none';
+                $variant = $hasBorder ? 'outline' : 'solid';
+
+                // Shape from border_radius
+                $radiusVal = null;
+                if (isset($settings['border_radius']['top'])) {
+                    $radiusVal = (int) $settings['border_radius']['top'];
+                }
+                $shape = ($radiusVal !== null && $radiusVal >= 20) ? 'pill' : (($radiusVal === 0) ? 'square' : 'pill');
+
+                // Hover animation
+                $hoverAnim = $settings['hover_animation'] ?? 'shrink';
+                if ($hoverAnim === 'elementor-animation-shrink') $hoverAnim = 'shrink';
+                if ($hoverAnim === 'elementor-animation-grow') $hoverAnim = 'grow';
+
+                $size = $settings['size'] ?? 'md';
+                $isUppercase = ($settings['typography_text_transform'] ?? '') === 'uppercase';
+
+                $borderColor = $this->resolveColor(
+                    $settings['border_color'] ?? null,
+                    $settings['__globals__']['border_color'] ?? null
+                );
+
                 return [
                     'id' => $id,
                     'type' => 'Button',
@@ -437,6 +462,12 @@ class ElementorParser
                         'icon' => $settings['selected_icon']['value'] ?? null,
                         'bgColor' => $btnBg,
                         'color' => $btnColor,
+                        'variant' => $variant,
+                        'shape' => $shape,
+                        'size' => $size,
+                        'hoverEffect' => $hoverAnim,
+                        'uppercase' => $isUppercase,
+                        'borderColor' => $borderColor,
                     ],
                     'styles' => $styles,
                 ];
