@@ -36,7 +36,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   siteSlug,
   title,
   subtitle,
-  buttonText = 'Envoyer ma demande →',
+  buttonText = 'Mesajı Gönder →',
   buttonBgColor = '#222222',
   buttonTextColor = '#ffffff',
   buttonShape = 'pill',
@@ -98,7 +98,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
     const currentFields = steps[currentStep] || []
     for (const f of currentFields) {
       if (f.required && (formData[f.id] === undefined || formData[f.id] === '' || formData[f.id] === false)) {
-        setError(`Veuillez renseigner le champ obligatoire : "${f.label || f.id}"`)
+        setError(`Lütfen zorunlu alanı doldurunuz: "${f.label || f.id}"`)
         return false
       }
     }
@@ -140,13 +140,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.message || 'Le message n\'a pas pu être envoyé. Veuillez réessayer.')
+        throw new Error(data.message || 'Mesaj gönderilemedi. Lütfen tekrar deneyiniz.')
       }
       setSubmitted(true)
       setFormData({})
       setCurrentStep(0)
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue.')
+      setError(err.message || 'Bir hata oluştu.')
     } finally {
       setLoading(false)
     }
@@ -199,9 +199,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({
       return (
         <div className="bg-[#FAF7F2] border border-[#E8E2D9] text-[#222222] rounded-2xl p-8 text-center space-y-3">
           <div className="text-3xl">✨</div>
-          <h4 className="font-serif text-xl font-normal text-[#222222]">Message bien envoyé</h4>
+          <h4 className="font-serif text-xl font-normal text-[#222222]">Mesajınız Başarıyla İletildi</h4>
           <p className="text-sm text-[#555555] max-w-md mx-auto leading-relaxed">
-            Merci de nous avoir contactés. Nous revenons vers vous sous 24 à 48 heures ouvrées pour échanger sur votre projet.
+            Bizimle iletişime geçtiğiniz için teşekkür ederiz. Talebinizi değerlendirerek en kısa sürede sizinle iletişime geçeceğiz.
           </p>
           <button
             onClick={() => {
@@ -210,7 +210,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             }}
             className="mt-4 inline-block text-xs uppercase tracking-widest font-semibold text-[#9E2123] underline hover:opacity-80 cursor-pointer"
           >
-            Envoyer une autre demande
+            Yeni Bir Mesaj Gönder
           </button>
         </div>
       )
@@ -225,7 +225,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <div className="space-y-2 pb-2">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-500">
               <span className="uppercase tracking-wider">
-                Étape {currentStep + 1} sur {steps.length}
+                Adım {currentStep + 1} / {steps.length}
               </span>
               <span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
             </div>
@@ -351,36 +351,36 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           // Default fallback simple form
           <div className="space-y-4">
             <div>
-              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Nom complet *</label>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Ad Soyad *</label>
               <input
                 type="text"
                 required
                 value={formData.name || ''}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                placeholder="Votre nom"
+                placeholder="Adınız ve Soyadınız"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">E-mail *</label>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">E-posta *</label>
               <input
                 type="email"
                 required
                 value={formData.email || ''}
                 onChange={(e) => handleFieldChange('email', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                placeholder="contact@exemple.com"
+                placeholder="ornek@sirket.com"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Message *</label>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Mesajınız *</label>
               <textarea
                 required
                 rows={4}
                 value={formData.message || ''}
                 onChange={(e) => handleFieldChange('message', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                placeholder="Parlez-nous de votre projet..."
+                placeholder="Projeniz veya talebinizden bahsedin..."
               />
             </div>
           </div>
@@ -394,7 +394,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               onClick={handlePrevStep}
               className={`py-3.5 px-6 border border-gray-300 text-gray-700 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition hover:bg-gray-100 cursor-pointer`}
             >
-              ← Précédent
+              ← Geri
             </button>
           )}
 
@@ -405,7 +405,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
               className={`flex-1 py-4 px-8 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:opacity-90 active:scale-[0.99] shadow-sm cursor-pointer flex items-center justify-center gap-2`}
             >
-              <span>Continuer →</span>
+              <span>İleri →</span>
             </button>
           ) : (
             <button
@@ -420,7 +420,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Envoi en cours...</span>
+                  <span>Gönderiliyor...</span>
                 </>
               ) : (
                 <span>{buttonText}</span>

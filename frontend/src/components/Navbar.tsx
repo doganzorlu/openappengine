@@ -60,6 +60,8 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, activePage, isEngin
   // Header text/logo dark mode: if hero is dark -> white text, else dark text
   const useLightHeaderTheme = isTransparent && !isHeroDark
 
+  const customHeaderBg = (site.settings as any)?.header_bg || (site.theme_config as any)?.header_bg
+
   const headerClass = isTransparent
     ? `fixed ${topPosition} inset-x-0 z-40 transition-all duration-300 ${
         isScrolledActive
@@ -70,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, activePage, isEngin
           ? 'bg-transparent text-neutral-900 border-b border-transparent'
           : 'bg-transparent text-white border-b border-transparent'
       }`
-    : `sticky ${topPosition} z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300`
+    : `sticky ${topPosition} z-40 ${customHeaderBg ? '' : 'bg-white/95'} backdrop-blur-md border-b border-gray-200/60 shadow-sm transition-all duration-300`
 
   const navItemClass = isTransparent
     ? useLightHeaderTheme
@@ -79,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, activePage, isEngin
     : 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-gray-700 hover:text-neutral-950 hover:bg-gray-100 transition-all'
 
   return (
-    <header className={headerClass}>
+    <header className={headerClass} style={customHeaderBg && !isTransparent ? { backgroundColor: customHeaderBg } : undefined}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand */}
         <a

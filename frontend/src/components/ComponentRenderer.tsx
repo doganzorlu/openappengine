@@ -982,7 +982,8 @@ const NodeItem: React.FC<{
           styles.backgroundColor === '#1A1A1A70' ||
           node.id === '3c904e7'
 
-        const widthVal = typeof props.width === 'number' ? props.width : parseFloat(props.width || '100')
+        const rawWidth = props.inlineSize ?? props.width
+        const widthVal = typeof rawWidth === 'number' ? rawWidth : parseFloat(rawWidth || '100')
         const widthClass = isHeroColumn
           ? 'w-full flex justify-center items-center'
           : inGrid
@@ -1033,7 +1034,7 @@ const NodeItem: React.FC<{
             <div className="w-full flex justify-center items-center mx-auto my-4">
               <div
                 style={heroBoxStyle}
-                className="rounded-2xl shadow-2xl backdrop-blur-md border border-white/20 text-center mx-auto transition-all"
+                className={`${styles.borderRadius ? '' : 'rounded-2xl'} ${styles.border === 'none' ? 'border-0' : 'border border-white/20'} shadow-2xl backdrop-blur-sm text-center mx-auto transition-all`}
               >
                 <ComponentRenderer
                   nodes={children}
@@ -1848,7 +1849,10 @@ const NodeItem: React.FC<{
 
       case 'Video': {
         let embedUrl = props.url || ''
-        if (embedUrl.includes('youtube.com/watch?v=')) {
+        if (embedUrl.includes('listType=playlist&list=')) {
+          const listId = embedUrl.split('list=')[1]?.split('&')[0]
+          embedUrl = `https://www.youtube.com/embed/videoseries?list=${listId}`
+        } else if (embedUrl.includes('youtube.com/watch?v=')) {
           const videoId = embedUrl.split('v=')[1]?.split('&')[0]
           embedUrl = `https://www.youtube.com/embed/${videoId}`
         } else if (embedUrl.includes('youtu.be/')) {

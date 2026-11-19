@@ -264,6 +264,7 @@ export function App() {
         const themeFonts = [
           siteData.site?.theme_config?.font_family,
           siteData.site?.theme_config?.heading_font_family,
+          ...(Array.isArray(siteData.site?.theme_config?.fonts) ? siteData.site?.theme_config?.fonts : []),
         ].filter(Boolean) as string[]
 
         themeFonts.forEach((fStr) => {

@@ -38,9 +38,10 @@ export const Timeline: React.FC<TimelineProps> = ({ items, accentColor = '#BB009
 
           {/* Content Card */}
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <h4 className="text-lg font-bold text-gray-800 mb-1">{item.title}</h4>
+            <h4 className="text-lg font-bold mb-1" style={{ color: accentColor }}>{item.title}</h4>
             <div
-              className="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+              className="text-gray-700 text-sm leading-relaxed prose prose-sm max-w-none"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
               dangerouslySetInnerHTML={{ __html: item.description }}
             />
           </div>
