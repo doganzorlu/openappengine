@@ -174,6 +174,7 @@ interface RendererProps {
   onUpdateNode?: (updatedNode: ComponentNode) => void
   isTopLevel?: boolean
   inGrid?: boolean
+  inFlexRow?: boolean
   onMoveNode?: (nodeId: string, direction: 'up' | 'down') => void
   onDuplicateNode?: (nodeId: string) => void
   onDeleteNode?: (nodeId: string) => void
@@ -197,6 +198,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
   onDeleteNode,
   onAddBlockAtIndex,
   themeTokens,
+  inFlexRow = false,
 }) => {
   // 1. Resolve Inherited Theme Tokens (Site -> Page -> Container -> Component)
   const siteGlobalColors = (site?.settings as any)?.global_colors || {}
@@ -279,6 +281,8 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
 
             const colWidthClass = inGrid
               ? 'w-full h-full'
+              : inFlexRow
+              ? 'w-auto'
               : isFooterCol
               ? `w-full md:w-1/3 px-4 sm:px-6 text-center ${footerColBorder}`
               : node.type === 'Column'
@@ -368,6 +372,7 @@ export const ComponentRenderer: React.FC<RendererProps> = ({
                   onDeleteNode={onDeleteNode}
                   themeTokens={activeTheme}
                   inGrid={inGrid}
+                  inFlexRow={inFlexRow}
                 />
               </div>
             )
@@ -666,6 +671,7 @@ const NodeItem: React.FC<{
   onDeleteNode?: (nodeId: string) => void
   themeTokens?: ThemeTokens
   inGrid?: boolean
+  inFlexRow?: boolean
 }> = ({
   node,
   siteSlug,
@@ -679,6 +685,7 @@ const NodeItem: React.FC<{
   onDeleteNode,
   themeTokens,
   inGrid = false,
+  inFlexRow = false,
 }) => {
   const { type, props = {}, styles = {}, children = [] } = node
 
@@ -735,6 +742,18 @@ const NodeItem: React.FC<{
         if (styles.borderStyle) bgStyle.borderStyle = styles.borderStyle
         if (styles.padding) bgStyle.padding = styles.padding
         if (styles.margin) bgStyle.margin = styles.margin
+        if (styles.paddingTop) bgStyle.paddingTop = styles.paddingTop
+        if (styles.paddingBottom) bgStyle.paddingBottom = styles.paddingBottom
+        if (styles.paddingLeft) bgStyle.paddingLeft = styles.paddingLeft
+        if (styles.paddingRight) bgStyle.paddingRight = styles.paddingRight
+        if (styles.marginTop) bgStyle.marginTop = styles.marginTop
+        if (styles.marginBottom) bgStyle.marginBottom = styles.marginBottom
+        if (styles.justifyContent || props.justifyContent) {
+          bgStyle.justifyContent = styles.justifyContent || props.justifyContent
+        }
+        if (styles.alignItems || props.alignItems) {
+          bgStyle.alignItems = styles.alignItems || props.alignItems
+        }
 
         const isRow = props.flexDirection === 'row' || styles.flexDirection === 'row'
         const secBg = styles.backgroundColor || props.bgColor
@@ -758,11 +777,12 @@ const NodeItem: React.FC<{
           children.length === 1 &&
           (children[0].type === 'Spacer' || children[0].children?.[0]?.type === 'Spacer')
 
+        const hasCustomPadding = !!(styles.padding || styles.paddingTop || styles.paddingBottom)
         const paddingClass = isSpacerOnly
           ? 'py-0'
           : isHeader
           ? 'py-2 sm:py-3'
-          : styles.padding
+          : hasCustomPadding
           ? ''
           : 'py-10 md:py-14'
 
@@ -779,6 +799,7 @@ const NodeItem: React.FC<{
         const gapClass = props.gap === 'none' || props.gap === '0' ? 'gap-0' :
                          props.gap === 'sm' || props.gap === '16' ? 'gap-4' :
                          props.gap === 'lg' || props.gap === '32' ? 'gap-8' :
+                         styles.gap ? '' :
                          'gap-6'
 
         const gridColsClass = 
@@ -795,12 +816,18 @@ const NodeItem: React.FC<{
           props.alignItems === 'end' ? 'items-end' :
           'items-stretch'
 
+        const isRowJustify =
+          (props.justifyContent || styles.justifyContent) === 'center' ? 'justify-center' :
+          (props.justifyContent || styles.justifyContent) === 'flex-end' || (props.justifyContent || styles.justifyContent) === 'end' ? 'justify-end' :
+          (props.justifyContent || styles.justifyContent) === 'flex-start' || (props.justifyContent || styles.justifyContent) === 'start' ? 'justify-start' :
+          'justify-between'
+
         const childWrapperClass = isFooter
           ? 'flex flex-col md:flex-row items-stretch md:items-start justify-center gap-8 md:gap-0 max-w-5xl mx-auto w-full text-white'
           : isGridMode
           ? `grid ${gridColsClass} ${gapClass} ${alignItemsClass} w-full max-w-full`
           : isRow
-          ? 'flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full'
+          ? `flex flex-col sm:flex-row items-center ${isRowJustify} ${gapClass} w-full max-w-full`
           : hasLeftAlignedHeading
           ? 'flex flex-col items-stretch justify-center gap-4 w-full max-w-full'
           : 'flex flex-col items-center justify-center gap-4 w-full max-w-full text-center'
@@ -811,7 +838,7 @@ const NodeItem: React.FC<{
             style={bgStyle}
             className={`relative ${paddingClass} transition-all ${
               isHeader ? 'overflow-visible z-40' : 'overflow-hidden'
-            } flex flex-col justify-center`}
+            } flex flex-col ${bgStyle.justifyContent ? '' : 'justify-center'}`}
           >
             {/* Top Shape Divider */}
             {props.shapeDividerTop && (
@@ -855,8 +882,19 @@ const NodeItem: React.FC<{
                   ? 'max-w-7xl px-4 sm:px-6 lg:px-8'
                   : 'max-w-6xl px-4 sm:px-6 lg:px-8'
               }`}
+              style={{
+                maxWidth: styles.maxWidth || undefined,
+                width: styles.width || undefined,
+              }}
             >
-              <div className={childWrapperClass}>
+              <div
+                className={childWrapperClass}
+                style={{
+                  gap: styles.gap || props.gap || undefined,
+                  justifyContent: styles.justifyContent || props.justifyContent || undefined,
+                  alignItems: styles.alignItems || props.alignItems || undefined,
+                }}
+              >
                 <ComponentRenderer
                   nodes={children}
                   siteSlug={siteSlug}
@@ -869,6 +907,7 @@ const NodeItem: React.FC<{
                   onDuplicateNode={onDuplicateNode}
                   onDeleteNode={onDeleteNode}
                   inGrid={isGridMode}
+                  inFlexRow={isRow}
                   themeTokens={sectionThemeTokens}
                 />
               </div>
@@ -1154,7 +1193,7 @@ const NodeItem: React.FC<{
       }
 
       case 'Heading': {
-        const level = props.level || 'h2'
+        const level = (props.level || 'h2').toLowerCase()
         const align = styles.textAlign || props.align || 'left'
         const effectiveHeadingColor = styles.color || props.color || activeTheme.headingColor
         const effectiveFontFamily =
@@ -1162,12 +1201,23 @@ const NodeItem: React.FC<{
           props.fontFamily ||
           (site?.theme_config as any)?.heading_font_family ||
           activeTheme.fontFamily
-        const color: React.CSSProperties = {
+
+        const headingStyles: React.CSSProperties = {
           color: effectiveHeadingColor,
           fontFamily: effectiveFontFamily,
           fontStyle: (styles.fontStyle || props.fontStyle) as any,
           letterSpacing: styles.letterSpacing || props.letterSpacing,
           lineHeight: styles.lineHeight || props.lineHeight,
+          textTransform: (styles.textTransform || props.textTransform) as any,
+          fontSize: styles.fontSize || props.fontSize,
+          fontWeight: styles.fontWeight ?? props.fontWeight,
+          maxWidth: styles.maxWidth || props.maxWidth,
+          margin: styles.margin,
+          marginTop: styles.marginTop,
+          marginBottom: styles.marginBottom,
+          marginLeft: styles.marginLeft,
+          marginRight: styles.marginRight,
+          padding: styles.padding,
         }
 
         const alignClass =
@@ -1196,13 +1246,13 @@ const NodeItem: React.FC<{
             }
           : {}
 
-        // Hero heading
+        // Hero badge heading (legacy support)
         if (styles.fontSize === '5.5em' || node.id === 'c568d68' || styles.fontSize === '2em' || node.id === '3f78df5') {
           return (
             <div className="flex justify-center w-full px-2">
               <h2
                 {...editableProps}
-                style={{ ...color, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+                style={{ ...headingStyles, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
                 className={`bg-[#54595FAB] px-4 sm:px-8 py-3 sm:py-5 rounded-2xl text-base sm:text-2xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-wider leading-snug shadow-xl backdrop-blur-sm border border-white/20 text-center uppercase my-2 max-w-[320px] sm:max-w-4xl mx-auto break-words ${
                   isSelected ? 'outline-none cursor-text ring-2 ring-purple-400' : ''
                 }`}
@@ -1210,25 +1260,6 @@ const NodeItem: React.FC<{
                 {isSelected ? props.text : renderFormattedText(props.text)}
               </h2>
             </div>
-          )
-        }
-
-        if (level === 'h1') {
-          return (
-            <h1
-              {...editableProps}
-              style={{
-                ...color,
-                ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
-                ...(styles.fontWeight ? { fontWeight: styles.fontWeight } : {}),
-                ...(styles.fontFamily ? { fontFamily: styles.fontFamily } : {}),
-              }}
-              className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight w-full ${
-                props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''
-              } ${alignClass} ${isSelected ? 'outline-none cursor-text ring-2 ring-purple-400 rounded px-1' : ''}`}
-            >
-              {isSelected ? props.text : renderFormattedText(props.text)}
-            </h1>
           )
         }
 
@@ -1262,28 +1293,36 @@ const NodeItem: React.FC<{
           node.id === '26a5a60' ||
           (props.align === 'center' && (styles.fontSize === '2.6rem' || styles.fontSize === '2.8rem' || styles.fontSize === '3.4em'))
 
+        const Tag = (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span'].includes(level) ? level : 'h2') as React.ElementType
+
+        const defaultWeightClass = (styles.fontWeight !== undefined || props.fontWeight !== undefined)
+          ? ''
+          : (level === 'h1' || level === 'h2') ? 'font-extrabold' : 'font-semibold'
+
+        const defaultSizeClass = (styles.fontSize || props.fontSize)
+          ? ''
+          : level === 'h1' ? 'text-2xl sm:text-3xl md:text-4xl' :
+            level === 'h2' ? 'text-xl sm:text-2xl md:text-3xl' :
+            level === 'h3' ? 'text-lg sm:text-xl' :
+            level === 'h4' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
+
         return (
-          <h2
+          <Tag
             {...editableProps}
             style={{
-              ...color,
-              ...(styles.fontSize ? { fontSize: styles.fontSize } : {}),
-              ...(styles.fontWeight ? { fontWeight: styles.fontWeight } : {}),
-              ...(styles.fontFamily ? { fontFamily: styles.fontFamily } : {}),
+              ...headingStyles,
               ...(isHeroHeading ? { textShadow: '0 2px 10px rgba(0,0,0,0.5)' } : {}),
             }}
-            className={`font-extrabold tracking-tight whitespace-pre-line w-full ${
+            className={`${defaultSizeClass} ${defaultWeightClass} tracking-tight leading-tight w-full ${
               isHeroHeading
-                ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-3 leading-snug text-white text-center'
-                : color.color
-                ? ''
-                : 'text-xl sm:text-2xl text-gray-800'
+                ? 'my-3 leading-snug text-white text-center'
+                : ''
             } ${props.withDivider ? 'border-b border-gray-300 pb-3 mb-2' : ''} ${alignClass} ${
               isSelected ? 'outline-none cursor-text ring-2 ring-purple-400 rounded px-1' : ''
             }`}
           >
             {isSelected ? props.text : renderFormattedText(props.text)}
-          </h2>
+          </Tag>
         )
       }
 
@@ -1437,11 +1476,15 @@ const NodeItem: React.FC<{
         if (styles.fontSize || props.fontSize) btnStyle.fontSize = styles.fontSize || props.fontSize
         if (styles.fontFamily || props.fontFamily) btnStyle.fontFamily = styles.fontFamily || props.fontFamily
         if (styles.letterSpacing || props.letterSpacing) btnStyle.letterSpacing = styles.letterSpacing || props.letterSpacing
+        if (styles.fontWeight || props.fontWeight) btnStyle.fontWeight = styles.fontWeight || props.fontWeight
+        if (styles.textTransform || props.textTransform) btnStyle.textTransform = styles.textTransform || props.textTransform
+        if (styles.margin) btnStyle.margin = styles.margin
 
         const resolvedBtnUrl = resolveSiteUrl(props.url, siteSlug, site?.domain)
+        const wrapperWidth = props.fullWidth ? 'w-full' : (inGrid || inFlexRow ? 'w-auto' : 'w-full')
 
         return (
-          <div className={`flex w-full ${alignClass} my-3`}>
+          <div className={`flex ${wrapperWidth} ${alignClass} my-2`}>
             <a
               href={resolvedBtnUrl}
               target={props.target || '_self'}

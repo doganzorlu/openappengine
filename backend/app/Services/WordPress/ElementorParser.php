@@ -5,10 +5,31 @@ namespace App\Services\WordPress;
 class ElementorParser
 {
     protected array $globalColors = [];
+    protected array $globalTypography = [];
 
     public function setGlobalColors(array $colors): void
     {
         $this->globalColors = $colors;
+    }
+
+    public function setGlobalTypography(array $typography): void
+    {
+        $this->globalTypography = $typography;
+    }
+
+    public function resolveTypography(?string $globalRef): ?array
+    {
+        if (!$globalRef) return null;
+        if (preg_match('/id=([a-zA-Z0-9_-]+)/', $globalRef, $m)) {
+            $id = $m[1];
+            if (isset($this->globalTypography[$id])) {
+                return $this->globalTypography[$id];
+            }
+        }
+        if (isset($this->globalTypography[$globalRef])) {
+            return $this->globalTypography[$globalRef];
+        }
+        return null;
     }
 
     public function resolveColor(?string $color, ?string $globalRef = null): ?string
@@ -31,10 +52,13 @@ class ElementorParser
     /**
      * Parse the raw Elementor JSON array into OpenAppEngine Component Tree
      */
-    public function parse(array $elementorElements, array $globalColors = []): array
+    public function parse(array $elementorElements, array $globalColors = [], array $globalTypography = []): array
     {
         if (!empty($globalColors)) {
             $this->globalColors = $globalColors;
+        }
+        if (!empty($globalTypography)) {
+            $this->globalTypography = $globalTypography;
         }
 
         $components = [];
@@ -901,18 +925,54 @@ class ElementorParser
         }
 
         // 4. Margins & Padding
-        if (!empty($settings['_margin'])) {
-            $m = $settings['_margin'];
+        $m = $settings['margin'] ?? $settings['_margin'] ?? null;
+        if (!empty($m) && is_array($m)) {
             $u = $m['unit'] ?? 'px';
             $styles['margin'] = "{$m['top']}{$u} {$m['right']}{$u} {$m['bottom']}{$u} {$m['left']}{$u}";
+            if (isset($m['top'])) $styles['marginTop'] = "{$m['top']}{$u}";
+            if (isset($m['bottom'])) $styles['marginBottom'] = "{$m['bottom']}{$u}";
+            if (isset($m['left'])) $styles['marginLeft'] = "{$m['left']}{$u}";
+            if (isset($m['right'])) $styles['marginRight'] = "{$m['right']}{$u}";
         }
-        if (!empty($settings['_padding'])) {
-            $p = $settings['_padding'];
+        $p = $settings['padding'] ?? $settings['_padding'] ?? null;
+        if (!empty($p) && is_array($p)) {
             $u = $p['unit'] ?? 'px';
             $styles['padding'] = "{$p['top']}{$u} {$p['right']}{$u} {$p['bottom']}{$u} {$p['left']}{$u}";
+            if (isset($p['top'])) $styles['paddingTop'] = "{$p['top']}{$u}";
+            if (isset($p['bottom'])) $styles['paddingBottom'] = "{$p['bottom']}{$u}";
+            if (isset($p['left'])) $styles['paddingLeft'] = "{$p['left']}{$u}";
+            if (isset($p['right'])) $styles['paddingRight'] = "{$p['right']}{$u}";
         }
 
-        // 5. Typography
+        // 5. Typography (Global preset lookup + direct overrides)
+        $globalTypoRef = $globals['typography'] ?? null;
+        if ($globalTypoRef) {
+            $typoPreset = $this->resolveTypography($globalTypoRef);
+            if ($typoPreset) {
+                if (!empty($typoPreset['typography_font_family'])) {
+                    $styles['fontFamily'] = $typoPreset['typography_font_family'];
+                }
+                if (!empty($typoPreset['typography_font_size']['size'])) {
+                    $styles['fontSize'] = $typoPreset['typography_font_size']['size'] . ($typoPreset['typography_font_size']['unit'] ?? 'px');
+                }
+                if (!empty($typoPreset['typography_font_weight'])) {
+                    $styles['fontWeight'] = (int) $typoPreset['typography_font_weight'];
+                }
+                if (!empty($typoPreset['typography_line_height']['size'])) {
+                    $styles['lineHeight'] = $typoPreset['typography_line_height']['size'] . ($typoPreset['typography_line_height']['unit'] ?? 'em');
+                }
+                if (!empty($typoPreset['typography_letter_spacing']['size'])) {
+                    $styles['letterSpacing'] = $typoPreset['typography_letter_spacing']['size'] . ($typoPreset['typography_letter_spacing']['unit'] ?? 'px');
+                }
+                if (!empty($typoPreset['typography_text_transform'])) {
+                    $styles['textTransform'] = $typoPreset['typography_text_transform'];
+                }
+                if (!empty($typoPreset['typography_font_style'])) {
+                    $styles['fontStyle'] = $typoPreset['typography_font_style'];
+                }
+            }
+        }
+
         if (!empty($settings['typography_font_size']['size'])) {
             $styles['fontSize'] = $settings['typography_font_size']['size'] . ($settings['typography_font_size']['unit'] ?? 'px');
         }
@@ -921,6 +981,18 @@ class ElementorParser
         }
         if (!empty($settings['typography_font_family'])) {
             $styles['fontFamily'] = $settings['typography_font_family'];
+        }
+        if (!empty($settings['typography_line_height']['size'])) {
+            $styles['lineHeight'] = $settings['typography_line_height']['size'] . ($settings['typography_line_height']['unit'] ?? 'em');
+        }
+        if (!empty($settings['typography_letter_spacing']['size'])) {
+            $styles['letterSpacing'] = $settings['typography_letter_spacing']['size'] . ($settings['typography_letter_spacing']['unit'] ?? 'px');
+        }
+        if (!empty($settings['typography_text_transform'])) {
+            $styles['textTransform'] = $settings['typography_text_transform'];
+        }
+        if (!empty($settings['typography_font_style'])) {
+            $styles['fontStyle'] = $settings['typography_font_style'];
         }
         $textColor = $this->resolveColor(
             $settings['text_color'] ?? $settings['title_color'] ?? null,
@@ -933,7 +1005,23 @@ class ElementorParser
             $styles['textAlign'] = $settings['align'];
         }
 
-        // 6. Animation
+        // 6. Flex layout & Gaps
+        if (!empty($settings['gap']['size'])) {
+            $styles['gap'] = $settings['gap']['size'] . ($settings['gap']['unit'] ?? 'px');
+        } elseif (!empty($settings['flex_gap']['size'])) {
+            $styles['gap'] = $settings['flex_gap']['size'] . ($settings['flex_gap']['unit'] ?? 'px');
+        }
+        if (!empty($settings['justify_content'])) {
+            $styles['justifyContent'] = $settings['justify_content'];
+        }
+        if (!empty($settings['align_items'])) {
+            $styles['alignItems'] = $settings['align_items'];
+        }
+        if (!empty($settings['flex_direction'])) {
+            $styles['flexDirection'] = $settings['flex_direction'];
+        }
+
+        // 7. Animation
         if (!empty($settings['animation'])) {
             $styles['animation'] = $settings['animation'];
         }

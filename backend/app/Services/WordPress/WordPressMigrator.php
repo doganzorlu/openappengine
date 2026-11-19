@@ -53,6 +53,7 @@ class WordPressMigrator
 
         // 1. EXTRACT ELEMENTOR GLOBAL COLORS & TYPOGRAPHY (Active Kit)
         $globalColors = [];
+        $globalTypography = [];
         $extractedFonts = [];
         $headingFont = null;
         $bodyFont = null;
@@ -77,6 +78,9 @@ class WordPressMigrator
                     // Extract typography (system & custom)
                     $typoList = array_merge($kitData['system_typography'] ?? [], $kitData['custom_typography'] ?? []);
                     foreach ($typoList as $st) {
+                        if (!empty($st['_id'])) {
+                            $globalTypography[$st['_id']] = $st;
+                        }
                         $fFam = $st['typography_font_family'] ?? null;
                         if (!empty($fFam) && is_string($fFam)) {
                             $cleanFont = trim(trim($fFam, "'\""));
@@ -144,9 +148,9 @@ class WordPressMigrator
                 $tArr = json_decode($tJson, true);
                 if (is_array($tArr)) {
                     if ($tType === 'header' && empty($headerLayout)) {
-                        $headerLayout = $this->parser->parse($tArr, $globalColors);
+                        $headerLayout = $this->parser->parse($tArr, $globalColors, $globalTypography);
                     } elseif ($tType === 'footer' && empty($footerLayout)) {
-                        $footerLayout = $this->parser->parse($tArr, $globalColors);
+                        $footerLayout = $this->parser->parse($tArr, $globalColors, $globalTypography);
                     }
                 }
             }
@@ -305,7 +309,7 @@ class WordPressMigrator
             if ($elementorJsonRaw) {
                 $elementorArray = json_decode($elementorJsonRaw, true);
                 if (is_array($elementorArray)) {
-                    $layout = $this->parser->parse($elementorArray, $globalColors);
+                    $layout = $this->parser->parse($elementorArray, $globalColors, $globalTypography);
                 }
             }
 
