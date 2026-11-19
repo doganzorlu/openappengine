@@ -147,10 +147,35 @@ class McpController extends Controller
         if (!empty($args['accent_color'])) {
             $globalColors['accent'] = $args['accent_color'];
         }
+        $themeConfig = $site->theme_config ?? [];
+
+        if (!empty($args['primary_color'])) {
+            $themeConfig['primary_color'] = $args['primary_color'];
+        }
+        if (!empty($args['secondary_color'])) {
+            $themeConfig['secondary_color'] = $args['secondary_color'];
+        }
+        if (!empty($args['accent_color'])) {
+            $themeConfig['accent_color'] = $args['accent_color'];
+        }
         if (!empty($args['font_family'])) {
-            $site->theme_config = array_merge($site->theme_config ?? [], ['font_family' => $args['font_family']]);
+            $themeConfig['font_family'] = $args['font_family'];
+        }
+        if (!empty($args['heading_font_family'])) {
+            $themeConfig['heading_font_family'] = $args['heading_font_family'];
+        }
+        if (isset($args['header_transparent'])) {
+            $themeConfig['header_transparent'] = (bool) $args['header_transparent'];
+        }
+        if (isset($args['sticky_header'])) {
+            $themeConfig['sticky_header'] = (bool) $args['sticky_header'];
+        }
+        if (!empty($args['fonts']) && is_array($args['fonts'])) {
+            $themeConfig['fonts'] = array_values(array_unique($args['fonts']));
+            $settings['fonts'] = $themeConfig['fonts'];
         }
 
+        $site->theme_config = $themeConfig;
         $settings['global_colors'] = $globalColors;
         $site->settings = $settings;
         $site->save();
@@ -521,15 +546,29 @@ class McpController extends Controller
             ],
             [
                 'name' => 'update_site_theme',
-                'description' => 'Update the primary brand color, secondary color, or typography font family of a site',
+                'description' => 'Update typography, colors, navigation header appearance (transparent/sticky), and loaded fonts for a site. Essential for achieving 100% visual parity when cloning websites.',
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => [
                         'site_slug' => ['type' => 'string'],
-                        'primary_color' => ['type' => 'string', 'description' => 'Hex color code (e.g. #0077b6)'],
-                        'secondary_color' => ['type' => 'string', 'description' => 'Hex color code'],
-                        'accent_color' => ['type' => 'string', 'description' => 'Hex color code'],
-                        'font_family' => ['type' => 'string', 'description' => 'CSS font family name'],
+                        'primary_color' => ['type' => 'string', 'description' => 'Primary brand color hex code (e.g. #0a0a0a)'],
+                        'secondary_color' => ['type' => 'string', 'description' => 'Secondary accent color hex code (e.g. #c5a880)'],
+                        'accent_color' => ['type' => 'string', 'description' => 'Accent color hex code'],
+                        'font_family' => ['type' => 'string', 'description' => 'Body text font family (e.g. "Syne, sans-serif" or "Inter, sans-serif")'],
+                        'heading_font_family' => ['type' => 'string', 'description' => 'Headline/title font family (e.g. Playfair Display, serif)'],
+                        'fonts' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'string'],
+                            'description' => 'List of Google Font names to load dynamically in frontend (e.g. ["Playfair Display", "Syne", "Lexend Deca"])',
+                        ],
+                        'header_transparent' => [
+                            'type' => 'boolean',
+                            'description' => 'Set to true if hero section begins beneath a transparent floating navbar',
+                        ],
+                        'sticky_header' => [
+                            'type' => 'boolean',
+                            'description' => 'Set to true if navigation bar should stick fixed to the top on scroll',
+                        ],
                     ],
                     'required' => ['site_slug'],
                 ],

@@ -7,11 +7,63 @@ class ComponentCatalog
     public static function getCatalog(): array
     {
         return [
+            'site_cloning_contract' => [
+                'overview' => 'CRITICAL GUIDELINES FOR AI AGENTS: When scraping, migrating, or cloning a target website into OpenAppEngine via MCP, follow this contract to achieve 100% visual and functional parity.',
+                'step_1_typography_extraction' => [
+                    'action' => 'Inspect the source site fonts via <head> Google Font links, document.fonts, and computed CSS (window.getComputedStyle).',
+                    'detect' => [
+                        'heading_font' => 'Distinguish the headline serif/display font (e.g. Playfair Display, Cinzel, Cormorant Garamond, Montserrat).',
+                        'body_font' => 'Distinguish the clean body sans-serif font (e.g. Syne, Inter, Lexend Deca, Poppins).',
+                        'font_weights_and_italics' => 'Check which weights (300, 400, 600, 700) and italic variants are loaded.',
+                    ],
+                    'how_to_apply' => 'Call update_site_theme with: { site_slug, heading_font_family: "Playfair Display, serif", font_family: "Syne, sans-serif", fonts: ["Playfair Display", "Syne", "Lexend Deca"] }. OpenAppEngine frontend will automatically inject the dynamic Google Fonts stylesheets into <head>.',
+                ],
+                'step_2_header_and_navbar_contract' => [
+                    'action' => 'Inspect the source site navbar overlay, transparency and sticky behavior.',
+                    'detect' => [
+                        'is_transparent' => 'Does the hero image extend underneath a transparent floating navbar? If yes, set header_transparent: true.',
+                        'is_sticky' => 'Does the header stick to top on scroll? If yes, set sticky_header: true.',
+                        'header_cta' => 'Is there a call-to-action button or phone pill in the navbar? Include it in the menu or site settings.',
+                    ],
+                    'how_to_apply' => 'Call update_site_theme with: { site_slug, header_transparent: true, sticky_header: true }.',
+                ],
+                'step_3_visual_effects_contract' => [
+                    'parallax_backgrounds' => [
+                        'source_indicator' => 'Background image with CSS background-attachment: fixed, or image remaining fixed while page scrolls over it.',
+                        'how_to_apply' => 'In Section props, set bgAttachment: "fixed" alongside bgImage.',
+                    ],
+                    'scroll_reveal_animations' => [
+                        'source_indicator' => 'Sections, cards or headings sliding or fading into view upon scroll.',
+                        'how_to_apply' => 'In Section props, set animation: "slideInUp" (or "fadeIn", "zoomIn", "slideInLeft", "slideInRight") and animationDelay: 150 (in milliseconds).',
+                    ],
+                    'editorial_italic_serif_headings' => [
+                        'source_indicator' => 'Headlines where specific words are italicized or highlighted in accent serif (e.g. "DES ESPACES <i>d\'exception</i>").',
+                        'how_to_apply' => 'In Heading props, put HTML directly into the text prop: text: "DES ESPACES <i>d\'exception</i>". ComponentRenderer supports <i>, <em>, and <span> formatting.',
+                    ],
+                ],
+                'step_4_clean_relative_links' => [
+                    'rule' => 'NEVER copy hardcoded legacy domains (e.g. https://oldsite.com/...) into navigation links, buttons, or anchors.',
+                    'internal_links' => 'Always use root-relative paths like "/" for home, "/hakkimizda" for pages, or "#section-id" for in-page anchors.',
+                    'external_links' => 'Use absolute URLs ONLY for true external third-party destinations (Instagram, WhatsApp, Google Maps).',
+                ],
+                'step_5_visual_verification' => [
+                    'action' => 'ALWAYS call preview_page_screenshot after updating layout and theme to visually verify alignment, typography, and colors against the original website.',
+                ],
+            ],
             'design_system' => [
                 'hierarchy' => 'Site (Global Theme) -> Page -> Container / Section -> Component',
                 'color_tokens' => ['primary', 'secondary', 'accent', 'text', 'heading'],
-                'standard_fonts' => ['Poppins, sans-serif', 'Roboto, sans-serif', 'Inter, sans-serif'],
+                'standard_fonts' => ['Poppins, sans-serif', 'Roboto, sans-serif', 'Inter, sans-serif', 'Playfair Display, serif', 'Syne, sans-serif'],
                 'layout_system' => 'Flexbox & CSS Grid with Tailwind utilities, boxed (max-w-6xl/max-w-7xl) or full-width',
+                'theme_tokens' => [
+                    'primary_color' => 'Main brand color',
+                    'secondary_color' => 'Secondary accent color',
+                    'heading_font_family' => 'Font family for headlines (e.g. Playfair Display, serif)',
+                    'font_family' => 'Font family for body text (e.g. "Syne, sans-serif")',
+                    'fonts' => 'Array of Google Font names to dynamically inject into <head>',
+                    'header_transparent' => 'Boolean: transparent floating navbar overlaying hero',
+                    'sticky_header' => 'Boolean: fixed sticky navbar on scroll',
+                ],
                 'url_rules' => [
                     'rule' => 'ALWAYS use clean relative paths for internal navigation (/about, /contact, #section). NEVER hardcode legacy domains (https://oldsite.com/...) or staging/localhost URLs.',
                     'home_url' => '/',
@@ -36,6 +88,9 @@ class ComponentCatalog
                         'bgImage' => ['type' => 'string', 'description' => 'Media URL for background image'],
                         'bgOverlayColor' => ['type' => 'string', 'description' => 'Overlay tint color'],
                         'bgOverlayOpacity' => ['type' => 'number', 'description' => '0.0 to 1.0'],
+                        'bgAttachment' => ['type' => 'string', 'enum' => ['scroll', 'fixed'], 'default' => 'scroll', 'description' => 'Set to "fixed" to enable luxury parallax background where the image stays locked as content scrolls'],
+                        'animation' => ['type' => 'string', 'enum' => ['none', 'fadeIn', 'slideInUp', 'zoomIn', 'slideInLeft', 'slideInRight'], 'default' => 'none', 'description' => 'Scroll reveal animation triggered when section enters viewport'],
+                        'animationDelay' => ['type' => 'number', 'default' => 0, 'description' => 'Delay in milliseconds before scroll reveal animation begins (e.g. 150, 300)'],
                         'minHeight' => ['type' => 'string|number', 'description' => 'Height in px or vh (e.g. 500, "80vh")'],
                         'shapeDividerTop' => ['type' => 'string', 'enum' => ['drops', 'waves', 'tilt', 'mountains']],
                         'shapeDividerBottom' => ['type' => 'string', 'enum' => ['drops', 'waves', 'tilt', 'mountains']],
@@ -62,9 +117,9 @@ class ComponentCatalog
                 ],
                 'Heading' => [
                     'category' => 'Typography',
-                    'description' => 'H1 through H4 headings with auto theme color inheritance.',
+                    'description' => 'H1 through H4 headings with auto theme color inheritance. Supports inline HTML such as <i>editorial italic accents</i>, <em>, and <span class="..."> to match luxury magazine aesthetics.',
                     'props' => [
-                        'text' => ['type' => 'string', 'required' => true],
+                        'text' => ['type' => 'string', 'required' => true, 'description' => 'Heading text. Supports HTML tags like "ESPACES <i>d\'exception</i>" for italic serif accents.'],
                         'level' => ['type' => 'string', 'enum' => ['h1', 'h2', 'h3', 'h4'], 'default' => 'h2'],
                         'align' => ['type' => 'string', 'enum' => ['left', 'center', 'right'], 'default' => 'left'],
                         'color' => ['type' => 'string', 'description' => 'Optional override; inherits from theme'],
