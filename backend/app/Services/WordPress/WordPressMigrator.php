@@ -51,8 +51,12 @@ class WordPressMigrator
             'media' => 0,
         ];
 
-        // 1. EXTRACT ELEMENTOR GLOBAL COLORS (Active Kit)
+        // 1. EXTRACT ELEMENTOR GLOBAL COLORS & TYPOGRAPHY (Active Kit)
         $globalColors = [];
+        $extractedFonts = [];
+        $headingFont = null;
+        $bodyFont = null;
+
         $kitId = $pdo->query("SELECT option_value FROM {$prefix}options WHERE option_name = 'elementor_active_kit'")->fetchColumn();
         if ($kitId) {
             $kitMeta = $pdo->query("SELECT meta_value FROM {$prefix}postmeta WHERE post_id = {$kitId} AND meta_key = '_elementor_page_settings'")->fetchColumn();
@@ -69,9 +73,26 @@ class WordPressMigrator
                             $globalColors[$cc['_id']] = $cc['color'];
                         }
                     }
+
+                    // Extract typography (system & custom)
+                    $typoList = array_merge($kitData['system_typography'] ?? [], $kitData['custom_typography'] ?? []);
+                    foreach ($typoList as $st) {
+                        $fFam = $st['typography_font_family'] ?? null;
+                        if (!empty($fFam) && is_string($fFam)) {
+                            $cleanFont = trim(trim($fFam, "'\""));
+                            $extractedFonts[] = $cleanFont;
+                            $id = $st['_id'] ?? '';
+                            if ($id === 'primary' && empty($headingFont)) {
+                                $headingFont = $cleanFont;
+                            } elseif (($id === 'text' || $id === 'secondary') && empty($bodyFont)) {
+                                $bodyFont = $cleanFont;
+                            }
+                        }
+                    }
                 }
             }
         }
+        $extractedFonts = array_values(array_unique($extractedFonts));
         $this->parser->setGlobalColors($globalColors);
 
         // 2. EXTRACT SITE LOGO (Prefer high-quality transparent PNG logo over lossy JPG)
@@ -167,7 +188,12 @@ class WordPressMigrator
                 'settings' => $siteSettings,
                 'theme_config' => [
                     'primary_color' => $primaryColor,
-                    'font_family' => 'Roboto, sans-serif',
+                    'secondary_color' => $globalColors['secondary'] ?? '#f3f4f6',
+                    'font_family' => $bodyFont ? "{$bodyFont}, sans-serif" : 'Syne, sans-serif',
+                    'heading_font_family' => $headingFont ? "{$headingFont}, serif" : 'Playfair Display, serif',
+                    'fonts' => !empty($extractedFonts) ? $extractedFonts : ['Playfair Display', 'Syne'],
+                    'header_transparent' => true,
+                    'sticky_header' => true,
                     'logo_url' => $logoUrl,
                 ],
                 'status' => 'active',
