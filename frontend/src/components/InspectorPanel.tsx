@@ -656,13 +656,13 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 
                   {/* Dikey Hizalama */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Dikey Hizalama</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Yatay İçerik Hizalaması (Align Items)</label>
                     <div className="grid grid-cols-4 gap-1 text-xs">
                       {[
                         { id: 'stretch', label: 'Eşit Boy' },
-                        { id: 'start', label: 'Üst' },
-                        { id: 'center', label: 'Orta' },
-                        { id: 'end', label: 'Alt' },
+                        { id: 'start', label: 'Sola / Üst' },
+                        { id: 'center', label: 'Ortala' },
+                        { id: 'end', label: 'Sağa / Alt' },
                       ].map((a) => (
                         <button
                           key={a.id}
@@ -675,6 +675,35 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                           }`}
                         >
                           {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dikey / Ana Eksen Konumlandırması (Justify Content) */}
+                  <div className="mt-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Dikey İçerik Konumu (Hero / Bölüm Yaslama)</label>
+                    <div className="grid grid-cols-4 gap-1 text-xs">
+                      {[
+                        { id: 'flex-start', label: 'Üst' },
+                        { id: 'center', label: 'Orta' },
+                        { id: 'flex-end', label: 'Alt (Hero)' },
+                        { id: 'space-between', label: 'İki Yana' },
+                      ].map((j) => (
+                        <button
+                          key={j.id}
+                          type="button"
+                          onClick={() => {
+                            handlePropChange('justifyContent', j.id)
+                            handleStyleChange('justifyContent', j.id)
+                          }}
+                          className={`py-1.5 rounded-lg font-semibold border transition ${
+                            (props.justifyContent || styles.justifyContent || 'center') === j.id
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {j.label}
                         </button>
                       ))}
                     </div>
@@ -3362,12 +3391,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     onChange={(e) => handleStyleChange('fontFamily', e.target.value)}
                     className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none font-medium"
                   >
+                    <option value="'Syne', sans-serif">Syne (Lüks & Modern Sans)</option>
+                    <option value="'Playfair Display', serif">Playfair Display (Zarif Serif)</option>
+                    <option value="'Cinzel', serif">Cinzel (Klasik / Prestij)</option>
+                    <option value="'Lexend Deca', sans-serif">Lexend Deca (Modern Geometrik)</option>
                     <option value="Poppins, sans-serif">Poppins (Modern & Sade)</option>
                     <option value="Inter, sans-serif">Inter (Temiz & Düz)</option>
                     <option value="Roboto, sans-serif">Roboto (Geometrik Sans)</option>
                     <option value="Montserrat, sans-serif">Montserrat (Güçlü Başlık)</option>
-                    <option value="'Playfair Display', serif">Playfair Display (Zarif Serif)</option>
-                    <option value="'Cinzel', serif">Cinzel (Klasik / Prestij)</option>
                     <option value="system-ui, sans-serif">Sistem Fontu (Varsayılan)</option>
                   </select>
                 </div>
@@ -3381,7 +3412,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <input
                       type="text"
-                      placeholder="örn: 24px"
+                      placeholder="örn: 24px veya clamp(2.5rem, 5vw, 4rem)"
                       value={styles.fontSize || ''}
                       onChange={(e) => handleStyleChange('fontSize', e.target.value)}
                       className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none"
@@ -3401,6 +3432,98 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                         }`}
                       >
                         {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Satır Yüksekliği (Line Height) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-600">Satır Yüksekliği (Line Height)</label>
+                    <span className="text-[11px] font-mono font-bold text-purple-600">{styles.lineHeight || 'normal'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <input
+                      type="text"
+                      placeholder="örn: 1.05em, 1.4em, 1.6"
+                      value={styles.lineHeight || ''}
+                      onChange={(e) => handleStyleChange('lineHeight', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {['1.05em', '1.15em', '1.3em', '1.4em', '1.6', '1.8'].map((lh) => (
+                      <button
+                        key={lh}
+                        type="button"
+                        onClick={() => handleStyleChange('lineHeight', lh)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                          styles.lineHeight === lh
+                            ? 'bg-purple-600 text-white border-purple-600 font-bold'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {lh}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Harf Aralığı (Letter Spacing) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-600">Harf Aralığı (Letter Spacing)</label>
+                    <span className="text-[11px] font-mono font-bold text-purple-600">{styles.letterSpacing || 'normal'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <input
+                      type="text"
+                      placeholder="örn: -0.05em, 0.02em, 0.2em"
+                      value={styles.letterSpacing || ''}
+                      onChange={(e) => handleStyleChange('letterSpacing', e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg bg-white outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {['-0.05em', '-0.02em', '0em', '0.02em', '0.05em', '0.1em', '0.2em'].map((ls) => (
+                      <button
+                        key={ls}
+                        type="button"
+                        onClick={() => handleStyleChange('letterSpacing', ls)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                          styles.letterSpacing === ls
+                            ? 'bg-purple-600 text-white border-purple-600 font-bold'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {ls}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Büyük / Küçük Harf (Text Transform) */}
+                <div>
+                  <label className="block text-gray-600 mb-1">Harf Dönüşümü (Text Transform)</label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { label: 'Normal', val: 'none' },
+                      { label: 'BÜYÜK', val: 'uppercase' },
+                      { label: 'küçük', val: 'lowercase' },
+                      { label: 'Baş Harf', val: 'capitalize' },
+                    ].map((tt) => (
+                      <button
+                        key={tt.val}
+                        type="button"
+                        onClick={() => handleStyleChange('textTransform', tt.val)}
+                        className={`py-1 text-center rounded text-[10px] border transition ${
+                          (styles.textTransform || 'none') === tt.val
+                            ? 'bg-purple-600 text-white border-purple-600 font-bold'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {tt.label}
                       </button>
                     ))}
                   </div>
