@@ -1364,14 +1364,19 @@ const NodeItem: React.FC<{
           align === 'center' ? 'justify-center' :
           align === 'right' ? 'justify-end' : 'justify-start'
 
-        const variant = props.variant || (props.border || styles.border ? 'outline' : 'solid')
-        const shape = props.shape || (styles.borderRadius ? undefined : 'pill')
+        const variant = props.variant || (
+          (styles.borderWidth === '0px 0px 1px 0px' || styles.borderBottom)
+            ? 'underline'
+            : (props.border || styles.border ? 'outline' : 'solid')
+        )
+        const shape = props.shape || (styles.borderRadius ? undefined : (variant === 'underline' ? 'square' : 'pill'))
         const size = props.size || 'md'
         const hoverEffect = props.hoverEffect || 'shrink'
         const isUppercase = props.uppercase !== false
 
         // Size classes
         const sizeClasses =
+          variant === 'underline' ? 'px-0 py-1 text-xs sm:text-sm' :
           size === 'xs' ? 'px-3.5 py-1.5 text-xs' :
           size === 'sm' ? 'px-5 py-2.5 text-xs' :
           size === 'lg' ? 'px-9 py-4 text-base' :
@@ -1380,6 +1385,7 @@ const NodeItem: React.FC<{
 
         // Shape classes
         const shapeClass =
+          variant === 'underline' ? 'rounded-none' :
           shape === 'pill' ? 'rounded-full' :
           shape === 'square' ? 'rounded-none' :
           shape === 'rounded' ? 'rounded-xl' : 'rounded-full'
@@ -1393,16 +1399,14 @@ const NodeItem: React.FC<{
 
         // Fallback colors from theme or primary
         const primaryCol = site?.theme_config?.primary_color || '#222222'
-        const defaultBg = variant === 'outline' ? 'transparent' : primaryCol
-        const defaultColor = variant === 'outline' ? primaryCol : '#ffffff'
+        const defaultBg = variant === 'solid' ? primaryCol : 'transparent'
+        const defaultColor = variant === 'solid' ? '#ffffff' : primaryCol
 
         const btnStyle: React.CSSProperties = {}
         if (styles.backgroundColor || props.bgColor) {
           btnStyle.backgroundColor = styles.backgroundColor || props.bgColor
-        } else if (variant === 'solid') {
+        } else {
           btnStyle.backgroundColor = defaultBg
-        } else if (variant === 'outline') {
-          btnStyle.backgroundColor = 'transparent'
         }
 
         if (styles.color || props.color || props.textColor) {
@@ -1411,7 +1415,15 @@ const NodeItem: React.FC<{
           btnStyle.color = defaultColor
         }
 
-        if (variant === 'outline') {
+        if (variant === 'underline') {
+          const bColor = props.borderColor || styles.borderColor || btnStyle.color || primaryCol
+          const bWidth = props.borderWidth || styles.borderWidth || '1px'
+          btnStyle.border = 'none'
+          btnStyle.borderBottom = `${bWidth} solid ${bColor}`
+          btnStyle.borderRadius = '0px'
+          btnStyle.backgroundColor = 'transparent'
+          btnStyle.padding = styles.padding || '0px 0px 6px 0px'
+        } else if (variant === 'outline') {
           const bColor = props.borderColor || styles.borderColor || primaryCol
           const bWidth = props.borderWidth || styles.borderWidth || '1.5px'
           btnStyle.border = `${bWidth} solid ${bColor}`

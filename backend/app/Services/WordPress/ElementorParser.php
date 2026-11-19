@@ -429,7 +429,18 @@ class ElementorParser
                 
                 // Extract Button Variant & Shape
                 $hasBorder = !empty($settings['border_border']) && $settings['border_border'] !== 'none';
-                $variant = $hasBorder ? 'outline' : 'solid';
+                $borderWidthSetting = $settings['border_width'] ?? [];
+                $isUnderline = false;
+                if (is_array($borderWidthSetting)) {
+                    $top = (int)($borderWidthSetting['top'] ?? 0);
+                    $bottom = (int)($borderWidthSetting['bottom'] ?? 0);
+                    $left = (int)($borderWidthSetting['left'] ?? 0);
+                    $right = (int)($borderWidthSetting['right'] ?? 0);
+                    if ($bottom > 0 && $top === 0 && $left === 0 && $right === 0) {
+                        $isUnderline = true;
+                    }
+                }
+                $variant = $isUnderline ? 'underline' : ($hasBorder ? 'outline' : 'solid');
 
                 // Shape from border_radius
                 $radiusVal = null;

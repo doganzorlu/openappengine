@@ -300,6 +300,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     >
                       <option value="solid">Dolu (Solid Fill)</option>
                       <option value="outline">Çerçeveli (Outline)</option>
+                      <option value="underline">Alt Çizgili (Underline / Lüks Stili)</option>
                       <option value="link">Metin Linki (Link)</option>
                     </select>
                   </div>
