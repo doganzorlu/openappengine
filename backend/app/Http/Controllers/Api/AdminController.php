@@ -293,14 +293,17 @@ class AdminController extends Controller
             ['name' => 'message', 'label' => 'Mesajınız', 'type' => 'textarea', 'required' => true],
         ];
 
+        $incomingSettings = $request->input('settings', []);
+        if ($request->filled('recipient_email')) {
+            $incomingSettings['recipient_email'] = $request->input('recipient_email');
+        }
+
         $form = Form::create([
             'site_id' => $site->id,
             'name' => $request->input('name'),
             'slug' => $slug ?: 'iletisim-formu',
             'fields' => $request->input('fields', $defaultFields),
-            'settings' => [
-                'recipient_email' => $request->input('recipient_email', ''),
-            ],
+            'settings' => $incomingSettings,
         ]);
 
         return response()->json(['success' => true, 'form' => $form]);
@@ -320,11 +323,14 @@ class AdminController extends Controller
         if ($request->has('fields') && is_array($request->input('fields'))) {
             $form->fields = $request->input('fields');
         }
-        if ($request->has('recipient_email')) {
-            $settings = $form->settings ?? [];
-            $settings['recipient_email'] = $request->input('recipient_email');
-            $form->settings = $settings;
+        $settings = $form->settings ?? [];
+        if ($request->has('settings') && is_array($request->input('settings'))) {
+            $settings = array_merge($settings, $request->input('settings'));
         }
+        if ($request->has('recipient_email')) {
+            $settings['recipient_email'] = $request->input('recipient_email');
+        }
+        $form->settings = $settings;
         $form->save();
 
         return response()->json(['success' => true, 'form' => $form]);

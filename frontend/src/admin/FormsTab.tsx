@@ -32,13 +32,56 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
 
-  // Form Create/Edit Modal State
+  // Form Create/Edit Modal State (No-Code Form Designer)
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingForm, setEditingForm] = useState<any | null>(null)
+  const [modalTab, setModalTab] = useState<'fields' | 'styling' | 'workflow'>('fields')
   const [formName, setFormName] = useState('')
   const [formSlug, setFormSlug] = useState('')
   const [recipientEmail, setRecipientEmail] = useState('')
+  const [formFields, setFormFields] = useState<any[]>([])
+  const [buttonText, setButtonText] = useState('Gönder')
+  const [buttonBg, setButtonBg] = useState('#222222')
+  const [buttonShape, setButtonShape] = useState<'pill' | 'rounded' | 'square'>('pill')
+  const [cardStyle, setCardStyle] = useState<'transparent' | 'minimal' | 'boxed'>('transparent')
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false)
+  const [autoReplySubject, setAutoReplySubject] = useState('')
+  const [autoReplyMessage, setAutoReplyMessage] = useState('')
+  const [webhookUrl, setWebhookUrl] = useState('')
   const [savingForm, setSavingForm] = useState(false)
+
+  const handleAddField = () => {
+    const newField = {
+      id: 'field_' + Math.random().toString(36).substring(2, 8),
+      type: 'text',
+      label: 'Yeni Alan',
+      placeholder: '',
+      required: false,
+      width: 100,
+      options: '',
+    }
+    setFormFields([...formFields, newField])
+  }
+
+  const handleUpdateField = (index: number, key: string, value: any) => {
+    const updated = [...formFields]
+    updated[index] = { ...updated[index], [key]: value }
+    setFormFields(updated)
+  }
+
+  const handleRemoveField = (index: number) => {
+    setFormFields(formFields.filter((_, i) => i !== index))
+  }
+
+  const handleMoveField = (index: number, dir: -1 | 1) => {
+    const target = index + dir
+    if (target < 0 || target >= formFields.length) return
+    const updated = [...formFields]
+    const temp = updated[index]
+    updated[index] = updated[target]
+    updated[target] = temp
+    setFormFields(updated)
+  }
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
@@ -232,6 +275,20 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
     setFormName('')
     setFormSlug('')
     setRecipientEmail('')
+    setModalTab('fields')
+    setFormFields([
+      { id: 'name', type: 'text', label: 'Adınız Soyadınız', placeholder: 'Ad Soyad', required: true, width: 100 },
+      { id: 'email', type: 'email', label: 'E-Posta', placeholder: 'ornek@domain.com', required: true, width: 100 },
+      { id: 'message', type: 'textarea', label: 'Mesajınız', placeholder: 'Mesajınızı buraya yazın...', required: true, width: 100 },
+    ])
+    setButtonText('Gönder')
+    setButtonBg('#222222')
+    setButtonShape('pill')
+    setCardStyle('transparent')
+    setAutoReplyEnabled(false)
+    setAutoReplySubject('')
+    setAutoReplyMessage('')
+    setWebhookUrl('')
     setShowFormModal(true)
   }
 
@@ -239,7 +296,30 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
     setEditingForm(f)
     setFormName(f.name || '')
     setFormSlug(f.slug || '')
-    setRecipientEmail(f.settings?.recipient_email || '')
+    const s = f.settings || {}
+    setRecipientEmail(s.recipient_email || '')
+    setModalTab('fields')
+    
+    // Normalize options if array
+    const rawFields = Array.isArray(f.fields) && f.fields.length > 0 ? f.fields : [
+      { id: 'name', type: 'text', label: 'Adınız Soyadınız', placeholder: 'Ad Soyad', required: true, width: 100 },
+      { id: 'email', type: 'email', label: 'E-Posta', placeholder: 'ornek@domain.com', required: true, width: 100 },
+      { id: 'message', type: 'textarea', label: 'Mesajınız', placeholder: 'Mesajınızı buraya yazın...', required: true, width: 100 },
+    ]
+    const normalizedFields = rawFields.map((field: any) => ({
+      ...field,
+      options: Array.isArray(field.options) ? field.options.join(', ') : (field.options || ''),
+    }))
+    setFormFields(normalizedFields)
+
+    setButtonText(s.button_text || 'Gönder')
+    setButtonBg(s.button_bg || '#222222')
+    setButtonShape(s.button_shape || 'pill')
+    setCardStyle(s.card_style || 'transparent')
+    setAutoReplyEnabled(Boolean(s.auto_reply_enabled))
+    setAutoReplySubject(s.auto_reply_subject || '')
+    setAutoReplyMessage(s.auto_reply_message || '')
+    setWebhookUrl(s.webhook_url || '')
     setShowFormModal(true)
   }
 
@@ -254,23 +334,56 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
         : `/api/v1/admin/sites/${siteSlug}/forms`
       const method = editingForm ? 'PUT' : 'POST'
 
+      // Clean field options into array
+      const cleanedFields = formFields.map((f: any) => {
+        let optArray: string[] | undefined = undefined
+        if (typeof f.options === 'string' && f.options.trim()) {
+          optArray = f.options.split(',').map((s: string) => s.trim()).filter(Boolean)
+        } else if (Array.isArray(f.options)) {
+          optArray = f.options
+        }
+        return {
+          id: f.id || ('field_' + Math.random().toString(36).substring(2, 7)),
+          type: f.type || 'text',
+          label: f.label || '',
+          placeholder: f.placeholder || '',
+          required: Boolean(f.required),
+          width: Number(f.width) === 50 ? 50 : 100,
+          options: optArray,
+        }
+      })
+
+      const payload = {
+        name: formName.trim(),
+        slug: formSlug.trim() || undefined,
+        fields: cleanedFields,
+        recipient_email: recipientEmail.trim() || undefined,
+        settings: {
+          recipient_email: recipientEmail.trim() || undefined,
+          button_text: buttonText,
+          button_bg: buttonBg,
+          button_shape: buttonShape,
+          card_style: cardStyle,
+          auto_reply_enabled: autoReplyEnabled,
+          auto_reply_subject: autoReplySubject,
+          auto_reply_message: autoReplyMessage,
+          webhook_url: webhookUrl,
+        },
+      }
+
       const res = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: formName.trim(),
-          slug: formSlug.trim() || undefined,
-          recipient_email: recipientEmail.trim() || undefined,
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (data.success) {
         setShowFormModal(false)
         fetchData()
-        showToast('✅ Form başarıyla kaydedildi!')
+        showToast('✅ Form ve Akış Ayarları Başarıyla Kaydedildi!')
       }
     } catch (e) {
       alert('Form kaydedilemedi.')
@@ -782,65 +895,442 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
         </div>
       )}
 
-      {/* Form Create / Edit Modal */}
+      {/* No-Code Form Designer & Workflow Modal */}
       {showFormModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              {editingForm ? 'Form Ayarlarını Düzenle' : 'Yeni İletişim Formu Oluştur'}
-            </h3>
-            <form onSubmit={handleSaveForm} className="space-y-4 text-xs sm:text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl shadow-2xl flex flex-col max-w-3xl w-full max-h-[92vh] overflow-hidden border border-gray-100">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">Form Adı *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Örn: Ön Kayıt Başvuru Formu"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none"
-                />
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <span>🛠️</span>
+                  <span>{editingForm ? 'No-Code Form Tasarımcısı & Akış Motoru' : 'Yeni No-Code Form Oluştur'}</span>
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Form alanlarını, buton stilini ve başvuru sonrası otomasyon akışlarını yapılandırın.
+                </p>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Form Kodu (Slug)</label>
-                <input
-                  type="text"
-                  placeholder="Örn: on-kayit-formu"
-                  value={formSlug}
-                  onChange={(e) => setFormSlug(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none font-mono text-xs"
-                />
+              <button
+                type="button"
+                onClick={() => setShowFormModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-200/80 hover:bg-gray-300 text-gray-700 flex items-center justify-center text-sm font-bold transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-gray-200 px-6 bg-white gap-2 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setModalTab('fields')}
+                className={`py-3 px-4 border-b-2 transition flex items-center gap-2 ${
+                  modalTab === 'fields'
+                    ? 'border-purple-600 text-purple-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <span>📋</span>
+                <span>Alanlar & Düzen ({formFields.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('styling')}
+                className={`py-3 px-4 border-b-2 transition flex items-center gap-2 ${
+                  modalTab === 'styling'
+                    ? 'border-purple-600 text-purple-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <span>🎨</span>
+                <span>Tasarım & UI</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('workflow')}
+                className={`py-3 px-4 border-b-2 transition flex items-center gap-2 ${
+                  modalTab === 'workflow'
+                    ? 'border-purple-600 text-purple-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <span>⚡</span>
+                <span>Akış & Otomasyon</span>
+              </button>
+            </div>
+
+            {/* Modal Body with Scroll */}
+            <form onSubmit={handleSaveForm} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 text-xs sm:text-sm">
+              {/* Common Meta Details (Name & Slug) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                <div>
+                  <label className="block font-bold text-gray-700 text-xs mb-1">Form Adı *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Örn: Studio İletişim Formu"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-purple-600 outline-none text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 text-xs mb-1">Form Kodu (Slug) *</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: contact-studio"
+                    value={formSlug}
+                    onChange={(e) => setFormSlug(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-purple-600 outline-none font-mono text-xs"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">
-                  Bildirim Alıcı E-Posta Adresi (SMTP ile gönderilir)
-                </label>
-                <input
-                  type="email"
-                  placeholder="Örn: info@domain.com"
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none"
-                />
-              </div>
+              {/* TAB 1: FIELDS DESIGNER */}
+              {modalTab === 'fields' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Form Alanları</h4>
+                      <p className="text-[11px] text-gray-500">Alanları sırayla düzenleyin, genişliklerini ve veri tiplerini belirleyin.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddField}
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition shadow"
+                    >
+                      <span>＋</span>
+                      <span>Yeni Alan Ekle</span>
+                    </button>
+                  </div>
 
-              <div className="flex gap-2 pt-2">
+                  <div className="space-y-3">
+                    {formFields.map((field, idx) => (
+                      <div
+                        key={field.id || idx}
+                        className="p-3.5 bg-white rounded-2xl border border-gray-200 hover:border-purple-300 transition shadow-sm space-y-3"
+                      >
+                        <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold text-gray-800 text-xs">
+                              {field.label || 'İsimsiz Alan'}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-mono">
+                              {field.type}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => handleMoveField(idx, -1)}
+                              className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs disabled:opacity-30"
+                              title="Yukarı Taşı"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === formFields.length - 1}
+                              onClick={() => handleMoveField(idx, 1)}
+                              className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs disabled:opacity-30"
+                              title="Aşağı Taşı"
+                            >
+                              ▼
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveField(idx)}
+                              className="w-6 h-6 rounded bg-red-50 hover:bg-red-100 text-red-600 text-xs ml-1"
+                              title="Alanı Sil"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Alan Tipi</label>
+                            <select
+                              value={field.type}
+                              onChange={(e) => handleUpdateField(idx, 'type', e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-gray-300 bg-white text-xs"
+                            >
+                              <option value="text">Metin (Text)</option>
+                              <option value="email">E-Posta (Email)</option>
+                              <option value="tel">Telefon (Tel)</option>
+                              <option value="number">Sayı (Number)</option>
+                              <option value="textarea">Uzun Metin (Textarea)</option>
+                              <option value="select">Açılır Kutu (Select)</option>
+                              <option value="checkbox">Onay Kutusu (Checkbox / KVKK)</option>
+                              <option value="radio">Radyo Düğmesi (Radio)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Etiket (Label)</label>
+                            <input
+                              type="text"
+                              value={field.label}
+                              onChange={(e) => handleUpdateField(idx, 'label', e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-gray-300 text-xs"
+                              placeholder="Örn: Telefon Numarası"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">İpucu (Placeholder)</label>
+                            <input
+                              type="text"
+                              value={field.placeholder || ''}
+                              onChange={(e) => handleUpdateField(idx, 'placeholder', e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-gray-300 text-xs"
+                              placeholder="Örn: +90 5..."
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-3 pt-4 sm:pt-5">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(field.required)}
+                                onChange={(e) => handleUpdateField(idx, 'required', e.target.checked)}
+                                className="rounded text-purple-600"
+                              />
+                              <span className="font-semibold text-gray-700">Zorunlu</span>
+                            </label>
+
+                            <select
+                              value={field.width || 100}
+                              onChange={(e) => handleUpdateField(idx, 'width', Number(e.target.value))}
+                              className="px-2 py-1 rounded-lg border border-gray-300 text-[11px] bg-white font-medium"
+                              title="Alan Genişliği"
+                            >
+                              <option value={100}>Tam Satır (%100)</option>
+                              <option value={50}>Yan Yana (%50)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Options input for select/radio */}
+                        {(field.type === 'select' || field.type === 'radio') && (
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                              Seçenekler (Virgülle ayırarak girin)
+                            </label>
+                            <input
+                              type="text"
+                              value={field.options || ''}
+                              onChange={(e) => handleUpdateField(idx, 'options', e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-gray-300 text-xs font-mono"
+                              placeholder="Örn: Lancement, Refonte, Danışmanlık"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: STYLING & UI */}
+              {modalTab === 'styling' && (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-gray-900 text-sm">Buton ve Form Görünüm Stili</h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-xs mb-1">Gönder Buton Metni</label>
+                      <input
+                        type="text"
+                        value={buttonText}
+                        onChange={(e) => setButtonText(e.target.value)}
+                        placeholder="Örn: Envoyer ma demande →"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-xs mb-1">Buton Arka Plan Rengi</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={buttonBg}
+                          onChange={(e) => setButtonBg(e.target.value)}
+                          className="w-9 h-9 rounded-xl border border-gray-300 cursor-pointer p-0.5"
+                        />
+                        <input
+                          type="text"
+                          value={buttonBg}
+                          onChange={(e) => setButtonBg(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-xs mb-1">Buton Şekli</label>
+                      <select
+                        value={buttonShape}
+                        onChange={(e) => setButtonShape(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                      >
+                        <option value="pill">Tam Yuvarlak Hap (Pill - L'AGENCE Style)</option>
+                        <option value="rounded">Hafif Yuvarlatılmış (Rounded-xl)</option>
+                        <option value="square">Düz Köşeli (Square)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-xs mb-1">Kart Görünümü (Wrapper)</label>
+                      <select
+                        value={cardStyle}
+                        onChange={(e) => setCardStyle(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                      >
+                        <option value="transparent">Şeffaf (Sayfa zeminine tam oturan zarif)</option>
+                        <option value="minimal">Minimal (Hafif yarı saydam beyaz ve ince çerçeve)</option>
+                        <option value="boxed">Kutu Kart (Beyaz zemin ve belirgin gölge)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Live Button Preview */}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 mt-4 text-center space-y-2">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Canlı Buton Önizlemesi</span>
+                    <button
+                      type="button"
+                      style={{ backgroundColor: buttonBg, color: '#ffffff' }}
+                      className={`py-3 px-8 text-xs font-bold uppercase tracking-wider ${
+                        buttonShape === 'pill' ? 'rounded-full' : buttonShape === 'rounded' ? 'rounded-xl' : 'rounded-none'
+                      } shadow transition`}
+                    >
+                      {buttonText}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: WORKFLOW & NOTIFICATIONS */}
+              {modalTab === 'workflow' && (
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">Kayıt Sonrası Akış & Otomasyonlar</h4>
+                    <p className="text-[11px] text-gray-500">Form doldurulduğu anda tetiklenecek bildirimler ve entegrasyonlar.</p>
+                  </div>
+
+                  {/* 1. Admin Notification */}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-gray-800 text-xs">
+                      <span>📧</span>
+                      <span>Yönetici Bildirim E-Postası (SMTP)</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500">
+                      Gelen başvuruların tüm detayları bu adrese anında e-posta olarak iletilir.
+                    </p>
+                    <input
+                      type="email"
+                      placeholder="Örn: contact@lagencedesignstudio.com"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                    />
+                  </div>
+
+                  {/* 2. Auto-responder to applicant */}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-gray-800 text-xs">
+                        <span>💌</span>
+                        <span>Başvuru Sahibine Otomatik Yanıt (Auto-Responder)</span>
+                      </div>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-purple-700">
+                        <input
+                          type="checkbox"
+                          checked={autoReplyEnabled}
+                          onChange={(e) => setAutoReplyEnabled(e.target.checked)}
+                          className="rounded text-purple-600"
+                        />
+                        <span>Aktif Et</span>
+                      </label>
+                    </div>
+
+                    {autoReplyEnabled && (
+                      <div className="space-y-2.5 pt-2 border-t border-gray-200/60">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">E-Posta Konusu</label>
+                          <input
+                            type="text"
+                            placeholder="Talebinizi aldık - Teşekkür ederiz"
+                            value={autoReplySubject}
+                            onChange={(e) => setAutoReplySubject(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                            E-Posta Metni (Kullanılabilir etiketler: <code className="text-purple-700">{"{{name}}"}</code>, <code className="text-purple-700">{"{{site}}"}</code>)
+                          </label>
+                          <textarea
+                            rows={3}
+                            placeholder="Merhaba {{name}}, projenizle ilgili talebiniz bize ulaştı..."
+                            value={autoReplyMessage}
+                            onChange={(e) => setAutoReplyMessage(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Outgoing Webhook */}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-gray-800 text-xs">
+                      <span>🌐</span>
+                      <span>Dış Sistem Entegrasyonu (Webhook HTTP POST)</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500">
+                      Zapier, Make, HubSpot veya CRM sisteminize form verilerini anlık JSON olarak aktarın.
+                    </p>
+                    <input
+                      type="url"
+                      placeholder="https://hooks.zapier.com/hooks/catch/..."
+                      value={webhookUrl}
+                      onChange={(e) => setWebhookUrl(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Footer Controls */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setShowFormModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition"
+                  className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-100 transition text-xs"
                 >
-                  İptal
+                  Vazgeç
                 </button>
-                <button
-                  type="submit"
-                  disabled={savingForm}
-                  className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition shadow disabled:opacity-50"
-                >
-                  {savingForm ? 'Kaydediliyor...' : 'Kaydet'}
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingForm}
+                    className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition shadow disabled:opacity-50 text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>💾</span>
+                    <span>{savingForm ? 'Kaydediliyor...' : 'Tüm Değişiklikleri Kaydet'}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

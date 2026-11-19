@@ -195,9 +195,47 @@ class SiteController extends Controller
                 });
 
                 $emailSent = true;
+
+                // Workflow Action 1: Auto-responder email to applicant
+                $settings = $form->settings ?? [];
+                $applicantEmail = $request->input('email') ?? $request->input('e-mail');
+                if (!empty($settings['auto_reply_enabled']) && !empty($applicantEmail)) {
+                    $replySubject = $settings['auto_reply_subject'] ?: "Başvurunuz Alındı: {$site->name}";
+                    $replyMsg = $settings['auto_reply_message'] ?: "Merhaba, form gönderiminiz başarıyla tarafımıza ulaştı. En kısa sürede sizinle iletişime geçeceğiz.";
+                    
+                    // Replace merge tags
+                    $applicantName = $request->input('name') ?? $request->input('prenom') ?? $request->input('nom') ?? '';
+                    $replyMsg = str_replace('{{name}}', htmlspecialchars($applicantName), $replyMsg);
+                    $replyMsg = str_replace('{{site}}', htmlspecialchars($site->name), $replyMsg);
+
+                    Mail::mailer('tenant_smtp')->html("<div style='font-family:sans-serif;line-height:1.6;color:#222;'>" . nl2br($replyMsg) . "</div>", function ($msg) use ($applicantEmail, $replySubject, $fromAddress, $fromName) {
+                        $msg->to($applicantEmail)
+                            ->from($fromAddress, $fromName)
+                            ->subject($replySubject);
+                    });
+                }
             } catch (\Throwable $e) {
                 Log::warning("Tenant ({$site->slug}) SMTP email dispatch failed: " . $e->getMessage());
                 $emailError = $e->getMessage();
+            }
+        }
+
+        // Workflow Action 2: Outgoing Webhook Trigger (e.g. Zapier / Make / CRM)
+        $webhookUrl = $form->settings['webhook_url'] ?? null;
+        if (!empty($webhookUrl) && filter_var($webhookUrl, FILTER_VALIDATE_URL)) {
+            try {
+                \Illuminate\Support\Facades\Http::timeout(5)->post($webhookUrl, [
+                    'event' => 'form_submission',
+                    'site_id' => $site->id,
+                    'site_slug' => $site->slug,
+                    'form_id' => $form->id,
+                    'form_slug' => $form->slug,
+                    'submission_id' => $submission->id,
+                    'data' => $submission->data,
+                    'created_at' => $submission->created_at->toIso8601String(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("Webhook dispatch failed for form {$form->slug}: " . $e->getMessage());
             }
         }
 
