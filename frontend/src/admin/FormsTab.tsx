@@ -44,6 +44,7 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
   const [buttonBg, setButtonBg] = useState('#222222')
   const [buttonShape, setButtonShape] = useState<'pill' | 'rounded' | 'square'>('pill')
   const [cardStyle, setCardStyle] = useState<'transparent' | 'minimal' | 'boxed'>('transparent')
+  const [inputStyle, setInputStyle] = useState<'underline' | 'boxed' | 'minimal'>('underline')
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false)
   const [autoReplySubject, setAutoReplySubject] = useState('')
   const [autoReplyMessage, setAutoReplyMessage] = useState('')
@@ -285,6 +286,7 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
     setButtonBg('#222222')
     setButtonShape('pill')
     setCardStyle('transparent')
+    setInputStyle('underline')
     setAutoReplyEnabled(false)
     setAutoReplySubject('')
     setAutoReplyMessage('')
@@ -316,6 +318,7 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
     setButtonBg(s.button_bg || '#222222')
     setButtonShape(s.button_shape || 'pill')
     setCardStyle(s.card_style || 'transparent')
+    setInputStyle(s.input_style || 'underline')
     setAutoReplyEnabled(Boolean(s.auto_reply_enabled))
     setAutoReplySubject(s.auto_reply_subject || '')
     setAutoReplyMessage(s.auto_reply_message || '')
@@ -364,6 +367,7 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
           button_bg: buttonBg,
           button_shape: buttonShape,
           card_style: cardStyle,
+          input_style: inputStyle,
           auto_reply_enabled: autoReplyEnabled,
           auto_reply_subject: autoReplySubject,
           auto_reply_message: autoReplyMessage,
@@ -1186,6 +1190,19 @@ export const FormsTab: React.FC<FormsTabProps> = ({ siteSlug, token }) => {
                         <option value="pill">Tam Yuvarlak Hap (Pill - L'AGENCE Style)</option>
                         <option value="rounded">Hafif Yuvarlatılmış (Rounded-xl)</option>
                         <option value="square">Düz Köşeli (Square)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-gray-700 text-xs mb-1">İnput / Alan Stili (Görsel Tarz)</label>
+                      <select
+                        value={inputStyle}
+                        onChange={(e) => setInputStyle(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs"
+                      >
+                        <option value="underline">Alt Çizgili (Underline / L'AGENCE & Lüks Stili)</option>
+                        <option value="boxed">Kutulu (Boxed / Klasik 4 Kenar)</option>
+                        <option value="minimal">Minimal (Yarı Saydam İnce)</option>
                       </select>
                     </div>
 

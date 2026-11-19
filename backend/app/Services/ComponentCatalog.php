@@ -28,6 +28,10 @@ class ComponentCatalog
                     'how_to_apply' => 'Call update_site_theme with: { site_slug, header_transparent: true, sticky_header: true }.',
                 ],
                 'step_3_visual_effects_contract' => [
+                    'inputbox_and_form_styles' => [
+                        'source_indicator' => 'Check CSS of inputs (input[type=text], select, textarea). If border-width is 0px 0px 1px 0px (or border-bottom only) and background is transparent:',
+                        'how_to_apply' => 'In ContactForm props, set inputStyle: "underline" and cardStyle: "transparent". This applies the luxury editorial underline aesthetic with flush left alignment and crisp focus states.',
+                    ],
                     'parallax_backgrounds' => [
                         'source_indicator' => 'Background image with CSS background-attachment: fixed, or image remaining fixed while page scrolls over it.',
                         'how_to_apply' => 'In Section props, set bgAttachment: "fixed" alongside bgImage.',
@@ -211,11 +215,27 @@ class ComponentCatalog
                 ],
                 'ContactForm' => [
                     'category' => 'Forms',
-                    'description' => 'Interactive AJAX contact and pre-registration form with backend integration.',
+                    'description' => 'Interactive AJAX contact, lead generation and pre-registration form supporting inline, multi-step wizard and modal display modes.',
                     'props' => [
-                        'formSlug' => ['type' => 'string', 'default' => 'iletisim-formu'],
+                        'formId' => ['type' => 'string', 'default' => 'contact-studio', 'description' => 'Target form slug in backend'],
                         'title' => ['type' => 'string', 'default' => 'Bize Ulaşın'],
                         'buttonText' => ['type' => 'string', 'default' => 'Gönder'],
+                        'buttonBgColor' => ['type' => 'string', 'description' => 'Hex color for submit button (e.g. #222222)'],
+                        'buttonShape' => ['type' => 'string', 'enum' => ['pill', 'rounded', 'square'], 'default' => 'pill'],
+                        'cardStyle' => ['type' => 'string', 'enum' => ['transparent', 'minimal', 'boxed'], 'default' => 'transparent'],
+                        'inputStyle' => [
+                            'type' => 'string',
+                            'enum' => ['underline', 'boxed', 'minimal'],
+                            'default' => 'underline',
+                            'description' => 'Input box style: "underline" (luxury bottom-border only, 0 padding left, matching high-end editorial designs like L\'AGENCE), "boxed" (classic rounded 4-border box), "minimal" (semi-transparent border)',
+                        ],
+                        'displayMode' => [
+                            'type' => 'string',
+                            'enum' => ['inline', 'multistep', 'modal'],
+                            'default' => 'inline',
+                            'description' => 'Presentation format: "inline" (standard embedded), "multistep" (interactive step-by-step wizard with progress bar), "modal" (lightbox popup window)',
+                        ],
+                        'modalTriggerText' => ['type' => 'string', 'default' => 'Teklif Alın →'],
                     ],
                 ],
                 'GoogleMap' => [

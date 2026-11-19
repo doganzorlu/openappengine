@@ -25,6 +25,7 @@ export interface ContactFormProps {
   buttonTextColor?: string
   buttonShape?: 'pill' | 'rounded' | 'square'
   cardStyle?: 'minimal' | 'boxed' | 'transparent'
+  inputStyle?: 'underline' | 'boxed' | 'minimal'
   displayMode?: 'inline' | 'multistep' | 'modal'
   modalTriggerText?: string
   fields?: FormField[]
@@ -40,6 +41,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   buttonTextColor = '#ffffff',
   buttonShape = 'pill',
   cardStyle = 'transparent',
+  inputStyle = 'underline',
   displayMode = 'inline',
   modalTriggerText = 'Bize Ulaşın / Teklif Alın →',
   fields = [],
@@ -157,6 +159,33 @@ export const ContactForm: React.FC<ContactFormProps> = ({
       ? 'w-full bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/80 p-6 md:p-8 shadow-sm'
       : 'w-full bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8'
 
+  // Determine input classes based on inputStyle prop
+  const inputClass =
+    inputStyle === 'underline'
+      ? 'w-full px-0 py-2.5 bg-transparent border-0 border-b border-[#222222]/40 rounded-none text-[#222222] placeholder:text-[#222222]/35 focus:border-b-[#222222] focus:ring-0 outline-none transition-colors text-xs font-light'
+      : inputStyle === 'minimal'
+      ? 'w-full px-3.5 py-2.5 rounded-xl border border-gray-200/90 bg-white/60 text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black outline-none transition text-xs'
+      : 'w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm'
+
+  const selectClass =
+    inputStyle === 'underline'
+      ? 'w-full px-0 py-2.5 bg-transparent border-0 border-b border-[#222222]/40 rounded-none text-[#222222] focus:border-b-[#222222] focus:ring-0 outline-none transition-colors text-xs font-light appearance-none cursor-pointer'
+      : inputStyle === 'minimal'
+      ? 'w-full px-3.5 py-2.5 rounded-xl border border-gray-200/90 bg-white/60 text-gray-900 focus:border-black focus:ring-1 focus:ring-black outline-none transition text-xs appearance-none cursor-pointer'
+      : 'w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm appearance-none cursor-pointer'
+
+  const textareaClass =
+    inputStyle === 'underline'
+      ? 'w-full px-0 py-2.5 bg-transparent border-0 border-b border-[#222222]/40 rounded-none text-[#222222] placeholder:text-[#222222]/35 focus:border-b-[#222222] focus:ring-0 outline-none transition-colors text-xs font-light resize-y'
+      : inputStyle === 'minimal'
+      ? 'w-full px-3.5 py-2.5 rounded-xl border border-gray-200/90 bg-white/60 text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black outline-none transition text-xs resize-y'
+      : 'w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm resize-y'
+
+  const labelClass =
+    inputStyle === 'underline'
+      ? 'block text-[11px] uppercase tracking-wider font-semibold text-[#222222] mb-1'
+      : 'block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5'
+
   const shapeClass =
     buttonShape === 'pill'
       ? 'rounded-full'
@@ -216,7 +245,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         )}
 
         {hasCustomFields ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
             {activeFieldsToRender.map((field) => {
               if (field.type === 'recaptcha_v3') return null
 
@@ -227,7 +256,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 return (
                   <div key={field.id} className={colSpanClass}>
                     {field.label && (
-                      <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
+                      <label className={labelClass}>
                         {field.label} {field.required && <span className="text-red-500">*</span>}
                       </label>
                     )}
@@ -237,7 +266,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                       placeholder={field.placeholder || ''}
                       value={formData[field.id] || ''}
                       onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm resize-y"
+                      className={textareaClass}
                     />
                   </div>
                 )
@@ -248,7 +277,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 return (
                   <div key={field.id} className={colSpanClass}>
                     {field.label && (
-                      <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
+                      <label className={labelClass}>
                         {field.label} {field.required && <span className="text-red-500">*</span>}
                       </label>
                     )}
@@ -257,7 +286,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                         required={field.required}
                         value={formData[field.id] || ''}
                         onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm appearance-none cursor-pointer"
+                        className={selectClass}
                       >
                         {field.placeholder && <option value="">{field.placeholder}</option>}
                         {field.options?.map((opt, i) => {
@@ -302,7 +331,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               return (
                 <div key={field.id} className={colSpanClass}>
                   {field.label && (
-                    <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
+                    <label className={labelClass}>
                       {field.label} {field.required && <span className="text-red-500">*</span>}
                     </label>
                   )}
@@ -312,7 +341,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                     placeholder={field.placeholder || ''}
                     value={formData[field.id] || ''}
                     onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm"
+                    className={inputClass}
                   />
                 </div>
               )

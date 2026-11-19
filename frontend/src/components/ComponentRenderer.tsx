@@ -1793,6 +1793,7 @@ const NodeItem: React.FC<{
             cardStyle={props.cardStyle}
             displayMode={props.displayMode}
             modalTriggerText={props.modalTriggerText}
+            inputStyle={props.inputStyle}
             fields={props.fields}
             formId={props.formId}
           />
