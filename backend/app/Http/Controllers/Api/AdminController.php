@@ -1496,6 +1496,51 @@ class AdminController extends Controller
         $submission->history = $history;
         $submission->save();
 
+        // Workflow Action: Notify applicant about status advancement via SMTP
+        $notifyApplicant = $request->input('notify_applicant', true);
+        $applicantEmail = $submission->data['email'] ?? $submission->data['e-mail'] ?? null;
+        $smtp = $site->settings['smtp'] ?? [];
+        if ($notifyApplicant && !empty($applicantEmail) && !empty($smtp['host']) && !empty($smtp['username'])) {
+            try {
+                \Illuminate\Support\Facades\Config::set('mail.mailers.tenant_smtp', [
+                    'transport' => 'smtp',
+                    'host' => $smtp['host'],
+                    'port' => (int)($smtp['port'] ?? 587),
+                    'encryption' => ($smtp['encryption'] === 'none') ? null : ($smtp['encryption'] ?: 'tls'),
+                    'username' => $smtp['username'],
+                    'password' => $smtp['password'] ?? '',
+                    'timeout' => 15,
+                ]);
+                \Illuminate\Support\Facades\Mail::purge('tenant_smtp');
+
+                $fromAddress = !empty($smtp['from_address'])
+                    ? $smtp['from_address']
+                    : ($smtp['username'] ?? 'noreply@' . ($site->domain ?: 'openappengine.local'));
+                $fromName = !empty($smtp['from_name']) ? $smtp['from_name'] : $site->name;
+
+                $stLabel = $statusLabels[$newStatus] ?? $newStatus;
+                $applicantName = $submission->data['name'] ?? $submission->data['prenom'] ?? $submission->data['nom'] ?? 'Değerli Müşterimiz';
+                $emailSubject = "Başvurunuz Hakkında Bilgilendirme: {$stLabel} - {$site->name}";
+
+                $bodyHtml = "<div style='font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#FAF8F5;border-radius:16px;border:1px solid #E8E2D9;'>";
+                $bodyHtml .= "<h2 style='font-size:20px;color:#222;margin-bottom:12px;'>Merhaba {$applicantName},</h2>";
+                $bodyHtml .= "<p style='color:#555;font-size:14px;line-height:1.6;'>Tarafımıza ilettiğiniz başvurunuzun durumu <strong>{$stLabel}</strong> olarak güncellenmiştir.</p>";
+                if ($note) {
+                    $bodyHtml .= "<div style='background:#fff;border-left:4px solid #222;padding:12px 16px;margin:16px 0;border-radius:4px;font-size:13px;color:#444;'><strong>Açıklama:</strong><br/>" . nl2br(htmlspecialchars($note)) . "</div>";
+                }
+                $bodyHtml .= "<p style='color:#777;font-size:12px;margin-top:24px;'>Bu e-posta {$site->name} tarafından otomatik olarak oluşturulmuştur.</p>";
+                $bodyHtml .= "</div>";
+
+                \Illuminate\Support\Facades\Mail::mailer('tenant_smtp')->html($bodyHtml, function ($msg) use ($applicantEmail, $emailSubject, $fromAddress, $fromName) {
+                    $msg->to($applicantEmail)
+                        ->from($fromAddress, $fromName)
+                        ->subject($emailSubject);
+                });
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Status update notification email failed for submission {$submissionId}: " . $e->getMessage());
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Durum başarıyla güncellendi.',

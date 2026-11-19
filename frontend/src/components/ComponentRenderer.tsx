@@ -1791,6 +1791,8 @@ const NodeItem: React.FC<{
             buttonTextColor={props.buttonTextColor}
             buttonShape={props.buttonShape}
             cardStyle={props.cardStyle}
+            displayMode={props.displayMode}
+            modalTriggerText={props.modalTriggerText}
             fields={props.fields}
             formId={props.formId}
           />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 
 export interface FormFieldOption {
   value: string
@@ -25,6 +25,8 @@ export interface ContactFormProps {
   buttonTextColor?: string
   buttonShape?: 'pill' | 'rounded' | 'square'
   cardStyle?: 'minimal' | 'boxed' | 'transparent'
+  displayMode?: 'inline' | 'multistep' | 'modal'
+  modalTriggerText?: string
   fields?: FormField[]
   formId?: string
 }
@@ -38,6 +40,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   buttonTextColor = '#ffffff',
   buttonShape = 'pill',
   cardStyle = 'transparent',
+  displayMode = 'inline',
+  modalTriggerText = 'Bize Ulaşın / Teklif Alın →',
   fields = [],
   formId = 'contact-studio',
 }) => {
@@ -45,15 +49,78 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0)
+
+  // Global listener for opening form modal via anchors or custom events
+  useEffect(() => {
+    const handleOpenModal = (e: any) => {
+      const targetForm = e.detail?.formId
+      if (!targetForm || targetForm === formId) {
+        setIsModalOpen(true)
+      }
+    }
+    window.addEventListener('open-form-modal', handleOpenModal)
+    return () => window.removeEventListener('open-form-modal', handleOpenModal)
+  }, [formId])
 
   const hasCustomFields = fields && fields.length > 0
+
+  // Multi-step grouping (chunk fields into logical steps: ~3 fields per step or by step property)
+  const steps = useMemo(() => {
+    if (!hasCustomFields) return []
+    const chunks: FormField[][] = []
+    let currentChunk: FormField[] = []
+    
+    fields.forEach((field, idx) => {
+      currentChunk.push(field)
+      // Group when 2 full-width or 3-4 mixed fields accumulate, or on textarea
+      if (currentChunk.length >= 3 || field.type === 'textarea' || idx === fields.length - 1) {
+        chunks.push(currentChunk)
+        currentChunk = []
+      }
+    })
+    if (currentChunk.length > 0) chunks.push(currentChunk)
+    return chunks.length > 0 ? chunks : [fields]
+  }, [fields, hasCustomFields])
+
+  const isMultiStepMode = displayMode === 'multistep' && steps.length > 1
+  const isLastStep = !isMultiStepMode || currentStep === steps.length - 1
 
   const handleFieldChange = (fieldId: string, val: any) => {
     setFormData((prev) => ({ ...prev, [fieldId]: val }))
   }
 
+  const validateCurrentStep = () => {
+    if (!isMultiStepMode) return true
+    const currentFields = steps[currentStep] || []
+    for (const f of currentFields) {
+      if (f.required && (formData[f.id] === undefined || formData[f.id] === '' || formData[f.id] === false)) {
+        setError(`Veuillez renseigner le champ obligatoire : "${f.label || f.id}"`)
+        return false
+      }
+    }
+    setError(null)
+    return true
+  }
+
+  const handleNextStep = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (validateCurrentStep()) {
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+    }
+  }
+
+  const handlePrevStep = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setError(null)
+    setCurrentStep((prev) => Math.max(prev - 1, 0))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateCurrentStep()) return
+
     setLoading(true)
     setError(null)
 
@@ -75,6 +142,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
       }
       setSubmitted(true)
       setFormData({})
+      setCurrentStep(0)
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.')
     } finally {
@@ -96,12 +164,10 @@ export const ContactForm: React.FC<ContactFormProps> = ({
       ? 'rounded-xl'
       : 'rounded-none'
 
-  return (
-    <div className={wrapperClass}>
-      {title && <h3 className="text-2xl font-normal text-gray-900 mb-2 font-serif">{title}</h3>}
-      {subtitle && <p className="text-sm text-gray-500 mb-6">{subtitle}</p>}
-
-      {submitted ? (
+  // Render Form Content
+  const renderFormInner = () => {
+    if (submitted) {
+      return (
         <div className="bg-[#FAF7F2] border border-[#E8E2D9] text-[#222222] rounded-2xl p-8 text-center space-y-3">
           <div className="text-3xl">✨</div>
           <h4 className="font-serif text-xl font-normal text-[#222222]">Message bien envoyé</h4>
@@ -109,104 +175,55 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             Merci de nous avoir contactés. Nous revenons vers vous sous 24 à 48 heures ouvrées pour échanger sur votre projet.
           </p>
           <button
-            onClick={() => setSubmitted(false)}
-            className="mt-4 inline-block text-xs uppercase tracking-widest font-semibold text-[#9E2123] underline hover:opacity-80"
+            onClick={() => {
+              setSubmitted(false)
+              if (displayMode === 'modal') setIsModalOpen(false)
+            }}
+            className="mt-4 inline-block text-xs uppercase tracking-widest font-semibold text-[#9E2123] underline hover:opacity-80 cursor-pointer"
           >
             Envoyer une autre demande
           </button>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3.5 rounded-xl text-sm border border-red-200">
-              {error}
+      )
+    }
+
+    const activeFieldsToRender = isMultiStepMode ? steps[currentStep] || [] : fields
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Multi-step progress bar */}
+        {isMultiStepMode && (
+          <div className="space-y-2 pb-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-gray-500">
+              <span className="uppercase tracking-wider">
+                Étape {currentStep + 1} sur {steps.length}
+              </span>
+              <span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
             </div>
-          )}
+            <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#222222] transition-all duration-300"
+                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
-          {hasCustomFields ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {fields.map((field) => {
-                if (field.type === 'recaptcha_v3') return null
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3.5 rounded-xl text-sm border border-red-200">
+            {error}
+          </div>
+        )}
 
-                const colSpanClass = field.width === 50 ? 'md:col-span-1' : 'md:col-span-2'
+        {hasCustomFields ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeFieldsToRender.map((field) => {
+              if (field.type === 'recaptcha_v3') return null
 
-                // 1. Textarea
-                if (field.type === 'textarea') {
-                  return (
-                    <div key={field.id} className={colSpanClass}>
-                      {field.label && (
-                        <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
-                          {field.label} {field.required && <span className="text-red-500">*</span>}
-                        </label>
-                      )}
-                      <textarea
-                        required={field.required}
-                        rows={3}
-                        placeholder={field.placeholder || ''}
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm resize-y"
-                      />
-                    </div>
-                  )
-                }
+              const colSpanClass = field.width === 50 ? 'md:col-span-1' : 'md:col-span-2'
 
-                // 2. Select dropdown
-                if (field.type === 'select') {
-                  return (
-                    <div key={field.id} className={colSpanClass}>
-                      {field.label && (
-                        <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
-                          {field.label} {field.required && <span className="text-red-500">*</span>}
-                        </label>
-                      )}
-                      <div className="relative">
-                        <select
-                          required={field.required}
-                          value={formData[field.id] || ''}
-                          onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm appearance-none cursor-pointer"
-                        >
-                          {field.placeholder && <option value="">{field.placeholder}</option>}
-                          {field.options?.map((opt, i) => {
-                            const val = typeof opt === 'string' ? opt : opt.value
-                            const lbl = typeof opt === 'string' ? opt : opt.label
-                            return (
-                              <option key={i} value={val}>
-                                {lbl}
-                              </option>
-                            )
-                          })}
-                        </select>
-                        <div className="absolute inset-y-0 right-3.5 flex items-center pointer-events-none text-gray-400 text-xs">
-                          ▼
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-
-                // 3. Single Consent Checkbox (KVKK / RGPD)
-                if (field.type === 'checkbox' && (!field.options || field.options.length <= 1)) {
-                  return (
-                    <div key={field.id} className="md:col-span-2 pt-1">
-                      <label className="flex items-start gap-3 cursor-pointer select-none group">
-                        <input
-                          type="checkbox"
-                          required={field.required}
-                          checked={!!formData[field.id]}
-                          onChange={(e) => handleFieldChange(field.id, e.target.checked)}
-                          className="mt-0.5 rounded border-[#C4BEB5] text-[#222222] focus:ring-[#222222] h-4 w-4 cursor-pointer"
-                        />
-                        <span className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-700 transition">
-                          {field.label || field.placeholder} {field.required && <span className="text-red-500">*</span>}
-                        </span>
-                      </label>
-                    </div>
-                  )
-                }
-
-                // 4. Standard text/email/tel/number inputs
+              // 1. Textarea
+              if (field.type === 'textarea') {
                 return (
                   <div key={field.id} className={colSpanClass}>
                     {field.label && (
@@ -214,63 +231,159 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                         {field.label} {field.required && <span className="text-red-500">*</span>}
                       </label>
                     )}
-                    <input
-                      type={field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : field.type === 'number' ? 'number' : 'text'}
+                    <textarea
                       required={field.required}
+                      rows={3}
                       placeholder={field.placeholder || ''}
                       value={formData[field.id] || ''}
                       onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm resize-y"
                     />
                   </div>
                 )
-              })}
+              }
+
+              // 2. Select dropdown
+              if (field.type === 'select') {
+                return (
+                  <div key={field.id} className={colSpanClass}>
+                    {field.label && (
+                      <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                      </label>
+                    )}
+                    <div className="relative">
+                      <select
+                        required={field.required}
+                        value={formData[field.id] || ''}
+                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm appearance-none cursor-pointer"
+                      >
+                        {field.placeholder && <option value="">{field.placeholder}</option>}
+                        {field.options?.map((opt, i) => {
+                          const val = typeof opt === 'string' ? opt : opt.value
+                          const lbl = typeof opt === 'string' ? opt : opt.label
+                          return (
+                            <option key={i} value={val}>
+                              {lbl}
+                            </option>
+                          )
+                        })}
+                      </select>
+                      <div className="absolute inset-y-0 right-3.5 flex items-center pointer-events-none text-gray-400 text-xs">
+                        ▼
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              // 3. Single Consent Checkbox (KVKK / RGPD)
+              if (field.type === 'checkbox' && (!field.options || field.options.length <= 1)) {
+                return (
+                  <div key={field.id} className="md:col-span-2 pt-1">
+                    <label className="flex items-start gap-3 cursor-pointer select-none group">
+                      <input
+                        type="checkbox"
+                        required={field.required}
+                        checked={!!formData[field.id]}
+                        onChange={(e) => handleFieldChange(field.id, e.target.checked)}
+                        className="mt-0.5 rounded border-[#C4BEB5] text-[#222222] focus:ring-[#222222] h-4 w-4 cursor-pointer"
+                      />
+                      <span className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-700 transition">
+                        {field.label || field.placeholder} {field.required && <span className="text-red-500">*</span>}
+                      </span>
+                    </label>
+                  </div>
+                )
+              }
+
+              // 4. Standard text/email/tel/number inputs
+              return (
+                <div key={field.id} className={colSpanClass}>
+                  {field.label && (
+                    <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1.5">
+                      {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                  )}
+                  <input
+                    type={field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : field.type === 'number' ? 'number' : 'text'}
+                    required={field.required}
+                    placeholder={field.placeholder || ''}
+                    value={formData[field.id] || ''}
+                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] bg-white text-gray-900 placeholder:text-gray-400 focus:border-[#222222] focus:ring-1 focus:ring-[#222222] outline-none transition text-sm"
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          // Default fallback simple form
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Nom complet *</label>
+              <input
+                type="text"
+                required
+                value={formData.name || ''}
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
+                placeholder="Votre nom"
+              />
             </div>
-          ) : (
-            // Default fallback simple form
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Nom complet *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                  placeholder="Votre nom"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">E-mail *</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email || ''}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                  placeholder="contact@exemple.com"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Message *</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={formData.message || ''}
-                  onChange={(e) => handleFieldChange('message', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
-                  placeholder="Parlez-nous de votre projet..."
-                />
-              </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">E-mail *</label>
+              <input
+                type="email"
+                required
+                value={formData.email || ''}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
+                placeholder="contact@exemple.com"
+              />
             </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-medium text-gray-600 mb-1">Message *</label>
+              <textarea
+                required
+                rows={4}
+                value={formData.message || ''}
+                onChange={(e) => handleFieldChange('message', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-[#DCD6CD] text-sm outline-none focus:border-[#222222]"
+                placeholder="Parlez-nous de votre projet..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Buttons: Multi-step Prev/Next or Final Submit */}
+        <div className="pt-3 flex items-center gap-3">
+          {isMultiStepMode && currentStep > 0 && (
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className={`py-3.5 px-6 border border-gray-300 text-gray-700 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition hover:bg-gray-100 cursor-pointer`}
+            >
+              ← Précédent
+            </button>
           )}
 
-          <div className="pt-2">
+          {isMultiStepMode && !isLastStep ? (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+              className={`flex-1 py-4 px-8 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:opacity-90 active:scale-[0.99] shadow-sm cursor-pointer flex items-center justify-center gap-2`}
+            >
+              <span>Continuer →</span>
+            </button>
+          ) : (
             <button
               type="submit"
               disabled={loading}
               style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-              className={`w-full py-4 px-8 ${shapeClass} font-semibold text-sm tracking-wider uppercase transition-all duration-300 hover:opacity-90 active:scale-[0.99] shadow-sm disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2`}
+              className={`flex-1 py-4 px-8 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:opacity-90 active:scale-[0.99] shadow-sm disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2`}
             >
               {loading ? (
                 <>
@@ -284,9 +397,53 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 <span>{buttonText}</span>
               )}
             </button>
+          )}
+        </div>
+      </form>
+    )
+  }
+
+  // 1. MODAL DISPLAY MODE: Render Trigger Button and Lightbox Modal
+  if (displayMode === 'modal') {
+    return (
+      <div className="inline-block">
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+          className={`py-3.5 px-7 ${shapeClass} font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:opacity-90 shadow-md cursor-pointer`}
+        >
+          {modalTriggerText}
+        </button>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-[#FAF8F5] rounded-3xl shadow-2xl p-6 sm:p-8 max-w-xl w-full max-h-[90vh] overflow-y-auto relative border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-200/80 hover:bg-gray-300 text-gray-700 flex items-center justify-center text-sm font-bold transition cursor-pointer"
+              >
+                ✕
+              </button>
+
+              {title && <h3 className="text-2xl font-normal text-gray-900 mb-2 font-serif">{title}</h3>}
+              {subtitle && <p className="text-sm text-gray-500 mb-6">{subtitle}</p>}
+
+              {renderFormInner()}
+            </div>
           </div>
-        </form>
-      )}
+        )}
+      </div>
+    )
+  }
+
+  // 2. INLINE / MULTISTEP MODE
+  return (
+    <div className={wrapperClass}>
+      {title && <h3 className="text-2xl font-normal text-gray-900 mb-2 font-serif">{title}</h3>}
+      {subtitle && <p className="text-sm text-gray-500 mb-6">{subtitle}</p>}
+      {renderFormInner()}
     </div>
   )
 }
