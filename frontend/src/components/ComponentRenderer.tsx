@@ -1785,7 +1785,12 @@ const NodeItem: React.FC<{
           <ContactForm
             siteSlug={siteSlug}
             title={props.title}
+            subtitle={props.subtitle}
             buttonText={props.buttonText}
+            buttonBgColor={props.buttonBgColor || site?.theme_config?.primary_color}
+            buttonTextColor={props.buttonTextColor}
+            buttonShape={props.buttonShape}
+            cardStyle={props.cardStyle}
             fields={props.fields}
             formId={props.formId}
           />

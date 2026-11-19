@@ -1,18 +1,42 @@
 import React, { useState, useEffect } from 'react'
-import type { Menu, Site } from '../types'
+import type { Menu, Site, PageData } from '../types'
 import { normalizeMediaUrl, resolveSiteUrl, handleInternalLinkClick } from './ImageBox'
+import { isDarkColor } from './ComponentRenderer'
 
 interface NavbarProps {
   site: Site
   menus: Menu[]
+  activePage?: PageData
   isEngineBarVisible?: boolean
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible = false }) => {
+export const Navbar: React.FC<NavbarProps> = ({ site, menus, activePage, isEngineBarVisible = false }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   const isTransparent = Boolean(site.settings?.header_transparent || site.theme_config?.header_transparent)
+    // Determine if the first section under the header is dark or light
+  const firstSection = activePage?.layout?.[0]
+  let isHeroDark = true
+  if (firstSection) {
+    const bgCol = firstSection.props?.bgColor || firstSection.styles?.backgroundColor
+    const bgImg = firstSection.props?.bgImage || firstSection.styles?.backgroundImage
+    const bgOverlay = firstSection.props?.bgOverlayColor
+    const bgOverlayOpacity = Number(firstSection.props?.bgOverlayOpacity ?? 0)
+
+    if (bgCol && bgCol !== 'transparent') {
+      isHeroDark = isDarkColor(bgCol)
+    } else if (bgImg) {
+      if (bgOverlay && bgOverlayOpacity >= 0.3) {
+        isHeroDark = isDarkColor(bgOverlay)
+      } else {
+        isHeroDark = true
+      }
+    } else {
+      isHeroDark = false
+    }
+  }
+
   const headerMenu = menus.find((m) => m.location === 'header') || menus[0]
   const rawLogoUrl = site.settings?.logo_url || site.theme_config?.logo_url
   const logoUrl = rawLogoUrl ? normalizeMediaUrl(rawLogoUrl, site.slug) : ''
@@ -33,16 +57,25 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible 
   const isScrolledActive = scrolled || isScrolledPreview
   const topPosition = isEngineBarVisible ? 'top-14' : 'top-0'
 
+  // Header text/logo dark mode: if hero is dark -> white text, else dark text
+  const useLightHeaderTheme = isTransparent && !isHeroDark
+
   const headerClass = isTransparent
     ? `fixed ${topPosition} inset-x-0 z-40 transition-all duration-300 ${
         isScrolledActive
-          ? 'bg-neutral-950/85 backdrop-blur-md text-white shadow-xl border-b border-white/10'
+          ? useLightHeaderTheme
+            ? 'bg-[#F3F0EB]/95 backdrop-blur-md text-neutral-900 shadow-md border-b border-[#DCD6CD]'
+            : 'bg-neutral-950/85 backdrop-blur-md text-white shadow-xl border-b border-white/10'
+          : useLightHeaderTheme
+          ? 'bg-transparent text-neutral-900 border-b border-transparent'
           : 'bg-transparent text-white border-b border-transparent'
       }`
     : `sticky ${topPosition} z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300`
 
   const navItemClass = isTransparent
-    ? 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-white/90 hover:text-white hover:bg-white/10 transition-all'
+    ? useLightHeaderTheme
+      ? 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-neutral-800 hover:text-black hover:bg-black/5 transition-all'
+      : 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-white/90 hover:text-white hover:bg-white/10 transition-all'
     : 'px-3.5 py-2 rounded-lg text-sm font-semibold tracking-wide text-gray-700 hover:text-neutral-950 hover:bg-gray-100 transition-all'
 
   return (
@@ -59,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible 
               src={logoUrl}
               alt={site.name}
               className={`h-10 sm:h-12 w-auto max-w-[200px] object-contain group-hover:scale-105 transition-transform ${
-                isTransparent ? 'brightness-0 invert' : ''
+                isTransparent && isHeroDark ? 'brightness-0 invert' : ''
               }`}
             />
           ) : (
@@ -71,13 +104,13 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible 
           {!hideBrandText && (
             <div>
               <span className={`font-extrabold text-base sm:text-xl tracking-tight block transition-colors ${
-                isTransparent ? 'text-white' : 'text-gray-900 group-hover:text-purple-700'
+                isTransparent ? (isHeroDark ? 'text-white' : 'text-neutral-900') : 'text-gray-900 group-hover:text-purple-700'
               }`}>
                 {site.name}
               </span>
               {site.description && (
                 <span className={`text-[11px] sm:text-xs font-medium block line-clamp-1 ${
-                  isTransparent ? 'text-white/70' : 'text-gray-500'
+                  isTransparent ? (isHeroDark ? 'text-white/70' : 'text-neutral-600') : 'text-gray-500'
                 }`}>
                   {site.description}
                 </span>
@@ -113,7 +146,9 @@ export const Navbar: React.FC<NavbarProps> = ({ site, menus, isEngineBarVisible 
               target={ctaUrl.startsWith('http') ? '_blank' : '_self'}
               className={`hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 ${
                 isTransparent
-                  ? 'bg-white text-neutral-900 hover:bg-neutral-100 shadow-md shadow-black/20'
+                  ? isHeroDark
+                    ? 'bg-white text-neutral-900 hover:bg-neutral-100 shadow-md shadow-black/20'
+                    : 'bg-neutral-900 text-white hover:bg-black shadow-md'
                   : 'bg-neutral-900 text-white hover:bg-black'
               }`}
             >

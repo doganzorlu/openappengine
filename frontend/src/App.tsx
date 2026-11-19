@@ -880,7 +880,7 @@ export function App() {
             />
           </header>
         ) : (
-          <Navbar site={site} menus={menus} isEngineBarVisible={isEngineBarVisible || isEditorMode} />
+          <Navbar site={site} menus={menus} activePage={page} isEngineBarVisible={isEngineBarVisible || isEditorMode} />
         )}
 
         {/* Main Workspace */}
